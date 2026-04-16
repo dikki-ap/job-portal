@@ -1,1 +1,13 @@
-<Solution />
+<Solution>
+  <Folder Name="/Core/">
+    <Project Path="Core/JobPortal.Application/JobPortal.Application.csproj" Id="dc1765b2-548f-4833-9a0d-c49a973f6545" />
+    <Project Path="Core/JobPortal.Domain/JobPortal.Domain.csproj" Id="04bb83b4-d017-4341-a9b4-b45435c94214" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="Infrastructure/JobPortal.Infrastructure/JobPortal.Infrastructure.csproj" Id="002e0174-e9ca-466d-bb44-9d314ce5d825" />
+    <Project Path="Infrastructure/JobPortal.Persistence/JobPortal.Persistence.csproj" Id="8fe12f6d-aab1-4ca9-9759-7b21f280a944" />
+  </Folder>
+  <Folder Name="/Presentation/">
+    <Project Path="Presentation/JobPortal.Web/JobPortal.Web.csproj" Id="51b948ed-f229-4275-bfdd-28fc4cec1f54" />
+  </Folder>
+</Solution>
