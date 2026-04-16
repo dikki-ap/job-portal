@@ -1,0 +1,54 @@
+# =========================
+# .NET
+# =========================
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / VSCode / VS
+.vs/
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# =========================
+# Environment
+# =========================
+.env
+.env.*
+
+# =========================
+# ASP.NET Core
+# =========================
+wwwroot/dist/
+wwwroot/build/
+
+# =========================
+# EF Core
+# =========================
+Migrations/*.Designer.cs
+
+# (optional kalau kamu generate snapshot tertentu)
+# Migrations/*Snapshot.cs
+
+# =========================
+# React / Vite (ClientApp)
+# =========================
+Presentation/JobPortal.Presentation/ClientApp/node_modules/
+Presentation/JobPortal.Presentation/ClientApp/dist/
+Presentation/JobPortal.Presentation/ClientApp/.vite/
+
+# lock file (optional, biasanya tetap di-commit)
+# package-lock.json
+# yarn.lock
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
