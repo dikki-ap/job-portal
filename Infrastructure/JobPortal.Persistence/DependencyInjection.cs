@@ -23,7 +23,7 @@ public static class DependencyInjection
 
         var applicationAssembly = typeof(GetAllDepartmentsQuery).Assembly;
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(applicationAssembly));
+        services.AddMediatR(applicationAssembly);
         services.AddValidatorsFromAssembly(applicationAssembly);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 

@@ -6,7 +6,6 @@ import {
   Briefcase,
   FileText,
   ChevronDown,
-  ChevronRight,
   Building2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -48,10 +47,20 @@ function NavGroup({ item }: { item: NavItem }) {
         >
           {item.icon}
           <span className="flex-1 text-left">{item.label}</span>
-          {open ? <ChevronDown className="h-4 w-4 opacity-60" /> : <ChevronRight className="h-4 w-4 opacity-60" />}
+          <ChevronDown
+            className={cn(
+              'h-4 w-4 opacity-60 transition-transform duration-200',
+              open ? 'rotate-0' : '-rotate-90'
+            )}
+          />
         </button>
-        {open && (
-          <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l border-white/20 pl-4">
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-200 ease-in-out',
+            open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          )}
+        >
+          <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l border-white/20 pl-4 pb-1">
             {item.children.map((child) => (
               <NavLink
                 key={child.to}
@@ -69,7 +78,7 @@ function NavGroup({ item }: { item: NavItem }) {
               </NavLink>
             ))}
           </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -100,15 +109,16 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   return (
     <>
-      {open && (
-        <div
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      <div
+        className={cn(
+          'fixed inset-0 z-20 bg-black/50 lg:hidden transition-opacity duration-300',
+          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        )}
+        onClick={onClose}
+      />
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 flex w-64 flex-col bg-[#004181] transition-transform duration-300 lg:relative lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-30 flex w-64 flex-col bg-[#004181] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >

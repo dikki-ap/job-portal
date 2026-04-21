@@ -3,6 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteDepartmentMutation } from "../api/departmentsApi";
+import { formatDateTime } from "../../../lib/format";
 import type { DepartmentDto } from "../../../types/api";
 
 interface DepartmentsTableProps {
@@ -52,9 +53,10 @@ export function DepartmentsTable({
             <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
               <th className="px-6 py-3 w-12">No</th>
               <th className="px-6 py-3">Name</th>
-              <th className="px-6 py-3 hidden md:table-cell">Created At</th>
               <th className="px-6 py-3 hidden lg:table-cell">Created By</th>
+              <th className="px-6 py-3 hidden md:table-cell">Created At</th>
               <th className="px-6 py-3 hidden lg:table-cell">Updated By</th>
+              <th className="px-6 py-3 hidden md:table-cell">Updated At</th>
               <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -67,19 +69,19 @@ export function DepartmentsTable({
                 <td className="px-6 py-4 font-medium text-gray-900">
                   {dept.name}
                 </td>
-                <td className="px-6 py-4 text-gray-500 hidden md:table-cell">
-                  {new Date(dept.createdAt).toLocaleDateString("id-ID", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </td>
                 <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">
                   {dept.createdByName ?? "—"}
+                </td>
+                <td className="px-6 py-4 text-gray-500 hidden md:table-cell">
+                  {formatDateTime(dept.createdAt)}
                 </td>
                 <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">
                   {dept.updatedByName ?? "—"}
                 </td>
+                <td className="px-6 py-4 text-gray-500 hidden md:table-cell">
+                  {formatDateTime(dept.updatedAt)}
+                </td>
+
                 <td className="px-6 py-4">
                   <div className="flex justify-end gap-2">
                     <Button
