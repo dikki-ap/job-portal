@@ -29,6 +29,11 @@ public static class DependencyInjection
 
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ISkillRepository, SkillRepository>();
+        services.AddScoped<IWorkModeRepository, WorkModeRepository>();
+        services.AddScoped<IEmploymentTypeRepository, EmploymentTypeRepository>();
+        services.AddScoped<IJobCategoryRepository, JobCategoryRepository>();
+        services.AddScoped<IJobLevelRepository, JobLevelRepository>();
 
         return services;
     }

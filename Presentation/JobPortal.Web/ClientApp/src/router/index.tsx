@@ -4,6 +4,11 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { LoginPage } from '../pages/LoginPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { DepartmentsPage } from '../features/departments/pages/DepartmentsPage';
+import { SkillsPage } from '../features/skills/pages/SkillsPage';
+import { WorkModesPage } from '../features/workModes/pages/WorkModesPage';
+import { EmploymentTypesPage } from '../features/employmentTypes/pages/EmploymentTypesPage';
+import { JobCategoriesPage } from '../features/jobCategories/pages/JobCategoriesPage';
+import { JobLevelsPage } from '../features/jobLevels/pages/JobLevelsPage';
 import { ComingSoonPage } from '../pages/ComingSoonPage';
 
 export function AppRouter() {
@@ -20,11 +25,11 @@ export function AppRouter() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="master/departments" element={<DepartmentsPage />} />
-        <Route path="master/skills" element={<ComingSoonPage title="Skill Management" />} />
-        <Route path="master/work-modes" element={<ComingSoonPage title="Work Mode Management" />} />
-        <Route path="master/employment-types" element={<ComingSoonPage title="Employment Type Management" />} />
-        <Route path="master/job-categories" element={<ComingSoonPage title="Job Category Management" />} />
-        <Route path="master/job-levels" element={<ComingSoonPage title="Job Level Management" />} />
+        <Route path="master/skills" element={<SkillsPage />} />
+        <Route path="master/work-modes" element={<WorkModesPage />} />
+        <Route path="master/employment-types" element={<EmploymentTypesPage />} />
+        <Route path="master/job-categories" element={<JobCategoriesPage />} />
+        <Route path="master/job-levels" element={<JobLevelsPage />} />
         <Route path="jobs" element={<ComingSoonPage title="Job Management" />} />
         <Route path="applications" element={<ComingSoonPage title="Applications" />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
