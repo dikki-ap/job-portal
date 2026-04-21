@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 namespace JobPortal.Application.Features.Departments.Commands.DeleteDepartment;
 
 public class DeleteDepartmentCommandHandler(IDepartmentRepository repository, ILogger<DeleteDepartmentCommandHandler> logger)
-    : IRequestHandler<DeleteDepartmentCommand>
+    : IRequestHandler<DeleteDepartmentCommand, Unit>
 {
-    public async Task Handle(DeleteDepartmentCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(DeleteDepartmentCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -16,6 +16,7 @@ public class DeleteDepartmentCommandHandler(IDepartmentRepository repository, IL
 
             await repository.DeleteAsync(department, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
         }
         catch (Exception ex)
         {
