@@ -70,3 +70,51 @@ export interface JobLevelDto {
   updatedByUserId: number | null;
   updatedByName: string | null;
 }
+
+export interface CurrencyTypeDto {
+  id: number;
+  name: string;
+  prefix: string;
+  createdAt: string;
+  createdByUserId: number;
+  createdByName: string | null;
+  updatedAt: string | null;
+  updatedByUserId: number | null;
+  updatedByName: string | null;
+}
+
+export interface DocumentTypeDto {
+  id: number;
+  name: string;
+  maxFileSizeMb: number;
+  allowedMimeTypes: string[];
+  createdAt: string;
+  createdByUserId: number;
+  createdByName: string | null;
+  updatedAt: string | null;
+  updatedByUserId: number | null;
+  updatedByName: string | null;
+}
+
+export interface EducationLevelDto {
+  id: number;
+  name: string;
+  level: number;
+  createdAt: string;
+  createdByUserId: number;
+  createdByName: string | null;
+  updatedAt: string | null;
+  updatedByUserId: number | null;
+  updatedByName: string | null;
+}
+
+export interface EducationMajorDto {
+  id: number;
+  name: string;
+  createdAt: string;
+  createdByUserId: number;
+  createdByName: string | null;
+  updatedAt: string | null;
+  updatedByUserId: number | null;
+  updatedByName: string | null;
+}

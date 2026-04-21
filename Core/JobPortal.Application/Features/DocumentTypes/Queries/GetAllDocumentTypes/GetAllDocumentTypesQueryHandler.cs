@@ -14,7 +14,9 @@ public class GetAllDocumentTypesQueryHandler(IDocumentTypeRepository repository,
         {
             var items = await repository.GetAllAsync(cancellationToken);
             return items.Select(d => new DocumentTypeDto(
-                d.Id, d.Name, d.CreatedAt, d.CreatedByUserId,
+                d.Id, d.Name, d.MaxFileSizeMb,
+                d.MimeTypes.Select(m => m.MimeType),
+                d.CreatedAt, d.CreatedByUserId,
                 d.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null,
                 d.UpdatedAt, d.UpdatedByUserId,
                 d.UpdatedByUser is { } ub ? $"{ub.FirstName} {ub.LastName}".Trim() : null));
