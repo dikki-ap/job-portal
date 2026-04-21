@@ -5,6 +5,10 @@ import { workModesApi } from '../features/workModes/api/workModesApi';
 import { employmentTypesApi } from '../features/employmentTypes/api/employmentTypesApi';
 import { jobCategoriesApi } from '../features/jobCategories/api/jobCategoriesApi';
 import { jobLevelsApi } from '../features/jobLevels/api/jobLevelsApi';
+import { currencyTypesApi } from '../features/currencyTypes/api/currencyTypesApi';
+import { documentTypesApi } from '../features/documentTypes/api/documentTypesApi';
+import { educationLevelsApi } from '../features/educationLevels/api/educationLevelsApi';
+import { educationMajorsApi } from '../features/educationMajors/api/educationMajorsApi';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +18,10 @@ export const store = configureStore({
     [employmentTypesApi.reducerPath]: employmentTypesApi.reducer,
     [jobCategoriesApi.reducerPath]: jobCategoriesApi.reducer,
     [jobLevelsApi.reducerPath]: jobLevelsApi.reducer,
+    [currencyTypesApi.reducerPath]: currencyTypesApi.reducer,
+    [documentTypesApi.reducerPath]: documentTypesApi.reducer,
+    [educationLevelsApi.reducerPath]: educationLevelsApi.reducer,
+    [educationMajorsApi.reducerPath]: educationMajorsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -22,7 +30,11 @@ export const store = configureStore({
       .concat(workModesApi.middleware)
       .concat(employmentTypesApi.middleware)
       .concat(jobCategoriesApi.middleware)
-      .concat(jobLevelsApi.middleware),
+      .concat(jobLevelsApi.middleware)
+      .concat(currencyTypesApi.middleware)
+      .concat(documentTypesApi.middleware)
+      .concat(educationLevelsApi.middleware)
+      .concat(educationMajorsApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
