@@ -13,6 +13,14 @@ interface DocumentTypesTableProps {
   onError: (message: string) => void;
 }
 
+const MIME_LABELS: Record<string, string> = {
+  "application/pdf": "PDF",
+  "image/jpeg": "JPEG",
+  "image/png": "PNG",
+  "application/msword": "DOC",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DOCX",
+};
+
 export function DocumentTypesTable({ documentTypes, onEdit, onSuccess, onError }: DocumentTypesTableProps) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmItem, setConfirmItem] = useState<DocumentTypeDto | null>(null);
@@ -44,6 +52,8 @@ export function DocumentTypesTable({ documentTypes, onEdit, onSuccess, onError }
             <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
               <th className="px-6 py-3 w-12">No</th>
               <th className="px-6 py-3">Name</th>
+              <th className="px-6 py-3">Max Size</th>
+              <th className="px-6 py-3">Allowed Types</th>
               <th className="px-6 py-3 hidden lg:table-cell">Created By</th>
               <th className="px-6 py-3 hidden md:table-cell">Created At</th>
               <th className="px-6 py-3 hidden lg:table-cell">Updated By</th>
@@ -56,6 +66,16 @@ export function DocumentTypesTable({ documentTypes, onEdit, onSuccess, onError }
               <tr key={dt.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 text-gray-400 font-mono text-xs">{idx + 1}</td>
                 <td className="px-6 py-4 font-medium text-gray-900">{dt.name}</td>
+                <td className="px-6 py-4 text-gray-700 font-medium">{dt.maxFileSizeMb} MB</td>
+                <td className="px-6 py-4">
+                  <div className="flex flex-wrap gap-1">
+                    {dt.allowedMimeTypes.map((mime) => (
+                      <span key={mime} className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-[#004181] ring-1 ring-inset ring-blue-200">
+                        {MIME_LABELS[mime] ?? mime}
+                      </span>
+                    ))}
+                  </div>
+                </td>
                 <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">{dt.createdByName ?? "—"}</td>
                 <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{formatDateTime(dt.createdAt)}</td>
                 <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">{dt.updatedByName ?? "—"}</td>

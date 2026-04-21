@@ -20,14 +20,17 @@ public class CreateDocumentTypeCommandHandler(
             var documentType = new DocumentType
             {
                 Name = request.Name,
+                MaxFileSizeMb = request.MaxFileSizeMb,
                 CreatedAt = DateTime.UtcNow,
                 CreatedByUserId = currentUserService.GetCurrentUserId() ?? 0,
+                MimeTypes = request.MimeTypes.Select(m => new DocumentTypeMimeType { MimeType = m }).ToList(),
             };
             await repository.AddAsync(documentType, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
 
             return new DocumentTypeDto(
-                documentType.Id, documentType.Name,
+                documentType.Id, documentType.Name, documentType.MaxFileSizeMb,
+                documentType.MimeTypes.Select(m => m.MimeType),
                 documentType.CreatedAt, documentType.CreatedByUserId, null,
                 null, null, null);
         }

@@ -47,6 +47,20 @@ public class DocumentTypeConfiguration : IEntityTypeConfiguration<DocumentType>
     {
         builder.HasIndex(e => e.Name).IsUnique();
         builder.Property(e => e.Name).HasMaxLength(100).IsRequired();
+        builder.HasMany(d => d.MimeTypes)
+            .WithOne(m => m.DocumentType)
+            .HasForeignKey(m => m.DocumentTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class DocumentTypeMimeTypeConfiguration : IEntityTypeConfiguration<DocumentTypeMimeType>
+{
+    public void Configure(EntityTypeBuilder<DocumentTypeMimeType> builder)
+    {
+        builder.ToTable("DocumentTypeMimeTypes");
+        builder.Property(e => e.MimeType).HasMaxLength(100).IsRequired();
+        builder.HasIndex(e => new { e.DocumentTypeId, e.MimeType }).IsUnique();
     }
 }
 

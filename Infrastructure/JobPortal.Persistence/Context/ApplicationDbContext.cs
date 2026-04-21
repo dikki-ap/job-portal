@@ -17,6 +17,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<CurrencyType> CurrencyTypes => Set<CurrencyType>();
     public DbSet<Skill> Skills => Set<Skill>();
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
+    public DbSet<DocumentTypeMimeType> DocumentTypeMimeTypes => Set<DocumentTypeMimeType>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<WorkMode> WorkModes => Set<WorkMode>();
     public DbSet<EmploymentType> EmploymentTypes => Set<EmploymentType>();

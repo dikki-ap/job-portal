@@ -9,6 +9,7 @@ public class DocumentTypeRepository(ApplicationDbContext context) : IDocumentTyp
 {
     public async Task<IEnumerable<DocumentType>> GetAllAsync(CancellationToken cancellationToken = default)
         => await context.DocumentTypes
+            .Include(d => d.MimeTypes)
             .Include(d => d.CreatedByUser)
             .Include(d => d.UpdatedByUser)
             .OrderBy(d => d.Name)
@@ -16,6 +17,7 @@ public class DocumentTypeRepository(ApplicationDbContext context) : IDocumentTyp
 
     public async Task<DocumentType?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await context.DocumentTypes
+            .Include(d => d.MimeTypes)
             .Include(d => d.CreatedByUser)
             .Include(d => d.UpdatedByUser)
             .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);

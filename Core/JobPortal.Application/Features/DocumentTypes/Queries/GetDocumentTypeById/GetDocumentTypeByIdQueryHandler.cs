@@ -15,7 +15,9 @@ public class GetDocumentTypeByIdQueryHandler(IDocumentTypeRepository repository,
             var d = await repository.GetByIdAsync(request.Id, cancellationToken);
             if (d is null) return null;
             return new DocumentTypeDto(
-                d.Id, d.Name, d.CreatedAt, d.CreatedByUserId,
+                d.Id, d.Name, d.MaxFileSizeMb,
+                d.MimeTypes.Select(m => m.MimeType),
+                d.CreatedAt, d.CreatedByUserId,
                 d.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null,
                 d.UpdatedAt, d.UpdatedByUserId,
                 d.UpdatedByUser is { } ub ? $"{ub.FirstName} {ub.LastName}".Trim() : null);

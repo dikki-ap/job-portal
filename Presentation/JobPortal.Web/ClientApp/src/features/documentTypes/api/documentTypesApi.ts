@@ -18,11 +18,11 @@ export const documentTypesApi = createApi({
       query: () => '/document-types',
       providesTags: ['DocumentType'],
     }),
-    createDocumentType: builder.mutation<DocumentTypeDto, { name: string }>({
+    createDocumentType: builder.mutation<DocumentTypeDto, { name: string; maxFileSizeMb: number; mimeTypes: string[] }>({
       query: (body) => ({ url: '/document-types', method: 'POST', body }),
       invalidatesTags: ['DocumentType'],
     }),
-    updateDocumentType: builder.mutation<DocumentTypeDto, { id: number; name: string }>({
+    updateDocumentType: builder.mutation<DocumentTypeDto, { id: number; name: string; maxFileSizeMb: number; mimeTypes: string[] }>({
       query: ({ id, ...body }) => ({ url: `/document-types/${id}`, method: 'PUT', body: { id, ...body } }),
       invalidatesTags: ['DocumentType'],
     }),
