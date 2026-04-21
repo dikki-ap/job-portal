@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import keycloak from '../lib/keycloak'
+import keycloak, { initKeycloak } from '../lib/keycloak'
 
 interface AuthContextValue {
   isAuthenticated: boolean
@@ -19,8 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    keycloak
-      .init({ onLoad: 'check-sso', silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html' })
+    initKeycloak()
       .then((authenticated) => {
         setIsAuthenticated(authenticated)
         setIsLoading(false)
@@ -36,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token: keycloak.token,
         userEmail: keycloak.tokenParsed?.email,
         userName: keycloak.tokenParsed?.name,
-        login: () => keycloak.login(),
+        login: () => keycloak.login({ redirectUri: window.location.origin + '/dashboard' }),
         logout: () => keycloak.logout({ redirectUri: window.location.origin }),
         register: () => keycloak.register(),
       }}
