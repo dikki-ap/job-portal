@@ -1,3 +1,4 @@
+using JobPortal.Domain.Common;
 using JobPortal.Domain.Entities.Applications;
 using JobPortal.Domain.Entities.Audit;
 using JobPortal.Domain.Entities.Documents;
@@ -53,5 +54,23 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes()
+            .Where(e => typeof(AuditableEntity).IsAssignableFrom(e.ClrType)
+                     && e.ClrType != typeof(AuditableEntity)))
+        {
+            modelBuilder.Entity(entityType.ClrType)
+                .HasOne(typeof(User), nameof(AuditableEntity.CreatedByUser))
+                .WithMany()
+                .HasForeignKey(nameof(AuditableEntity.CreatedByUserId))
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity(entityType.ClrType)
+                .HasOne(typeof(User), nameof(AuditableEntity.UpdatedByUser))
+                .WithMany()
+                .HasForeignKey(nameof(AuditableEntity.UpdatedByUserId))
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
     }
 }

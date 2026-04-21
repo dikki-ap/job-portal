@@ -18,7 +18,8 @@ public static class DependencyInjection
         var connStr = configuration.GetConnectionString("DefaultConnection")!;
 
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseMySql(connStr, ServerVersion.AutoDetect(connStr)));
+            options.UseMySql(connStr, ServerVersion.AutoDetect(connStr),
+                mySql => mySql.CommandTimeout(120)));
 
         var applicationAssembly = typeof(GetAllDepartmentsQuery).Assembly;
 
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
     }

@@ -53,6 +53,8 @@ export function DepartmentsTable({
               <th className="px-6 py-3 w-12">No</th>
               <th className="px-6 py-3">Name</th>
               <th className="px-6 py-3 hidden md:table-cell">Created At</th>
+              <th className="px-6 py-3 hidden lg:table-cell">Created By</th>
+              <th className="px-6 py-3 hidden lg:table-cell">Updated By</th>
               <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -71,6 +73,12 @@ export function DepartmentsTable({
                     month: "short",
                     year: "numeric",
                   })}
+                </td>
+                <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">
+                  {dept.createdByName ?? "—"}
+                </td>
+                <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">
+                  {dept.updatedByName ?? "—"}
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex justify-end gap-2">

@@ -15,7 +15,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.ExternalId).HasMaxLength(255).IsRequired();
         builder.Property(u => u.Email).HasMaxLength(255).IsRequired();
-        builder.Property(u => u.FullName).HasMaxLength(255).IsRequired();
+        builder.Property(u => u.FirstName).HasMaxLength(100).IsRequired();
+        builder.Property(u => u.LastName).HasMaxLength(100).IsRequired();
 
         builder.HasOne(u => u.Profile)
             .WithOne(p => p.User)
