@@ -1,10 +1,30 @@
 using FluentValidation;
+using JobPortal.Application.Interfaces.Services;
 using JobPortal.Persistence;
+using JobPortal.Web.Middleware;
+using JobPortal.Web.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, config) =>
+{
+    config
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+        .WriteTo.File(
+            path: "logs/web-log-.log",
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 7,
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}")
+        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning);
+});
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -22,11 +42,15 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddPersistence(builder.Configuration);
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.Authority = builder.Configuration["Keycloak:Authority"];
         options.RequireHttpsMetadata = false;
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateAudience = false,
@@ -81,6 +105,7 @@ app.UseExceptionHandler(errorApp =>
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
+app.UseMiddleware<UserSyncMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import keycloak, { initKeycloak } from '../lib/keycloak'
+import type { UserDto } from '../types/api'
 
 interface AuthContextValue {
   isAuthenticated: boolean
   isLoading: boolean
+  currentUser: UserDto | null
   token: string | undefined
   userEmail: string | undefined
   userName: string | undefined
@@ -14,17 +16,34 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+async function syncCurrentUser(): Promise<UserDto | null> {
+  try {
+    const res = await fetch('/api/users/me', {
+      headers: { Authorization: `Bearer ${keycloak.token}` },
+    })
+    if (!res.ok) return null
+    return (await res.json()) as UserDto
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState<UserDto | null>(null)
 
   useEffect(() => {
     initKeycloak()
-      .then((authenticated) => {
+      .then(async (authenticated) => {
         setIsAuthenticated(authenticated)
-        setIsLoading(false)
+        if (authenticated) {
+          const user = await syncCurrentUser()
+          setCurrentUser(user)
+        }
       })
-      .catch(() => setIsLoading(false))
+      .catch(() => {})
+      .finally(() => setIsLoading(false))
   }, [])
 
   return (
@@ -32,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         isAuthenticated,
         isLoading,
+        currentUser,
         token: keycloak.token,
         userEmail: keycloak.tokenParsed?.email,
         userName: keycloak.tokenParsed?.name,

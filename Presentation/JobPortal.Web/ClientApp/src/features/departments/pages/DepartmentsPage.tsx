@@ -2,10 +2,12 @@ import { useState, useMemo } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
+import { Pagination } from '../../../components/ui/Pagination';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { DepartmentForm } from '../components/DepartmentForm';
 import { DepartmentsTable } from '../components/DepartmentsTable';
 import { useGetDepartmentsQuery } from '../api/departmentsApi';
+import { usePagination } from '../../../hooks/usePagination';
 import { useToast } from '../../../hooks/useToast';
 import type { DepartmentDto } from '../../../types/api';
 
@@ -21,6 +23,9 @@ export function DepartmentsPage() {
     () => departments.filter((d) => d.name.toLowerCase().includes(search.toLowerCase())),
     [departments, search]
   );
+
+  const { paginated, currentPage, totalPages, totalItems, pageSize, from, to, goToPage, setPageSize } =
+    usePagination(filtered);
 
   const handleEdit = (dept: DepartmentDto) => {
     setEditing(dept);
@@ -69,12 +74,24 @@ export function DepartmentsPage() {
       )}
 
       {!isLoading && !isError && (
-        <DepartmentsTable
-          departments={filtered}
-          onEdit={handleEdit}
-          onSuccess={(msg) => addToast(msg, 'success')}
-          onError={(msg) => addToast(msg, 'error')}
-        />
+        <>
+          <DepartmentsTable
+            departments={paginated}
+            onEdit={handleEdit}
+            onSuccess={(msg) => addToast(msg, 'success')}
+            onError={(msg) => addToast(msg, 'error')}
+          />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            from={from}
+            to={to}
+            pageSize={pageSize}
+            onPageChange={goToPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
       )}
 
       <DepartmentForm

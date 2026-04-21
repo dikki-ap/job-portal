@@ -8,10 +8,17 @@ namespace JobPortal.Persistence.Repositories;
 public class DepartmentRepository(ApplicationDbContext context) : IDepartmentRepository
 {
     public async Task<IEnumerable<Department>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await context.Departments.OrderBy(d => d.Name).ToListAsync(cancellationToken);
+        => await context.Departments
+            .Include(d => d.CreatedByUser)
+            .Include(d => d.UpdatedByUser)
+            .OrderBy(d => d.Name)
+            .ToListAsync(cancellationToken);
 
     public async Task<Department?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-        => await context.Departments.FindAsync([id], cancellationToken);
+        => await context.Departments
+            .Include(d => d.CreatedByUser)
+            .Include(d => d.UpdatedByUser)
+            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
 
     public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
         => await context.Departments.AnyAsync(

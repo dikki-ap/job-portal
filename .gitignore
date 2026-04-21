@@ -48,6 +48,11 @@ Presentation/JobPortal.Presentation/ClientApp/.vite/
 # yarn.lock
 
 # =========================
+# Logs
+# =========================
+Presentation/JobPortal.Web/logs/
+
+# =========================
 # Claude Code
 # =========================
 .claude/

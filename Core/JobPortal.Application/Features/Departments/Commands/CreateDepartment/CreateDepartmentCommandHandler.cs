@@ -1,19 +1,44 @@
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
+using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.Departments.Commands.CreateDepartment;
 
-public class CreateDepartmentCommandHandler(IDepartmentRepository repository)
+public class CreateDepartmentCommandHandler(
+    IDepartmentRepository repository,
+    ICurrentUserService currentUserService,
+    ILogger<CreateDepartmentCommandHandler> logger)
     : IRequestHandler<CreateDepartmentCommand, DepartmentDto>
 {
     public async Task<DepartmentDto> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
     {
-        var now = DateTime.UtcNow;
-        var department = new Department { Name = request.Name, CreatedAt = now, UpdatedAt = now };
-        await repository.AddAsync(department, cancellationToken);
-        await repository.SaveChangesAsync(cancellationToken);
-        return new DepartmentDto(department.Id, department.Name, department.CreatedAt, department.UpdatedAt);
+        try
+        {
+            var department = new Department
+            {
+                Name = request.Name,
+                CreatedAt = DateTime.UtcNow,
+                CreatedByUserId = currentUserService.GetCurrentUserId() ?? 0,
+            };
+            await repository.AddAsync(department, cancellationToken);
+            await repository.SaveChangesAsync(cancellationToken);
+            return new DepartmentDto(
+                department.Id,
+                department.Name,
+                department.CreatedAt,
+                department.CreatedByUserId,
+                null,
+                null,
+                null,
+                null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while creating department name={Name}", request.Name);
+            throw;
+        }
     }
 }
