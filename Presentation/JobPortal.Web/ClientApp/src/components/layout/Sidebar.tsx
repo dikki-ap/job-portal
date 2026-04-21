@@ -23,12 +23,16 @@ const navItems: NavItem[] = [
     label: 'Master Settings',
     icon: <Settings className="h-5 w-5" />,
     children: [
+      { label: 'Currency Type', to: '/master/currency-types' },
       { label: 'Department', to: '/master/departments' },
-      { label: 'Skill', to: '/master/skills' },
-      { label: 'Work Mode', to: '/master/work-modes' },
+      { label: 'Document Type', to: '/master/document-types' },
+      { label: 'Education Level', to: '/master/education-levels' },
+      { label: 'Education Major', to: '/master/education-majors' },
       { label: 'Employment Type', to: '/master/employment-types' },
       { label: 'Job Category', to: '/master/job-categories' },
       { label: 'Job Level', to: '/master/job-levels' },
+      { label: 'Skill', to: '/master/skills' },
+      { label: 'Work Mode', to: '/master/work-modes' },
     ],
   },
   { label: 'Job Management', to: '/jobs', icon: <Briefcase className="h-5 w-5" /> },
@@ -57,7 +61,7 @@ function NavGroup({ item }: { item: NavItem }) {
         <div
           className={cn(
             'overflow-hidden transition-all duration-200 ease-in-out',
-            open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            open ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
           )}
         >
           <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l border-white/20 pl-4 pb-1">

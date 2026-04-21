@@ -3,6 +3,7 @@ using JobPortal.Application.Common.Behaviors;
 using JobPortal.Application.Features.Departments.Queries.GetAllDepartments;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Persistence.Context;
+using JobPortal.Persistence.Interceptors;
 using JobPortal.Persistence.Repositories;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -17,9 +18,12 @@ public static class DependencyInjection
     {
         var connStr = configuration.GetConnectionString("DefaultConnection")!;
 
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddScoped<AuditInterceptor>();
+
+        services.AddDbContext<ApplicationDbContext>((sp, options) =>
             options.UseMySql(connStr, ServerVersion.AutoDetect(connStr),
-                mySql => mySql.CommandTimeout(120)));
+                mySql => mySql.CommandTimeout(120))
+                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
 
         var applicationAssembly = typeof(GetAllDepartmentsQuery).Assembly;
 
@@ -34,6 +38,10 @@ public static class DependencyInjection
         services.AddScoped<IEmploymentTypeRepository, EmploymentTypeRepository>();
         services.AddScoped<IJobCategoryRepository, JobCategoryRepository>();
         services.AddScoped<IJobLevelRepository, JobLevelRepository>();
+        services.AddScoped<ICurrencyTypeRepository, CurrencyTypeRepository>();
+        services.AddScoped<IDocumentTypeRepository, DocumentTypeRepository>();
+        services.AddScoped<IEducationLevelRepository, EducationLevelRepository>();
+        services.AddScoped<IEducationMajorRepository, EducationMajorRepository>();
 
         return services;
     }
