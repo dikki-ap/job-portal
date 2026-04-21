@@ -48,6 +48,11 @@ Presentation/JobPortal.Presentation/ClientApp/.vite/
 # yarn.lock
 
 # =========================
+# Claude Code
+# =========================
+.claude/
+
+# =========================
 # OS
 # =========================
 .DS_Store

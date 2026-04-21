@@ -1,4 +1,10 @@
+using FluentValidation;
+using JobPortal.Application.Common.Behaviors;
+using JobPortal.Application.Features.Departments.Queries.GetAllDepartments;
+using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Persistence.Context;
+using JobPortal.Persistence.Repositories;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +19,14 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseMySql(connStr, ServerVersion.AutoDetect(connStr)));
+
+        var applicationAssembly = typeof(GetAllDepartmentsQuery).Assembly;
+
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(applicationAssembly));
+        services.AddValidatorsFromAssembly(applicationAssembly);
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 
         return services;
     }

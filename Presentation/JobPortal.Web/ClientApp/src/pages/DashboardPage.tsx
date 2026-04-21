@@ -1,53 +1,37 @@
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContext';
+import { Briefcase, FileText, Clock } from 'lucide-react';
 
-export default function DashboardPage() {
-  const { userName, userEmail, logout } = useAuth()
+const stats = [
+  { label: 'Open Positions', value: '—', icon: Briefcase, color: 'text-blue-600 bg-blue-50' },
+  { label: 'My Applications', value: '—', icon: FileText, color: 'text-green-600 bg-green-50' },
+  { label: 'In Review', value: '—', icon: Clock, color: 'text-amber-600 bg-amber-50' },
+];
+
+export function DashboardPage() {
+  const { userName } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="text-white shadow-sm" style={{ backgroundColor: '#004181' }}>
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <span className="font-semibold text-sm">Job Portal</span>
-          <div className="flex items-center gap-3">
-            <span className="text-blue-200 text-sm hidden sm:block">{userEmail}</span>
-            <button
-              onClick={logout}
-              className="text-xs py-1.5 px-3 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </nav>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Welcome back, {userName ?? 'User'}</h1>
+        <p className="mt-1 text-sm text-gray-500">Here's what's happening in your organization today.</p>
+      </div>
 
-      {/* Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome, {userName ?? userEmail ?? 'User'}
-          </h1>
-          <p className="text-gray-500 mt-1 text-sm">Explore open positions and manage your applications</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          {[
-            { label: 'Open Positions', value: '—', icon: '💼' },
-            { label: 'My Applications', value: '—', icon: '📋' },
-            { label: 'In Review', value: '—', icon: '🔍' },
-          ].map(card => (
-            <div key={card.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <div className="text-2xl mb-2">{card.icon}</div>
-              <div className="text-2xl font-bold text-gray-900">{card.value}</div>
-              <div className="text-sm text-gray-500 mt-0.5">{card.label}</div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {stats.map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl ${color}`}>
+              <Icon className="h-5 w-5" />
             </div>
-          ))}
-        </div>
+            <div className="text-2xl font-bold text-gray-900">{value}</div>
+            <div className="mt-0.5 text-sm text-gray-500">{label}</div>
+          </div>
+        ))}
+      </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center py-16">
-          <p className="text-gray-400 text-sm">Job listings will appear here</p>
-        </div>
-      </main>
+      <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm">
+        <p className="text-sm text-gray-400">More features coming soon. Start by managing master data from the sidebar.</p>
+      </div>
     </div>
-  )
+  );
 }
