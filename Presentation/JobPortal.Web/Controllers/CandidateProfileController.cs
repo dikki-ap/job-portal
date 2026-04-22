@@ -115,8 +115,9 @@ public class CandidateProfileController(
         if (profile?.CvDocument is null)
             return NotFound(new { error = "No CV uploaded to profile." });
 
-        var url = await storageService.GeneratePresignedUrlAsync(
-            profile.CvDocument.FilePath, expiryMinutes: 15, cancellationToken);
-        return Redirect(url);
+        var (stream, contentType) = await storageService.DownloadAsync(profile.CvDocument.FilePath, cancellationToken);
+        var fileName = profile.CvDocument.OriginalFileName;
+
+        return File(stream, contentType, fileName);
     }
 }

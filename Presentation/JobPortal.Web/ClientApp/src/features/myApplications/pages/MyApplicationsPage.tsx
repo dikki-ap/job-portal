@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Eye } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Button } from '../../../components/ui/Button';
 import { Pagination } from '../../../components/ui/Pagination';
@@ -42,7 +41,6 @@ export function MyApplicationsPage() {
                       <th className="px-6 py-3 hidden md:table-cell">Applied At</th>
                       <th className="px-6 py-3">Status</th>
                       <th className="px-6 py-3 hidden lg:table-cell">Steps Progress</th>
-                      <th className="px-6 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -51,7 +49,11 @@ export function MyApplicationsPage() {
                       const totalSteps = app.steps.length;
                       const status = deriveStatus(app);
                       return (
-                        <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                        <tr
+                          key={app.id}
+                          onClick={() => navigate(`/my-applications/${app.id}`)}
+                          className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        >
                           <td className="px-6 py-4">
                             <div className="font-medium text-gray-900">{app.jobPostTitle}</div>
                             <div className="text-xs text-gray-400">Application #{app.id}</div>
@@ -64,13 +66,6 @@ export function MyApplicationsPage() {
                           </td>
                           <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">
                             {totalSteps > 0 ? `${passedSteps} / ${totalSteps} steps` : '—'}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex justify-end">
-                              <Button variant="ghost" size="icon" onClick={() => navigate(`/my-applications/${app.id}`)} title="View detail">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </div>
                           </td>
                         </tr>
                       );

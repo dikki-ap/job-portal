@@ -3,6 +3,8 @@ import { ArrowLeft, CheckCircle2, XCircle, Clock, Download, MapPin, Briefcase } 
 import { Spinner } from '../../../components/ui/Spinner';
 import { Button } from '../../../components/ui/Button';
 import { useGetMyApplicationByIdQuery } from '../api/myApplicationsApi';
+import { useAuth } from '../../../contexts/AuthContext';
+import { downloadWithAuth } from '../../../lib/download';
 import { formatDate, formatDateTime } from '../../../lib/format';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -34,6 +36,7 @@ function StepIcon({ status }: { status: string }) {
 
 export function MyApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { token } = useAuth();
   const { data: application, isLoading, isError } = useGetMyApplicationByIdQuery(Number(id));
 
   if (isLoading) {
@@ -173,7 +176,7 @@ export function MyApplicationDetailPage() {
                   variant="ghost"
                   size="sm"
                   className="gap-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 shrink-0"
-                  onClick={() => window.open(`/api/documents/${doc.id}/download`, '_blank')}
+                  onClick={() => downloadWithAuth(`/api/documents/${doc.id}/download`, token, doc.originalFileName)}
                 >
                   <Download className="h-3.5 w-3.5" /> Download
                 </Button>

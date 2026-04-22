@@ -1,6 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Eye } from 'lucide-react';
-import { Button } from '../../../components/ui/Button';
 import { formatDate } from '../../../lib/format';
 import { deriveStatus, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
 import type { ApplicationDto } from '../../../types/api';
@@ -30,14 +28,17 @@ export function ApplicationsTable({ applications }: ApplicationsTableProps) {
             <th className="px-6 py-3 hidden md:table-cell">Job Post</th>
             <th className="px-6 py-3 hidden lg:table-cell">Applied At</th>
             <th className="px-6 py-3">Status</th>
-            <th className="px-6 py-3 text-right">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {applications.map((app, idx) => {
             const status = deriveStatus(app);
             return (
-              <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+              <tr
+                key={app.id}
+                onClick={() => navigate(`/applications/${app.id}`)}
+                className="hover:bg-gray-50 transition-colors cursor-pointer"
+              >
                 <td className="px-6 py-4 text-gray-400 font-mono text-xs">{idx + 1}</td>
                 <td className="px-6 py-4">
                   <div className="font-medium text-gray-900">{app.candidateName || '—'}</div>
@@ -49,13 +50,6 @@ export function ApplicationsTable({ applications }: ApplicationsTableProps) {
                   <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
                     {STATUS_LABEL[status] ?? status}
                   </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex justify-end">
-                    <Button variant="ghost" size="icon" onClick={() => navigate(`/applications/${app.id}`)} title="View">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </td>
               </tr>
             );

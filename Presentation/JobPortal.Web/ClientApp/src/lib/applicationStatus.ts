@@ -17,18 +17,13 @@ export const STATUS_LABEL: Record<string, string> = {
 
 /** Compute the displayed status from step progression rather than the stored field alone. */
 export function deriveStatus(app: Pick<ApplicationDto, 'status' | 'steps'>): DerivedStatus {
-  if (app.status === 'Accepted' || app.status === 'InReview') return 'Accepted';
+  if (app.status === 'Accepted') return 'Accepted';
   if (app.status === 'Rejected') return 'Rejected';
+  if (app.status === 'InReview') return 'InReview';
 
-  const steps = [...app.steps].sort((a, b) => a.stepOrder - b.stepOrder);
-  if (steps.length === 0) return 'Pending';
-
-  const lastStep = steps[steps.length - 1];
-  const anyPassed = steps.some((s) => s.status === 'Passed');
-
-  if (lastStep.status === 'Passed') return 'Accepted';
-  if (anyPassed) return 'InProgress';
-  return 'Pending';
+  // DB status is 'Pending' — refine to InProgress if at least one step has been passed
+  const anyPassed = app.steps.some((s) => s.status === 'Passed');
+  return anyPassed ? 'InProgress' : 'Pending';
 }
 
 /** Returns true if this step can be acted on (previous required steps are all Passed). */
