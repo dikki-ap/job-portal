@@ -10,6 +10,7 @@ import {
   Globe,
   ExternalLink,
   ClipboardList,
+  UserCircle,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
@@ -127,6 +128,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   ];
 
   const candidateItems: NavItem[] = [
+    { label: 'My Profile', to: '/profile', icon: <UserCircle className="h-5 w-5" /> },
     { label: 'My Applications', to: '/my-applications', icon: <ClipboardList className="h-5 w-5" /> },
     { label: 'Open Positions', to: '/careers', icon: <Briefcase className="h-5 w-5" /> },
   ];

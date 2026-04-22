@@ -21,6 +21,7 @@ public class CreateDocumentTypeCommandHandler(
             {
                 Name = request.Name,
                 MaxFileSizeMb = request.MaxFileSizeMb,
+                IsDefaultRequired = request.IsDefaultRequired,
                 CreatedAt = DateTime.UtcNow,
                 CreatedByUserId = currentUserService.GetCurrentUserId() ?? 0,
                 MimeTypes = request.MimeTypes.Select(m => new DocumentTypeMimeType { MimeType = m }).ToList(),
@@ -30,6 +31,7 @@ public class CreateDocumentTypeCommandHandler(
 
             return new DocumentTypeDto(
                 documentType.Id, documentType.Name, documentType.MaxFileSizeMb,
+                documentType.IsDefaultRequired,
                 documentType.MimeTypes.Select(m => m.MimeType),
                 documentType.CreatedAt, documentType.CreatedByUserId, null,
                 null, null, null);

@@ -3,6 +3,7 @@ using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Jobs;
+using JobPortal.Application.Features.JobPosts.Queries.GetAllJobPosts;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -56,6 +57,9 @@ public class CreateJobPostCommandHandler(
                 RequiredSkills = request.RequiredSkillIds
                     .Select(skillId => new JobPostSkill { SkillId = skillId })
                     .ToList(),
+                RequiredDocuments = request.RequiredDocuments
+                    .Select(d => new JobPostRequiredDocument { DocumentTypeId = d.DocumentTypeId, IsRequired = d.IsRequired })
+                    .ToList(),
             };
 
             await repository.AddAsync(jobPost, cancellationToken);
@@ -76,6 +80,7 @@ public class CreateJobPostCommandHandler(
                 jobPost.Quota, jobPost.PublishDate, jobPost.CloseDate,
                 jobPost.JobSteps.Select(s => new JobStepDto(s.Id, s.Name, s.StepOrder, s.IsRequired)),
                 jobPost.RequiredSkills.Select(s => new JobSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty)),
+                jobPost.RequiredDocuments.Select(d => new JobRequiredDocumentDto(d.DocumentTypeId, d.DocumentType?.Name ?? string.Empty, d.IsRequired)),
                 jobPost.CreatedAt, null);
         }
         catch (Exception ex)

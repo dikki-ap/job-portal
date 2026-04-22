@@ -6,6 +6,7 @@ public class DocumentType : AuditableEntity
 {
     public string Name { get; set; } = string.Empty;
     public int MaxFileSizeMb { get; set; }
+    public bool IsDefaultRequired { get; set; } = false;
     public ICollection<DocumentTypeMimeType> MimeTypes { get; set; } = new List<DocumentTypeMimeType>();
 }
 

@@ -1,4 +1,5 @@
 using JobPortal.Domain.Common;
+using JobPortal.Domain.Entities.Masters;
 
 namespace JobPortal.Domain.Entities.Users;
 
@@ -12,6 +13,8 @@ public class UserProfile : AuditableEntity
     public string BirthPlace { get; set; } = string.Empty;
     public string Gender { get; set; } = string.Empty;
     public string MaritalStatus { get; set; } = string.Empty;
+    public int? EducationLevelId { get; set; }
 
     public User User { get; set; } = null!;
+    public EducationLevel? EducationLevel { get; set; }
 }

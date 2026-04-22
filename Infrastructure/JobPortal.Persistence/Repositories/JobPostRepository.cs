@@ -8,59 +8,36 @@ namespace JobPortal.Persistence.Repositories;
 
 public class JobPostRepository(ApplicationDbContext context, ICurrentUserService currentUserService) : IJobPostRepository
 {
-    public async Task<IEnumerable<JobPost>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await context.JobPosts
+    private static IQueryable<JobPost> WithFullIncludes(IQueryable<JobPost> query)
+        => query
             .Include(j => j.JobSteps)
             .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
+            .Include(j => j.RequiredDocuments).ThenInclude(d => d.DocumentType)
             .Include(j => j.Department)
             .Include(j => j.JobCategory)
             .Include(j => j.JobLevel)
             .Include(j => j.EmploymentType)
             .Include(j => j.WorkMode)
             .Include(j => j.MinEducationLevel)
-            .Include(j => j.CurrencyType)
+            .Include(j => j.CurrencyType);
+
+    public async Task<IEnumerable<JobPost>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await WithFullIncludes(context.JobPosts)
             .Include(j => j.CreatedByUser)
             .OrderByDescending(j => j.CreatedAt)
             .ToListAsync(cancellationToken);
 
     public async Task<JobPost?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-        => await context.JobPosts
-            .Include(j => j.JobSteps)
-            .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
-            .Include(j => j.Department)
-            .Include(j => j.JobCategory)
-            .Include(j => j.JobLevel)
-            .Include(j => j.EmploymentType)
-            .Include(j => j.WorkMode)
-            .Include(j => j.MinEducationLevel)
-            .Include(j => j.CurrencyType)
+        => await WithFullIncludes(context.JobPosts)
             .Include(j => j.CreatedByUser)
             .FirstOrDefaultAsync(j => j.Id == id, cancellationToken);
 
     public async Task<JobPost?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
-        => await context.JobPosts
-            .Include(j => j.JobSteps)
-            .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
-            .Include(j => j.Department)
-            .Include(j => j.JobCategory)
-            .Include(j => j.JobLevel)
-            .Include(j => j.EmploymentType)
-            .Include(j => j.WorkMode)
-            .Include(j => j.MinEducationLevel)
-            .Include(j => j.CurrencyType)
+        => await WithFullIncludes(context.JobPosts)
             .FirstOrDefaultAsync(j => j.Slug == slug, cancellationToken);
 
     public async Task<IEnumerable<JobPost>> GetAllPublishedAsync(CancellationToken cancellationToken = default)
-        => await context.JobPosts
-            .Include(j => j.JobSteps)
-            .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
-            .Include(j => j.Department)
-            .Include(j => j.JobCategory)
-            .Include(j => j.JobLevel)
-            .Include(j => j.EmploymentType)
-            .Include(j => j.WorkMode)
-            .Include(j => j.MinEducationLevel)
-            .Include(j => j.CurrencyType)
+        => await WithFullIncludes(context.JobPosts)
             .Where(j => j.Status == "Published")
             .OrderByDescending(j => j.PublishDate)
             .ToListAsync(cancellationToken);
@@ -68,16 +45,7 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
     public async Task<(IEnumerable<JobPost> Items, int TotalCount)> GetPublishedPagedAsync(
         string? search, int? categoryId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        var query = context.JobPosts
-            .Include(j => j.JobSteps)
-            .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
-            .Include(j => j.Department)
-            .Include(j => j.JobCategory)
-            .Include(j => j.JobLevel)
-            .Include(j => j.EmploymentType)
-            .Include(j => j.WorkMode)
-            .Include(j => j.MinEducationLevel)
-            .Include(j => j.CurrencyType)
+        var query = WithFullIncludes(context.JobPosts)
             .Where(j => j.Status == "Published")
             .AsQueryable();
 
@@ -101,6 +69,17 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
         => await context.JobPosts.AnyAsync(
             j => j.Slug == slug && (excludeId == null || j.Id != excludeId),
             cancellationToken);
+
+    public async Task<HashSet<int>> GetReferencedJobStepIdsAsync(IEnumerable<int> stepIds, CancellationToken cancellationToken = default)
+    {
+        var ids = stepIds.ToList();
+        if (ids.Count == 0) return [];
+        return await context.ApplicationSteps
+            .Where(s => ids.Contains(s.JobStepId))
+            .Select(s => s.JobStepId)
+            .Distinct()
+            .ToHashSetAsync(cancellationToken);
+    }
 
     public async Task AddAsync(JobPost jobPost, CancellationToken cancellationToken = default)
         => await context.JobPosts.AddAsync(jobPost, cancellationToken);

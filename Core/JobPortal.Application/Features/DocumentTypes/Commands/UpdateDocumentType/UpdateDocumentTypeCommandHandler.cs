@@ -22,6 +22,7 @@ public class UpdateDocumentTypeCommandHandler(
 
             documentType.Name = request.Name;
             documentType.MaxFileSizeMb = request.MaxFileSizeMb;
+            documentType.IsDefaultRequired = request.IsDefaultRequired;
             documentType.UpdatedAt = DateTime.UtcNow;
             documentType.UpdatedByUserId = currentUserService.GetCurrentUserId();
             documentType.MimeTypes.Clear();
@@ -32,6 +33,7 @@ public class UpdateDocumentTypeCommandHandler(
 
             return new DocumentTypeDto(
                 documentType.Id, documentType.Name, documentType.MaxFileSizeMb,
+                documentType.IsDefaultRequired,
                 documentType.MimeTypes.Select(m => m.MimeType),
                 documentType.CreatedAt, documentType.CreatedByUserId,
                 documentType.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null,
