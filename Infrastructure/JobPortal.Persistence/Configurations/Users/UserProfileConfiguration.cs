@@ -9,17 +9,18 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
     public void Configure(EntityTypeBuilder<UserProfile> builder)
     {
         builder.Property(p => p.NIK).HasMaxLength(20).IsRequired();
-        builder.Property(p => p.PhoneNumber).HasMaxLength(20).IsRequired();
-        builder.Property(p => p.BirthPlace).HasMaxLength(100).IsRequired();
-        builder.Property(p => p.Gender).HasMaxLength(20).IsRequired();
-        builder.Property(p => p.MaritalStatus).HasMaxLength(30).IsRequired();
-        builder.Property(p => p.ProfilePicture).HasMaxLength(500);
+        builder.Property(p => p.PhoneNumber).HasMaxLength(25).IsRequired();
 
         builder.HasIndex(p => p.NIK).IsUnique();
 
         builder.HasOne(p => p.EducationLevel)
             .WithMany()
             .HasForeignKey(p => p.EducationLevelId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(p => p.CvDocument)
+            .WithMany()
+            .HasForeignKey(p => p.CvDocumentId)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }

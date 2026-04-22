@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Upload, CheckCircle2, X, Loader2, Building2, LogIn } from 'lucide-react';
+import { ArrowLeft, Upload, CheckCircle2, X, Loader2, Building2, LogIn, UserCircle } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
@@ -10,6 +10,7 @@ import keycloak from '../../../lib/keycloak';
 import { useGetCareerByIdQuery, useApplyToJobMutation } from '../api/careersApi';
 import { useUploadDocumentMutation } from '../../documents/api/documentsApi';
 import { useGetDocumentTypesQuery } from '../../documentTypes/api/documentTypesApi';
+import { useGetProfileQuery } from '../../candidateProfile/api/candidateProfileApi';
 import type { DocumentTypeDto } from '../../../types/api';
 
 interface DocEntry {
@@ -20,6 +21,7 @@ interface DocEntry {
   isRequired: boolean;
   file: File | null;
   uploadedId: number | null;
+  fromProfile: boolean;
   uploading: boolean;
   error: string | null;
 }
@@ -104,7 +106,14 @@ function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile }: {
         {entry.uploadedId ? (
           <div className="flex items-center gap-2 text-sm text-green-700">
             <CheckCircle2 className="h-4 w-4" />
-            <span>{entry.file?.name} — uploaded</span>
+            {entry.fromProfile ? (
+              <span className="flex items-center gap-1.5">
+                <UserCircle className="h-3.5 w-3.5" />
+                From your profile
+              </span>
+            ) : (
+              <span>{entry.file?.name} — uploaded</span>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-3">
@@ -141,6 +150,7 @@ export function ApplyPage() {
 
   const { data: job, isLoading: jobLoading } = useGetCareerByIdQuery(jobPostId);
   const { data: allDocTypes = [], isLoading: typesLoading } = useGetDocumentTypesQuery();
+  const { data: profile } = useGetProfileQuery(undefined, { skip: !isAuthenticated });
   const [applyToJob, { isLoading: applying }] = useApplyToJobMutation();
   const [uploadDocument] = useUploadDocumentMutation();
 
@@ -148,6 +158,7 @@ export function ApplyPage() {
   const [submitted, setSubmitted] = useState(false);
 
   // Initialize entries from job's requiredDocuments when both are loaded
+  // Auto-populate with profile CV if documentTypeId matches
   useEffect(() => {
     if (!job || allDocTypes.length === 0) return;
 
@@ -155,6 +166,7 @@ export function ApplyPage() {
     for (const reqDoc of job.requiredDocuments) {
       const dt = allDocTypes.find((d) => d.id === reqDoc.documentTypeId);
       if (!dt) continue;
+      const isProfileCv = profile?.cvDocumentId != null && profile.cvDocumentTypeId === dt.id;
       initialEntries[dt.id] = {
         typeId: dt.id,
         typeName: dt.name,
@@ -162,13 +174,14 @@ export function ApplyPage() {
         maxFileSizeMb: dt.maxFileSizeMb,
         isRequired: reqDoc.isRequired,
         file: null,
-        uploadedId: null,
+        uploadedId: isProfileCv ? profile!.cvDocumentId : null,
+        fromProfile: isProfileCv,
         uploading: false,
         error: null,
       };
     }
     setEntries(initialEntries);
-  }, [job, allDocTypes]);
+  }, [job, allDocTypes, profile]);
 
   const addAdditionalDoc = (dt: DocumentTypeDto) => {
     setEntries((prev) => ({
@@ -181,6 +194,7 @@ export function ApplyPage() {
         isRequired: false,
         file: null,
         uploadedId: null,
+        fromProfile: false,
         uploading: false,
         error: null,
       },
@@ -196,26 +210,32 @@ export function ApplyPage() {
   };
 
   const setFile = (typeId: number, file: File | null) => {
-    setEntries((e) => ({ ...e, [typeId]: { ...e[typeId], file, uploadedId: null, error: null } }));
+    setEntries((e) => ({ ...e, [typeId]: { ...e[typeId], file, uploadedId: null, fromProfile: false, error: null } }));
   };
 
   const handleSubmit = async () => {
     const entryList = Object.values(entries);
 
-    // Validate required docs all have files attached
+    // Validate required docs all have files or existing uploadedId
     const missingRequired = entryList.filter((e) => e.isRequired && !e.file && !e.uploadedId);
     if (missingRequired.length > 0) {
       addToast(`Please attach: ${missingRequired.map((e) => e.typeName).join(', ')}`, 'error');
       return;
     }
 
-    const withFiles = entryList.filter((e) => e.file);
-    if (withFiles.length === 0) {
+    const hasAnyDoc = entryList.some((e) => e.file || e.uploadedId);
+    if (!hasAnyDoc) {
       addToast('Please attach at least one file.', 'error');
       return;
     }
 
-    const documentIds: number[] = [];
+    // Collect already-uploaded document IDs (e.g. profile CV)
+    const documentIds: number[] = entryList
+      .filter((e) => e.uploadedId && !e.file)
+      .map((e) => e.uploadedId!);
+
+    // Upload new files
+    const withFiles = entryList.filter((e) => e.file);
     for (const entry of withFiles) {
       setEntries((e) => ({ ...e, [entry.typeId]: { ...e[entry.typeId], uploading: true, error: null } }));
       try {

@@ -1,14 +1,21 @@
-import { useState, useEffect } from 'react';
-import { X, PlusCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, PlusCircle, Upload, CheckCircle2, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
+import { PhoneInput } from '../../../components/ui/PhoneInput';
 import { useToast } from '../../../hooks/useToast';
 import { useGetEducationLevelsQuery } from '../../educationLevels/api/educationLevelsApi';
 import { useGetSkillsQuery } from '../../skills/api/skillsApi';
-import { useGetProfileQuery, useUpsertProfileMutation } from '../api/candidateProfileApi';
+import { useGetDocumentTypesQuery } from '../../documentTypes/api/documentTypesApi';
+import {
+  useGetProfileQuery,
+  useUpsertProfileMutation,
+  useUploadCvMutation,
+  useRemoveCvMutation,
+} from '../api/candidateProfileApi';
 
 const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Expert'];
 
@@ -22,22 +29,29 @@ export function CandidateProfilePage() {
   const { data: profile, isLoading: profileLoading } = useGetProfileQuery();
   const { data: educationLevels = [] } = useGetEducationLevelsQuery();
   const { data: allSkills = [] } = useGetSkillsQuery();
+  const { data: documentTypes = [] } = useGetDocumentTypesQuery();
   const [upsertProfile, { isLoading: saving }] = useUpsertProfileMutation();
+  const [uploadCv, { isLoading: uploadingCv }] = useUploadCvMutation();
+  const [removeCv, { isLoading: removingCv }] = useRemoveCvMutation();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('+62');
   const [educationLevelId, setEducationLevelId] = useState<number | ''>('');
   const [skills, setSkills] = useState<SkillEntry[]>([]);
   const [addSkillId, setAddSkillId] = useState<number | ''>('');
   const [addSkillLevel, setAddSkillLevel] = useState('Intermediate');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvDocTypeId, setCvDocTypeId] = useState<number | ''>('');
+  const cvInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!profile) return;
     setFirstName(profile.firstName);
     setLastName(profile.lastName);
-    setPhoneNumber(profile.phoneNumber);
+    setPhoneNumber(profile.phoneNumber || '+62');
     setEducationLevelId(profile.educationLevelId ?? '');
     setSkills(profile.skills.map((s) => ({ skillId: s.skillId, skillLevel: s.skillLevel })));
   }, [profile]);
@@ -61,7 +75,8 @@ export function CandidateProfilePage() {
     const e: Record<string, string> = {};
     if (!firstName.trim()) e.firstName = 'First name is required.';
     if (!lastName.trim()) e.lastName = 'Last name is required.';
-    if (!phoneNumber.trim()) e.phoneNumber = 'Phone number is required.';
+    if (!phoneNumber || phoneNumber === '+' || phoneNumber.length < 6)
+      e.phoneNumber = 'Valid phone number is required.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -72,7 +87,7 @@ export function CandidateProfilePage() {
       await upsertProfile({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phoneNumber: phoneNumber.trim(),
+        phoneNumber,
         educationLevelId: educationLevelId !== '' ? Number(educationLevelId) : null,
         skills,
       }).unwrap();
@@ -83,9 +98,39 @@ export function CandidateProfilePage() {
     }
   };
 
-  const sortedEducationLevels = [...educationLevels].sort((a, b) => a.level - b.level);
+  const handleCvUpload = async () => {
+    if (!cvFile || cvDocTypeId === '') return;
+    try {
+      await uploadCv({ file: cvFile, documentTypeId: Number(cvDocTypeId) }).unwrap();
+      setCvFile(null);
+      setCvDocTypeId('');
+      if (cvInputRef.current) cvInputRef.current.value = '';
+      addToast('CV uploaded successfully.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to upload CV.', 'error');
+    }
+  };
 
+  const handleRemoveCv = async () => {
+    try {
+      await removeCv().unwrap();
+      addToast('CV removed.', 'success');
+    } catch {
+      addToast('Failed to remove CV.', 'error');
+    }
+  };
+
+  const sortedEducationLevels = [...educationLevels].sort((a, b) => a.level - b.level);
   const skillById = (id: number) => allSkills.find((s) => s.id === id);
+
+  const cvDocType = documentTypes.find((d) => d.id === profile?.cvDocumentTypeId);
+  const cvAllowedMimes = cvDocTypeId !== ''
+    ? (documentTypes.find((d) => d.id === Number(cvDocTypeId))?.allowedMimeTypes ?? [])
+    : [];
+  const cvMaxMb = cvDocTypeId !== ''
+    ? (documentTypes.find((d) => d.id === Number(cvDocTypeId))?.maxFileSizeMb ?? 10)
+    : 10;
 
   if (profileLoading) {
     return (
@@ -123,13 +168,12 @@ export function CandidateProfilePage() {
             placeholder="Doe"
           />
         </div>
-        <Input
+        <PhoneInput
           id="phoneNumber"
           label="Phone Number *"
           value={phoneNumber}
-          onChange={(e) => { setPhoneNumber(e.target.value); setErrors((p) => ({ ...p, phoneNumber: '' })); }}
+          onChange={(v) => { setPhoneNumber(v); setErrors((p) => ({ ...p, phoneNumber: '' })); }}
           error={errors.phoneNumber}
-          placeholder="+62 812 3456 7890"
         />
       </div>
 
@@ -144,6 +188,83 @@ export function CandidateProfilePage() {
           options={sortedEducationLevels.map((el) => ({ value: el.id, label: el.name }))}
           placeholder="— Select education level —"
         />
+      </div>
+
+      {/* CV Upload */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Resume / CV</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Upload once and reuse across applications.</p>
+        </div>
+
+        {profile?.cvDocumentId ? (
+          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+            <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{profile.cvOriginalFileName}</p>
+              {cvDocType && <p className="text-xs text-gray-500">{cvDocType.name}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={handleRemoveCv}
+              disabled={removingCv}
+              className="shrink-0 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+              title="Remove CV"
+            >
+              {removingCv ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <Select
+              id="cvDocType"
+              label="Document Type"
+              value={cvDocTypeId}
+              onChange={(e) => {
+                setCvDocTypeId(e.target.value !== '' ? Number(e.target.value) : '');
+                setCvFile(null);
+                if (cvInputRef.current) cvInputRef.current.value = '';
+              }}
+              options={documentTypes.map((d) => ({ value: d.id, label: d.name }))}
+              placeholder="— Select document type —"
+            />
+            <div className="flex items-center gap-3">
+              <label className={`flex items-center gap-2 cursor-pointer rounded-lg border border-dashed px-4 py-2.5 text-sm transition-colors ${
+                cvDocTypeId === ''
+                  ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'border-gray-300 text-gray-600 hover:border-[#004181] hover:text-[#004181]'
+              }`}>
+                <Upload className="h-4 w-4" />
+                {cvFile ? cvFile.name : 'Choose file'}
+                <input
+                  ref={cvInputRef}
+                  type="file"
+                  className="sr-only"
+                  disabled={cvDocTypeId === ''}
+                  accept={cvAllowedMimes.join(',') || undefined}
+                  onChange={(e) => setCvFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              {cvFile && (
+                <button type="button" onClick={() => { setCvFile(null); if (cvInputRef.current) cvInputRef.current.value = ''; }} className="text-gray-400 hover:text-red-500">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+              <Button
+                size="sm"
+                className="bg-[#004181] hover:bg-[#003268] text-white ml-auto"
+                onClick={handleCvUpload}
+                disabled={!cvFile || cvDocTypeId === ''}
+                loading={uploadingCv}
+              >
+                Upload
+              </Button>
+            </div>
+            {cvDocTypeId !== '' && (
+              <p className="text-xs text-gray-400">Max {cvMaxMb} MB · {cvAllowedMimes.join(', ') || 'any file'}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Skills */}

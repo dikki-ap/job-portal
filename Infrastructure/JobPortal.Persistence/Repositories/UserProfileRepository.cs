@@ -16,6 +16,7 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
 
         var profile = await context.UserProfiles
             .Include(p => p.EducationLevel)
+            .Include(p => p.CvDocument)
             .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
 
         var skills = await context.UserSkills
@@ -37,7 +38,6 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         if (existing is null)
         {
             profile.UserId = user.Id;
-            // NIK is required+unique; use a stable placeholder derived from userId until HR updates it
             if (string.IsNullOrEmpty(profile.NIK))
                 profile.NIK = $"TMP{user.Id:D17}";
             profile.CreatedAt = profile.UpdatedAt ?? DateTime.UtcNow;
@@ -61,6 +61,54 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         var skillList = skills.ToList();
         if (skillList.Count > 0)
             await context.UserSkills.AddRangeAsync(skillList, cancellationToken);
+    }
+
+    public async Task<UserProfile?> LinkCvAsync(
+        int userId, int documentId, int documentTypeId, string originalFileName, CancellationToken cancellationToken = default)
+    {
+        var profile = await context.UserProfiles
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+
+        if (profile is null)
+        {
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            if (user is null) return null;
+            profile = new UserProfile
+            {
+                UserId = userId,
+                NIK = $"TMP{userId:D17}",
+                PhoneNumber = string.Empty,
+                CvDocumentId = documentId,
+                CvDocumentTypeId = documentTypeId,
+                CreatedAt = DateTime.UtcNow,
+                CreatedByUserId = userId,
+            };
+            await context.UserProfiles.AddAsync(profile, cancellationToken);
+        }
+        else
+        {
+            profile.CvDocumentId = documentId;
+            profile.CvDocumentTypeId = documentTypeId;
+            profile.UpdatedAt = DateTime.UtcNow;
+            profile.UpdatedByUserId = userId;
+            context.UserProfiles.Update(profile);
+        }
+
+        return profile;
+    }
+
+    public async Task<bool> UnlinkCvAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var profile = await context.UserProfiles
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (profile is null) return false;
+
+        profile.CvDocumentId = null;
+        profile.CvDocumentTypeId = null;
+        profile.UpdatedAt = DateTime.UtcNow;
+        profile.UpdatedByUserId = userId;
+        context.UserProfiles.Update(profile);
+        return true;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

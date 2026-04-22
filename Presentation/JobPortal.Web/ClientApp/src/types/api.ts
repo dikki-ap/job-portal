@@ -147,6 +147,9 @@ export interface CandidateProfileDto {
   phoneNumber: string;
   educationLevelId: number | null;
   educationLevelName: string | null;
+  cvDocumentId: number | null;
+  cvDocumentTypeId: number | null;
+  cvOriginalFileName: string | null;
   skills: CandidateSkillDto[];
 }
 

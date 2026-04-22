@@ -27,6 +27,9 @@ public class GetCandidateProfileQueryHandler(
                 profile?.PhoneNumber ?? string.Empty,
                 profile?.EducationLevelId,
                 profile?.EducationLevel?.Name,
+                profile?.CvDocumentId,
+                profile?.CvDocumentTypeId,
+                profile?.CvDocument?.OriginalFileName,
                 skills.Select(s => new CandidateSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty, s.SkillLevel)));
         }
         catch (KeyNotFoundException)
