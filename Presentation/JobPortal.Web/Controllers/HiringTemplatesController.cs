@@ -11,6 +11,7 @@ namespace JobPortal.Web.Controllers;
 
 [ApiController]
 [Route("api/hiring-templates")]
+[Authorize(Policy = "HrOrAdmin")]
 public class HiringTemplatesController(IMediator mediator, ILogger<HiringTemplatesController> logger) : ControllerBase
 {
     [HttpGet]

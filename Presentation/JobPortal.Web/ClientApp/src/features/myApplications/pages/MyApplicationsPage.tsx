@@ -73,7 +73,7 @@ export function MyApplicationsPage() {
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex justify-end">
-                              <Button variant="ghost" size="icon" onClick={() => navigate(`/applications/${app.id}`)} title="View detail">
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/my-applications/${app.id}`)} title="View detail">
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </div>

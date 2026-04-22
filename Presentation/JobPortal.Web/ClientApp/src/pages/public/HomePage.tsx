@@ -243,8 +243,9 @@ function JobCard({ job, onView }: { job: JobPostDto; onView: () => void }) {
 
 function CareersSection() {
   const navigate = useNavigate();
-  const { data: jobs = [], isLoading } = useGetPublishedJobsQuery();
-  const preview = jobs.slice(0, 5);
+  const { data, isLoading } = useGetPublishedJobsQuery({ page: 1, pageSize: 3 });
+  const preview = data?.items ?? [];
+  const totalCount = data?.totalCount ?? 0;
 
   return (
     <section id="careers" className="py-20 bg-white">
@@ -268,7 +269,7 @@ function CareersSection() {
           <div className="flex-1 flex flex-col gap-3">
             {isLoading ? (
               <div className="flex flex-col gap-3">
-                {[...Array(4)].map((_, i) => (
+                {[...Array(3)].map((_, i) => (
                   <div key={i} className="h-16 rounded-xl bg-gray-100 animate-pulse" />
                 ))}
               </div>
@@ -281,12 +282,12 @@ function CareersSection() {
                 {preview.map((job) => (
                   <JobCard key={job.id} job={job} onView={() => navigate(`/careers/${job.id}`)} />
                 ))}
-                {jobs.length > 5 && (
+                {totalCount > 3 && (
                   <button
                     onClick={() => navigate('/careers')}
                     className="text-sm font-medium text-[#004181] hover:underline text-center mt-1"
                   >
-                    View {jobs.length - 5} more positions →
+                    View {totalCount - 3} more position{totalCount - 3 !== 1 ? 's' : ''} →
                   </button>
                 )}
               </>

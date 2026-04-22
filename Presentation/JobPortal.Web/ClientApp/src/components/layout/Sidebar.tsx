@@ -9,8 +9,10 @@ import {
   Building2,
   Globe,
   ExternalLink,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface NavItem {
   label: string;
@@ -18,37 +20,6 @@ interface NavItem {
   icon: React.ReactNode;
   children?: { label: string; to: string }[];
 }
-
-const navItems: NavItem[] = [
-  { label: 'Dashboard', to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-  {
-    label: 'Master Settings',
-    icon: <Settings className="h-5 w-5" />,
-    children: [
-      { label: 'Currency Type', to: '/master/currency-types' },
-      { label: 'Department', to: '/master/departments' },
-      { label: 'Document Type', to: '/master/document-types' },
-      { label: 'Education Level', to: '/master/education-levels' },
-      { label: 'Education Major', to: '/master/education-majors' },
-      { label: 'Employment Type', to: '/master/employment-types' },
-      { label: 'Hiring Template', to: '/master/hiring-templates' },
-      { label: 'Job Category', to: '/master/job-categories' },
-      { label: 'Job Level', to: '/master/job-levels' },
-      { label: 'Skill', to: '/master/skills' },
-      { label: 'Work Mode', to: '/master/work-modes' },
-    ],
-  },
-  { label: 'Job Management', to: '/jobs', icon: <Briefcase className="h-5 w-5" /> },
-  { label: 'Applications', to: '/applications', icon: <FileText className="h-5 w-5" /> },
-  {
-    label: 'Candidate Portal',
-    icon: <Globe className="h-5 w-5" />,
-    children: [
-      { label: 'Open Positions', to: '/careers' },
-      { label: 'My Applications', to: '/my-applications' },
-    ],
-  },
-];
 
 function NavGroup({ item }: { item: NavItem }) {
   const [open, setOpen] = useState(true);
@@ -122,6 +93,46 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
+  const { isAdmin, isHR, isCandidate } = useAuth();
+
+  const hrAdminItems: NavItem[] = [
+    { label: 'Dashboard', to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    ...(isAdmin ? [{
+      label: 'Master Settings',
+      icon: <Settings className="h-5 w-5" />,
+      children: [
+        { label: 'Currency Type', to: '/master/currency-types' },
+        { label: 'Department', to: '/master/departments' },
+        { label: 'Document Type', to: '/master/document-types' },
+        { label: 'Education Level', to: '/master/education-levels' },
+        { label: 'Education Major', to: '/master/education-majors' },
+        { label: 'Employment Type', to: '/master/employment-types' },
+        { label: 'Hiring Template', to: '/master/hiring-templates' },
+        { label: 'Job Category', to: '/master/job-categories' },
+        { label: 'Job Level', to: '/master/job-levels' },
+        { label: 'Skill', to: '/master/skills' },
+        { label: 'Work Mode', to: '/master/work-modes' },
+      ],
+    }] : []),
+    { label: 'Job Management', to: '/jobs', icon: <Briefcase className="h-5 w-5" /> },
+    { label: 'Applications', to: '/applications', icon: <FileText className="h-5 w-5" /> },
+    {
+      label: 'Candidate Portal',
+      icon: <Globe className="h-5 w-5" />,
+      children: [
+        { label: 'Open Positions', to: '/careers' },
+        { label: 'My Applications', to: '/my-applications' },
+      ],
+    },
+  ];
+
+  const candidateItems: NavItem[] = [
+    { label: 'My Applications', to: '/my-applications', icon: <ClipboardList className="h-5 w-5" /> },
+    { label: 'Open Positions', to: '/careers', icon: <Briefcase className="h-5 w-5" /> },
+  ];
+
+  const navItems = isCandidate ? candidateItems : hrAdminItems;
+
   return (
     <>
       <div
@@ -158,6 +169,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <NavGroup key={item.label} item={item} />
           ))}
         </nav>
+
+        {isCandidate && (
+          <div className="mt-auto border-t border-white/20 px-4 py-3">
+            <p className="text-xs text-blue-200">Logged in as Candidate</p>
+          </div>
+        )}
       </aside>
     </>
   );

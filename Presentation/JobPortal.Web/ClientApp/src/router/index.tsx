@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout';
 import { PublicLayout } from '../components/layout/PublicLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import { RoleRoute } from '../components/RoleRoute';
 import { LoginPage } from '../pages/LoginPage';
 import { HomePage } from '../pages/public/HomePage';
 import { DashboardPage } from '../pages/DashboardPage';
@@ -25,6 +26,10 @@ import { CareersPage } from '../features/careers/pages/CareersPage';
 import { CareerDetailPage } from '../features/careers/pages/CareerDetailPage';
 import { ApplyPage } from '../features/careers/pages/ApplyPage';
 import { MyApplicationsPage } from '../features/myApplications/pages/MyApplicationsPage';
+import { MyApplicationDetailPage } from '../features/myApplications/pages/MyApplicationDetailPage';
+
+const HR_ADMIN_ROLES = ['Admin', 'HR'];
+const ADMIN_ROLES = ['Admin'];
 
 export function AppRouter() {
   return (
@@ -42,7 +47,7 @@ export function AppRouter() {
       {/* Login */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* HR / Candidate Dashboard */}
+      {/* Authenticated dashboard shell */}
       <Route
         element={
           <ProtectedRoute>
@@ -50,25 +55,36 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       >
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="master/departments" element={<DepartmentsPage />} />
-        <Route path="master/skills" element={<SkillsPage />} />
-        <Route path="master/work-modes" element={<WorkModesPage />} />
-        <Route path="master/employment-types" element={<EmploymentTypesPage />} />
-        <Route path="master/job-categories" element={<JobCategoriesPage />} />
-        <Route path="master/job-levels" element={<JobLevelsPage />} />
-        <Route path="master/currency-types" element={<CurrencyTypesPage />} />
-        <Route path="master/document-types" element={<DocumentTypesPage />} />
-        <Route path="master/education-levels" element={<EducationLevelsPage />} />
-        <Route path="master/education-majors" element={<EducationMajorsPage />} />
-        <Route path="master/hiring-templates" element={<HiringTemplatesPage />} />
-        <Route path="jobs" element={<JobPostsPage />} />
-        <Route path="jobs/create" element={<CreateJobPostPage />} />
-        <Route path="jobs/:id/edit" element={<EditJobPostPage />} />
-        <Route path="applications" element={<ApplicationsPage />} />
-        <Route path="applications/:id" element={<ApplicationDetailPage />} />
+        {/* Candidate-accessible routes (any authenticated user) */}
         <Route path="my-applications" element={<MyApplicationsPage />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="my-applications/:id" element={<MyApplicationDetailPage />} />
+
+        {/* HR + Admin routes */}
+        <Route element={<RoleRoute roles={HR_ADMIN_ROLES} />}>
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="jobs" element={<JobPostsPage />} />
+          <Route path="jobs/create" element={<CreateJobPostPage />} />
+          <Route path="jobs/:id/edit" element={<EditJobPostPage />} />
+          <Route path="applications" element={<ApplicationsPage />} />
+          <Route path="applications/:id" element={<ApplicationDetailPage />} />
+        </Route>
+
+        {/* Admin-only routes */}
+        <Route element={<RoleRoute roles={ADMIN_ROLES} />}>
+          <Route path="master/departments" element={<DepartmentsPage />} />
+          <Route path="master/skills" element={<SkillsPage />} />
+          <Route path="master/work-modes" element={<WorkModesPage />} />
+          <Route path="master/employment-types" element={<EmploymentTypesPage />} />
+          <Route path="master/job-categories" element={<JobCategoriesPage />} />
+          <Route path="master/job-levels" element={<JobLevelsPage />} />
+          <Route path="master/currency-types" element={<CurrencyTypesPage />} />
+          <Route path="master/document-types" element={<DocumentTypesPage />} />
+          <Route path="master/education-levels" element={<EducationLevelsPage />} />
+          <Route path="master/education-majors" element={<EducationMajorsPage />} />
+          <Route path="master/hiring-templates" element={<HiringTemplatesPage />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/my-applications" replace />} />
       </Route>
     </Routes>
   );

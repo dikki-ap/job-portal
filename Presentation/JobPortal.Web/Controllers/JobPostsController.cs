@@ -13,6 +13,7 @@ namespace JobPortal.Web.Controllers;
 
 [ApiController]
 [Route("api/job-posts")]
+[Authorize(Policy = "HrOrAdmin")]
 public class JobPostsController(IMediator mediator, ILogger<JobPostsController> logger) : ControllerBase
 {
     [HttpGet]
