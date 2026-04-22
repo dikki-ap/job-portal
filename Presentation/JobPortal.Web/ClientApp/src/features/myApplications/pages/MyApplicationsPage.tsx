@@ -6,14 +6,7 @@ import { Pagination } from '../../../components/ui/Pagination';
 import { useGetMyApplicationsQuery } from '../api/myApplicationsApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { formatDate } from '../../../lib/format';
-
-const STATUS_BADGE: Record<string, string> = {
-  Pending: 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
-  InReview: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  Accepted: 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200',
-  Rejected: 'bg-red-50 text-red-600 ring-1 ring-inset ring-red-200',
-};
-const STATUS_LABEL: Record<string, string> = { InReview: 'In Review' };
+import { deriveStatus, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
 
 export function MyApplicationsPage() {
   const navigate = useNavigate();
@@ -56,6 +49,7 @@ export function MyApplicationsPage() {
                     {paginated.map((app) => {
                       const passedSteps = app.steps.filter((s) => s.status === 'Passed').length;
                       const totalSteps = app.steps.length;
+                      const status = deriveStatus(app);
                       return (
                         <tr key={app.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
@@ -64,8 +58,8 @@ export function MyApplicationsPage() {
                           </td>
                           <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{formatDate(app.appliedAt)}</td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${STATUS_BADGE[app.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                              {STATUS_LABEL[app.status] ?? app.status}
+                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
+                              {STATUS_LABEL[status] ?? status}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">
