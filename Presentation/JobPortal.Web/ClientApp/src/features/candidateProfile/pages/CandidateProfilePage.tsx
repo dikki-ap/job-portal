@@ -90,7 +90,7 @@ export function CandidateProfilePage() {
     }
   };
 
-  const sortedEducationLevels = [...educationLevels].sort((a, b) => a.level - b.level);
+  const sortedEducationLevels = [...educationLevels].sort((a, b) => b.level - a.level);
 
   if (profileLoading) {
     return (
