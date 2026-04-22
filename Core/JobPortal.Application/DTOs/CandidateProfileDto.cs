@@ -8,4 +8,7 @@ public record CandidateProfileDto(
     string PhoneNumber,
     int? EducationLevelId,
     string? EducationLevelName,
+    int? CvDocumentId,
+    int? CvDocumentTypeId,
+    string? CvOriginalFileName,
     IEnumerable<CandidateSkillDto> Skills);

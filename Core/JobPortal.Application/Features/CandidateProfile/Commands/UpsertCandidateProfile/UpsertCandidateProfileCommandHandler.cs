@@ -33,12 +33,7 @@ public class UpsertCandidateProfileCommandHandler(
                 EducationLevelId = request.EducationLevelId,
                 UpdatedAt = now,
                 UpdatedByUserId = userId,
-                // preserve existing fields with defaults; they'll be merged in repository
                 NIK = string.Empty,
-                BirthPlace = string.Empty,
-                Gender = string.Empty,
-                MaritalStatus = string.Empty,
-                BirthDate = default,
             };
 
             var skills = request.Skills.Select(s => new UserSkill
@@ -59,6 +54,7 @@ public class UpsertCandidateProfileCommandHandler(
                 user.FirstName, user.LastName,
                 request.PhoneNumber,
                 request.EducationLevelId, null,
+                null, null, null,
                 request.Skills.Select(s => new CandidateSkillDto(s.SkillId, string.Empty, s.SkillLevel)));
         }
         catch (Exception ex) when (ex is not UnauthorizedAccessException and not KeyNotFoundException)

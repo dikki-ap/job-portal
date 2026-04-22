@@ -10,6 +10,12 @@ interface UpsertProfileRequest {
   skills: { skillId: number; skillLevel: string }[];
 }
 
+interface UploadCvResult {
+  documentId: number;
+  documentTypeId: number;
+  originalFileName: string;
+}
+
 export const candidateProfileApi = createApi({
   reducerPath: 'candidateProfileApi',
   baseQuery: fetchBaseQuery({
@@ -32,8 +38,26 @@ export const candidateProfileApi = createApi({
       query: (body) => ({ url: '', method: 'PUT', body }),
       invalidatesTags: ['CandidateProfile'],
     }),
+    uploadCv: builder.mutation<UploadCvResult, { file: File; documentTypeId: number }>({
+      query: ({ file, documentTypeId }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('documentTypeId', String(documentTypeId));
+        return { url: '/cv', method: 'POST', body: formData };
+      },
+      invalidatesTags: ['CandidateProfile'],
+    }),
+    removeCv: builder.mutation<void, void>({
+      query: () => ({ url: '/cv', method: 'DELETE' }),
+      invalidatesTags: ['CandidateProfile'],
+    }),
   }),
 });
 
-export const { useGetProfileQuery, useUpsertProfileMutation } = candidateProfileApi;
+export const {
+  useGetProfileQuery,
+  useUpsertProfileMutation,
+  useUploadCvMutation,
+  useRemoveCvMutation,
+} = candidateProfileApi;
 export type { UpsertProfileRequest, CandidateSkillDto };
