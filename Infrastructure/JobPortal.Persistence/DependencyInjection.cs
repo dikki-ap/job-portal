@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IEducationMajorRepository, EducationMajorRepository>();
         services.AddScoped<IJobPostRepository, JobPostRepository>();
         services.AddScoped<IHiringTemplateRepository, HiringTemplateRepository>();
+        services.AddScoped<IApplicationRepository, ApplicationRepository>();
 
         return services;
     }

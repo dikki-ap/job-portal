@@ -11,6 +11,7 @@ import { educationLevelsApi } from '../features/educationLevels/api/educationLev
 import { educationMajorsApi } from '../features/educationMajors/api/educationMajorsApi';
 import { jobPostsApi } from '../features/jobPosts/api/jobPostsApi';
 import { hiringTemplatesApi } from '../features/hiringTemplates/api/hiringTemplatesApi';
+import { applicationsApi } from '../features/applications/api/applicationsApi';
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     [educationMajorsApi.reducerPath]: educationMajorsApi.reducer,
     [jobPostsApi.reducerPath]: jobPostsApi.reducer,
     [hiringTemplatesApi.reducerPath]: hiringTemplatesApi.reducer,
+    [applicationsApi.reducerPath]: applicationsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -40,7 +42,8 @@ export const store = configureStore({
       .concat(educationLevelsApi.middleware)
       .concat(educationMajorsApi.middleware)
       .concat(jobPostsApi.middleware)
-      .concat(hiringTemplatesApi.middleware),
+      .concat(hiringTemplatesApi.middleware)
+      .concat(applicationsApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
