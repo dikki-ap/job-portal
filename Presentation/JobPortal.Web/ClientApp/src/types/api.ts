@@ -100,6 +100,7 @@ export interface DocumentTypeDto {
   id: number;
   name: string;
   maxFileSizeMb: number;
+  isDefaultRequired: boolean;
   allowedMimeTypes: string[];
   createdAt: string;
   createdByUserId: number;
@@ -126,6 +127,27 @@ export interface JobStepDto {
   name: string;
   stepOrder: number;
   isRequired: boolean;
+}
+
+export interface JobRequiredDocumentDto {
+  documentTypeId: number;
+  documentTypeName: string;
+  isRequired: boolean;
+}
+
+export interface CandidateSkillDto {
+  skillId: number;
+  skillName: string;
+  skillLevel: string;
+}
+
+export interface CandidateProfileDto {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  educationLevelId: number | null;
+  educationLevelName: string | null;
+  skills: CandidateSkillDto[];
 }
 
 export interface JobPostDto {
@@ -158,6 +180,7 @@ export interface JobPostDto {
   closeDate: string | null;
   steps: JobStepDto[];
   requiredSkills: JobSkillDto[];
+  requiredDocuments: JobRequiredDocumentDto[];
   createdAt: string;
   createdByName: string | null;
 }

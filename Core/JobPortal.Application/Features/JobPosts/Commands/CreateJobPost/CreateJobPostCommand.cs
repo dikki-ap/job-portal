@@ -22,4 +22,5 @@ public record CreateJobPostCommand(
     DateTime? PublishDate,
     DateTime? CloseDate,
     List<CreateJobStepRequest> Steps,
-    List<int> RequiredSkillIds) : IRequest<JobPostDto>;
+    List<int> RequiredSkillIds,
+    List<CreateRequiredDocumentRequest> RequiredDocuments) : IRequest<JobPostDto>;

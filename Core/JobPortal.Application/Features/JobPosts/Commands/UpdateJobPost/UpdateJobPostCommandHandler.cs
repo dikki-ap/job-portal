@@ -43,20 +43,48 @@ public class UpdateJobPostCommandHandler(
             jobPost.UpdatedAt = now;
             jobPost.UpdatedByUserId = userId;
 
-            jobPost.JobSteps.Clear();
-            foreach (var (step, i) in request.Steps.Select((s, i) => (s, i)))
-                jobPost.JobSteps.Add(new JobStep
+            // Merge steps in-place to avoid FK violations from ApplicationStep references.
+            // Update existing steps positionally, add new ones, delete unreferenced trailing ones.
+            var existingSteps = jobPost.JobSteps.OrderBy(s => s.StepOrder).ToList();
+            var incomingSteps = request.Steps.ToList();
+
+            for (int i = 0; i < incomingSteps.Count; i++)
+            {
+                if (i < existingSteps.Count)
                 {
-                    Name = step.Name,
-                    StepOrder = i + 1,
-                    IsRequired = step.IsRequired,
-                    CreatedAt = now,
-                    CreatedByUserId = userId ?? 0,
-                });
+                    existingSteps[i].Name = incomingSteps[i].Name;
+                    existingSteps[i].StepOrder = i + 1;
+                    existingSteps[i].IsRequired = incomingSteps[i].IsRequired;
+                }
+                else
+                {
+                    jobPost.JobSteps.Add(new JobStep
+                    {
+                        Name = incomingSteps[i].Name,
+                        StepOrder = i + 1,
+                        IsRequired = incomingSteps[i].IsRequired,
+                        CreatedAt = now,
+                        CreatedByUserId = userId ?? 0,
+                    });
+                }
+            }
+
+            if (incomingSteps.Count < existingSteps.Count)
+            {
+                var stepsToRemove = existingSteps.Skip(incomingSteps.Count).ToList();
+                var referencedIds = await repository.GetReferencedJobStepIdsAsync(
+                    stepsToRemove.Select(s => s.Id), cancellationToken);
+                foreach (var step in stepsToRemove.Where(s => !referencedIds.Contains(s.Id)))
+                    jobPost.JobSteps.Remove(step);
+            }
 
             jobPost.RequiredSkills.Clear();
             foreach (var skillId in request.RequiredSkillIds)
                 jobPost.RequiredSkills.Add(new JobPostSkill { SkillId = skillId });
+
+            jobPost.RequiredDocuments.Clear();
+            foreach (var doc in request.RequiredDocuments)
+                jobPost.RequiredDocuments.Add(new JobPostRequiredDocument { DocumentTypeId = doc.DocumentTypeId, IsRequired = doc.IsRequired });
 
             await repository.UpdateAsync(jobPost, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
@@ -76,6 +104,7 @@ public class UpdateJobPostCommandHandler(
                 jobPost.Quota, jobPost.PublishDate, jobPost.CloseDate,
                 jobPost.JobSteps.OrderBy(s => s.StepOrder).Select(s => new JobStepDto(s.Id, s.Name, s.StepOrder, s.IsRequired)),
                 jobPost.RequiredSkills.Select(s => new JobSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty)),
+                jobPost.RequiredDocuments.Select(d => new JobRequiredDocumentDto(d.DocumentTypeId, d.DocumentType?.Name ?? string.Empty, d.IsRequired)),
                 jobPost.CreatedAt,
                 jobPost.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null);
         }

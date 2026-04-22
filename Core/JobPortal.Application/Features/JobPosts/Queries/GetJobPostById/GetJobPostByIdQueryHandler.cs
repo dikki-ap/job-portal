@@ -6,7 +6,10 @@ using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.JobPosts.Queries.GetJobPostById;
 
-public class GetJobPostByIdQueryHandler(IJobPostRepository repository, ILogger<GetJobPostByIdQueryHandler> logger)
+public class GetJobPostByIdQueryHandler(
+    IJobPostRepository repository,
+    IDocumentTypeRepository documentTypeRepository,
+    ILogger<GetJobPostByIdQueryHandler> logger)
     : IRequestHandler<GetJobPostByIdQuery, JobPostDto?>
 {
     public async Task<JobPostDto?> Handle(GetJobPostByIdQuery request, CancellationToken cancellationToken)
@@ -14,7 +17,9 @@ public class GetJobPostByIdQueryHandler(IJobPostRepository repository, ILogger<G
         try
         {
             var jobPost = await repository.GetByIdAsync(request.Id, cancellationToken);
-            return jobPost is null ? null : GetAllJobPostsQueryHandler.MapToDto(jobPost);
+            if (jobPost is null) return null;
+            var globalRequired = await documentTypeRepository.GetGloballyRequiredAsync(cancellationToken);
+            return GetAllJobPostsQueryHandler.MapToDto(jobPost, globalRequired);
         }
         catch (Exception ex)
         {

@@ -13,5 +13,6 @@ public interface IJobPostRepository
     Task UpdateAsync(JobPost jobPost, CancellationToken cancellationToken = default);
     Task DeleteAsync(JobPost jobPost, CancellationToken cancellationToken = default);
     Task<bool> ExistsBySlugAsync(string slug, int? excludeId = null, CancellationToken cancellationToken = default);
+    Task<HashSet<int>> GetReferencedJobStepIdsAsync(IEnumerable<int> stepIds, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

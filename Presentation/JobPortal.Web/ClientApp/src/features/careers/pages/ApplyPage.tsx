@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, CheckCircle2, X, Loader2, Building2, LogIn } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
@@ -16,6 +16,8 @@ interface DocEntry {
   typeId: number;
   typeName: string;
   allowedMimes: string[];
+  maxFileSizeMb: number;
+  isRequired: boolean;
   file: File | null;
   uploadedId: number | null;
   uploading: boolean;
@@ -72,6 +74,64 @@ function LoginWall({ jobTitle }: { jobTitle?: string }) {
   );
 }
 
+function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile }: {
+  entry: DocEntry;
+  dt: DocumentTypeDto;
+  locked: boolean;
+  onToggleOff: () => void;
+  onSetFile: (file: File | null) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-3">
+        {locked ? (
+          <span className="h-4 w-4 flex items-center justify-center">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#004181]" />
+          </span>
+        ) : (
+          <button type="button" onClick={onToggleOff} className="text-gray-400 hover:text-red-500 shrink-0">
+            <X className="h-4 w-4" />
+          </button>
+        )}
+        <span className="text-sm font-medium text-gray-900">{dt.name}</span>
+        {entry.isRequired && (
+          <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">Required</span>
+        )}
+        <span className="text-xs text-gray-400 ml-auto">max {dt.maxFileSizeMb} MB</span>
+      </div>
+
+      <div className="ml-7">
+        {entry.uploadedId ? (
+          <div className="flex items-center gap-2 text-sm text-green-700">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>{entry.file?.name} — uploaded</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-600 hover:border-[#004181] hover:text-[#004181] transition-colors">
+              <Upload className="h-4 w-4" />
+              {entry.file ? entry.file.name : 'Choose file'}
+              <input
+                type="file"
+                className="sr-only"
+                accept={dt.allowedMimeTypes.join(',')}
+                onChange={(e) => onSetFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
+            {entry.file && (
+              <button type="button" onClick={() => onSetFile(null)} className="text-gray-400 hover:text-red-500">
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            {entry.uploading && <Loader2 className="h-4 w-4 animate-spin text-[#004181]" />}
+          </div>
+        )}
+        {entry.error && <p className="text-xs text-red-600 mt-1">{entry.error}</p>}
+      </div>
+    </div>
+  );
+}
+
 export function ApplyPage() {
   const { id } = useParams<{ id: string }>();
   const jobPostId = Number(id);
@@ -80,27 +140,57 @@ export function ApplyPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   const { data: job, isLoading: jobLoading } = useGetCareerByIdQuery(jobPostId);
-  const { data: docTypes = [], isLoading: typesLoading } = useGetDocumentTypesQuery();
+  const { data: allDocTypes = [], isLoading: typesLoading } = useGetDocumentTypesQuery();
   const [applyToJob, { isLoading: applying }] = useApplyToJobMutation();
   const [uploadDocument] = useUploadDocumentMutation();
 
-  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [entries, setEntries] = useState<Record<number, DocEntry>>({});
   const [submitted, setSubmitted] = useState(false);
 
-  const toggleType = (dt: DocumentTypeDto) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(dt.id)) {
-        next.delete(dt.id);
-        setEntries((e) => { const n = { ...e }; delete n[dt.id]; return n; });
-      } else {
-        next.add(dt.id);
-        setEntries((e) => ({
-          ...e,
-          [dt.id]: { typeId: dt.id, typeName: dt.name, allowedMimes: dt.allowedMimeTypes, file: null, uploadedId: null, uploading: false, error: null },
-        }));
-      }
+  // Initialize entries from job's requiredDocuments when both are loaded
+  useEffect(() => {
+    if (!job || allDocTypes.length === 0) return;
+
+    const initialEntries: Record<number, DocEntry> = {};
+    for (const reqDoc of job.requiredDocuments) {
+      const dt = allDocTypes.find((d) => d.id === reqDoc.documentTypeId);
+      if (!dt) continue;
+      initialEntries[dt.id] = {
+        typeId: dt.id,
+        typeName: dt.name,
+        allowedMimes: dt.allowedMimeTypes,
+        maxFileSizeMb: dt.maxFileSizeMb,
+        isRequired: reqDoc.isRequired,
+        file: null,
+        uploadedId: null,
+        uploading: false,
+        error: null,
+      };
+    }
+    setEntries(initialEntries);
+  }, [job, allDocTypes]);
+
+  const addAdditionalDoc = (dt: DocumentTypeDto) => {
+    setEntries((prev) => ({
+      ...prev,
+      [dt.id]: {
+        typeId: dt.id,
+        typeName: dt.name,
+        allowedMimes: dt.allowedMimeTypes,
+        maxFileSizeMb: dt.maxFileSizeMb,
+        isRequired: false,
+        file: null,
+        uploadedId: null,
+        uploading: false,
+        error: null,
+      },
+    }));
+  };
+
+  const removeOptionalDoc = (typeId: number) => {
+    setEntries((prev) => {
+      const next = { ...prev };
+      delete next[typeId];
       return next;
     });
   };
@@ -111,10 +201,14 @@ export function ApplyPage() {
 
   const handleSubmit = async () => {
     const entryList = Object.values(entries);
-    if (entryList.length === 0) {
-      addToast('Please select at least one document type.', 'error');
+
+    // Validate required docs all have files attached
+    const missingRequired = entryList.filter((e) => e.isRequired && !e.file && !e.uploadedId);
+    if (missingRequired.length > 0) {
+      addToast(`Please attach: ${missingRequired.map((e) => e.typeName).join(', ')}`, 'error');
       return;
     }
+
     const withFiles = entryList.filter((e) => e.file);
     if (withFiles.length === 0) {
       addToast('Please attach at least one file.', 'error');
@@ -188,6 +282,13 @@ export function ApplyPage() {
     );
   }
 
+  // Doc types not yet in entries (for "additional docs" section)
+  const additionalDocTypes = allDocTypes.filter((dt) => !entries[dt.id]);
+  const entryList = Object.values(entries);
+  const configuredEntries = entryList.filter((e) => e.isRequired !== false || job.requiredDocuments.some((r) => r.documentTypeId === e.typeId));
+  const additionalEntries = entryList.filter((e) => !job.requiredDocuments.some((r) => r.documentTypeId === e.typeId));
+  const hasRequired = job.requiredDocuments.some((r) => r.isRequired);
+
   return (
     <ApplyLayout>
       <div className="flex flex-col gap-6">
@@ -203,62 +304,67 @@ export function ApplyPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-5">
           <div>
             <h2 className="text-base font-semibold text-gray-900">Supporting Documents</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Select the document types you want to include, then attach each file.</p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {hasRequired
+                ? 'Required documents are marked. Attach each file before submitting.'
+                : 'Attach any supporting documents for your application.'}
+            </p>
           </div>
 
-          {docTypes.length === 0 ? (
-            <p className="text-sm text-gray-400">No document types configured.</p>
+          {/* Configured doc types from job post */}
+          {configuredEntries.length === 0 && additionalEntries.length === 0 ? (
+            <p className="text-sm text-gray-400">No documents required for this position. You may add optional documents below.</p>
           ) : (
-            <div className="flex flex-col gap-4">
-              {docTypes.map((dt) => {
-                const isChecked = selected.has(dt.id);
-                const entry = entries[dt.id];
+            <div className="flex flex-col divide-y divide-gray-100">
+              {configuredEntries.map((entry) => {
+                const dt = allDocTypes.find((d) => d.id === entry.typeId);
+                if (!dt) return null;
                 return (
-                  <div key={dt.id} className="flex flex-col gap-2">
-                    <label className="flex items-center gap-3 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleType(dt)}
-                        className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181]"
-                      />
-                      <span className="text-sm font-medium text-gray-900">{dt.name}</span>
-                      <span className="text-xs text-gray-400">max {dt.maxFileSizeMb} MB</span>
-                    </label>
-
-                    {isChecked && (
-                      <div className="ml-7">
-                        {entry.uploadedId ? (
-                          <div className="flex items-center gap-2 text-sm text-green-700">
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span>{entry.file?.name} — uploaded</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-3">
-                            <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-600 hover:border-[#004181] hover:text-[#004181] transition-colors">
-                              <Upload className="h-4 w-4" />
-                              {entry.file ? entry.file.name : 'Choose file'}
-                              <input
-                                type="file"
-                                className="sr-only"
-                                accept={dt.allowedMimeTypes.join(',')}
-                                onChange={(e) => setFile(dt.id, e.target.files?.[0] ?? null)}
-                              />
-                            </label>
-                            {entry.file && (
-                              <button type="button" onClick={() => setFile(dt.id, null)} className="text-gray-400 hover:text-red-500">
-                                <X className="h-4 w-4" />
-                              </button>
-                            )}
-                            {entry.uploading && <Loader2 className="h-4 w-4 animate-spin text-[#004181]" />}
-                          </div>
-                        )}
-                        {entry.error && <p className="text-xs text-red-600 mt-1">{entry.error}</p>}
-                      </div>
-                    )}
+                  <div key={entry.typeId} className="py-3 first:pt-0 last:pb-0">
+                    <DocUploadRow
+                      entry={entry}
+                      dt={dt}
+                      locked={entry.isRequired}
+                      onToggleOff={() => removeOptionalDoc(entry.typeId)}
+                      onSetFile={(file) => setFile(entry.typeId, file)}
+                    />
                   </div>
                 );
               })}
+              {additionalEntries.map((entry) => {
+                const dt = allDocTypes.find((d) => d.id === entry.typeId);
+                if (!dt) return null;
+                return (
+                  <div key={entry.typeId} className="py-3 first:pt-0 last:pb-0">
+                    <DocUploadRow
+                      entry={entry}
+                      dt={dt}
+                      locked={false}
+                      onToggleOff={() => removeOptionalDoc(entry.typeId)}
+                      onSetFile={(file) => setFile(entry.typeId, file)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Additional optional documents */}
+          {additionalDocTypes.length > 0 && (
+            <div className="flex flex-col gap-2 border-t border-gray-100 pt-4">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Add more documents (optional)</p>
+              <div className="flex flex-wrap gap-2">
+                {additionalDocTypes.map((dt) => (
+                  <button
+                    key={dt.id}
+                    type="button"
+                    onClick={() => addAdditionalDoc(dt)}
+                    className="rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-[#004181] hover:text-[#004181] transition-colors"
+                  >
+                    + {dt.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -268,7 +374,7 @@ export function ApplyPage() {
           <Button
             onClick={handleSubmit}
             loading={isUploading || applying}
-            disabled={submitted || selected.size === 0}
+            disabled={submitted}
           >
             <CheckCircle2 className="h-4 w-4" />
             Submit Application

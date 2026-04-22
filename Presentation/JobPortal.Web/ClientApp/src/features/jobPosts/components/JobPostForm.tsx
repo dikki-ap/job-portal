@@ -16,11 +16,17 @@ import { useGetEducationLevelsQuery } from '../../educationLevels/api/educationL
 import { useGetCurrencyTypesQuery } from '../../currencyTypes/api/currencyTypesApi';
 import { useGetSkillsQuery } from '../../skills/api/skillsApi';
 import { useGetHiringTemplatesQuery } from '../../hiringTemplates/api/hiringTemplatesApi';
+import { useGetDocumentTypesQuery } from '../../documentTypes/api/documentTypesApi';
 import type { JobPostDto } from '../../../types/api';
 
 interface StepItem {
   tempId: string;
   name: string;
+  isRequired: boolean;
+}
+
+interface RequiredDocItem {
+  documentTypeId: number;
   isRequired: boolean;
 }
 
@@ -53,6 +59,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
   const [closeDate, setCloseDate] = useState('');
   const [steps, setSteps] = useState<StepItem[]>([{ tempId: crypto.randomUUID(), name: '', isRequired: true }]);
   const [requiredSkillIds, setRequiredSkillIds] = useState<number[]>([]);
+  const [requiredDocuments, setRequiredDocuments] = useState<RequiredDocItem[]>([]);
 
   // Error states
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -72,6 +79,21 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
   const { data: currencyTypes = [] } = useGetCurrencyTypesQuery();
   const { data: skills = [] } = useGetSkillsQuery();
   const { data: hiringTemplates = [] } = useGetHiringTemplatesQuery();
+  const { data: documentTypes = [] } = useGetDocumentTypesQuery();
+
+  // Merge globally-required document types into the list whenever documentTypes loads.
+  // Works for both new jobs (prev=[]) and existing jobs (prev loaded from DB).
+  // Uses functional update so it never overwrites manually unchecked optional types.
+  useEffect(() => {
+    if (documentTypes.length === 0) return;
+    setRequiredDocuments((prev) => {
+      const existingIds = new Set(prev.map((r) => r.documentTypeId));
+      const toAdd = documentTypes
+        .filter((d) => d.isDefaultRequired && !existingIds.has(d.id))
+        .map((d) => ({ documentTypeId: d.id, isRequired: true }));
+      return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
+    });
+  }, [documentTypes]);
 
   // Pre-populate when editing
   useEffect(() => {
@@ -95,6 +117,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
       setCloseDate(editing.closeDate ? editing.closeDate.split('T')[0] : '');
       setSteps(editing.steps.map((s) => ({ tempId: crypto.randomUUID(), name: s.name, isRequired: s.isRequired })));
       setRequiredSkillIds(editing.requiredSkills.map((s) => s.id));
+      setRequiredDocuments(editing.requiredDocuments.map((d) => ({ documentTypeId: d.documentTypeId, isRequired: d.isRequired })));
     }
   }, [editing]);
 
@@ -154,6 +177,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
     closeDate: closeDate || null,
     steps: steps.map((s) => ({ name: s.name.trim(), isRequired: s.isRequired })),
     requiredSkillIds,
+    requiredDocuments,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -224,6 +248,63 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
           onChange={setRequiredSkillIds}
           disabled={isLoading}
         />
+      </div>
+
+      {/* Required Documents */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+        <h2 className="text-base font-semibold text-gray-900">Required Documents</h2>
+        {documentTypes.length === 0 ? (
+          <p className="text-sm text-gray-400">No document types configured. Add document types in Master Settings first.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {documentTypes.map((dt) => {
+              const entry = requiredDocuments.find((r) => r.documentTypeId === dt.id);
+              const isChecked = !!entry;
+              const isGlobalDefault = dt.isDefaultRequired;
+              return (
+                <div key={dt.id} className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-2.5">
+                  <input
+                    type="checkbox"
+                    id={`doc-${dt.id}`}
+                    checked={isChecked}
+                    disabled={isLoading || isGlobalDefault}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setRequiredDocuments((prev) => [...prev, { documentTypeId: dt.id, isRequired: true }]);
+                      } else {
+                        setRequiredDocuments((prev) => prev.filter((r) => r.documentTypeId !== dt.id));
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181] disabled:opacity-60"
+                  />
+                  <label htmlFor={`doc-${dt.id}`} className="flex-1 text-sm text-gray-900">
+                    {dt.name}
+                    {isGlobalDefault && (
+                      <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">Global default</span>
+                    )}
+                    <span className="ml-1.5 text-xs text-gray-400">({dt.allowedMimeTypes.map((m) => m.split('/')[1]?.toUpperCase()).join(', ')}, max {dt.maxFileSizeMb} MB)</span>
+                  </label>
+                  {isChecked && (
+                    <label className="flex items-center gap-1.5 text-xs text-gray-600 shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={entry.isRequired}
+                        disabled={isLoading}
+                        onChange={(e) => {
+                          setRequiredDocuments((prev) =>
+                            prev.map((r) => r.documentTypeId === dt.id ? { ...r, isRequired: e.target.checked } : r)
+                          );
+                        }}
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-[#004181]"
+                      />
+                      Required
+                    </label>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Compensation */}

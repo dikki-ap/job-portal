@@ -16,5 +16,10 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.Property(p => p.ProfilePicture).HasMaxLength(500);
 
         builder.HasIndex(p => p.NIK).IsUnique();
+
+        builder.HasOne(p => p.EducationLevel)
+            .WithMany()
+            .HasForeignKey(p => p.EducationLevelId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

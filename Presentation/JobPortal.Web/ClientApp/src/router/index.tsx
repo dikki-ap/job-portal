@@ -27,6 +27,7 @@ import { CareerDetailPage } from '../features/careers/pages/CareerDetailPage';
 import { ApplyPage } from '../features/careers/pages/ApplyPage';
 import { MyApplicationsPage } from '../features/myApplications/pages/MyApplicationsPage';
 import { MyApplicationDetailPage } from '../features/myApplications/pages/MyApplicationDetailPage';
+import { CandidateProfilePage } from '../features/candidateProfile/pages/CandidateProfilePage';
 
 const HR_ADMIN_ROLES = ['Admin', 'HR'];
 const ADMIN_ROLES = ['Admin'];
@@ -56,6 +57,7 @@ export function AppRouter() {
         }
       >
         {/* Candidate-accessible routes (any authenticated user) */}
+        <Route path="profile" element={<CandidateProfilePage />} />
         <Route path="my-applications" element={<MyApplicationsPage />} />
         <Route path="my-applications/:id" element={<MyApplicationDetailPage />} />
 

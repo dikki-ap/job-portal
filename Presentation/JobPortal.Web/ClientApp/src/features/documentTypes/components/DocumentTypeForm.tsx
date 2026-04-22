@@ -39,6 +39,7 @@ export function DocumentTypeForm({
   const [nameError, setNameError] = useState("");
   const [maxFileSizeMb, setMaxFileSizeMb] = useState("");
   const [maxSizeError, setMaxSizeError] = useState("");
+  const [isDefaultRequired, setIsDefaultRequired] = useState(false);
   const [selectedMimeTypes, setSelectedMimeTypes] = useState<string[]>([]);
   const [mimeError, setMimeError] = useState("");
   const [createDocumentType, { isLoading: isCreating }] =
@@ -51,6 +52,7 @@ export function DocumentTypeForm({
     if (open) {
       setName(editing?.name ?? "");
       setMaxFileSizeMb(editing ? String(editing.maxFileSizeMb) : "");
+      setIsDefaultRequired(editing?.isDefaultRequired ?? false);
       setSelectedMimeTypes(editing?.allowedMimeTypes ?? []);
       setNameError("");
       setMaxSizeError("");
@@ -96,6 +98,7 @@ export function DocumentTypeForm({
           id: editing.id,
           name: trimmed,
           maxFileSizeMb: parsedSize,
+          isDefaultRequired,
           mimeTypes: selectedMimeTypes,
         }).unwrap();
         onSuccess("Document type updated successfully.");
@@ -103,6 +106,7 @@ export function DocumentTypeForm({
         await createDocumentType({
           name: trimmed,
           maxFileSizeMb: parsedSize,
+          isDefaultRequired,
           mimeTypes: selectedMimeTypes,
         }).unwrap();
         onSuccess("Document type created successfully.");
@@ -152,6 +156,16 @@ export function DocumentTypeForm({
           error={maxSizeError}
           disabled={isLoading}
         />
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isDefaultRequired}
+            onChange={(e) => setIsDefaultRequired(e.target.checked)}
+            disabled={isLoading}
+            className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181]"
+          />
+          <span className="text-sm text-gray-700">Required by default for all job posts</span>
+        </label>
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-gray-700">
             Allowed File Types

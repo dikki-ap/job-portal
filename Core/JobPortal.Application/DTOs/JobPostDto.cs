@@ -4,6 +4,8 @@ public record JobStepDto(int Id, string Name, int StepOrder, bool IsRequired);
 
 public record JobSkillDto(int Id, string Name);
 
+public record JobRequiredDocumentDto(int DocumentTypeId, string DocumentTypeName, bool IsRequired);
+
 public record PagedResult<T>(IEnumerable<T> Items, int TotalCount, int Page, int PageSize, int TotalPages);
 
 public record JobPostDto(
@@ -36,5 +38,6 @@ public record JobPostDto(
     DateTime? CloseDate,
     IEnumerable<JobStepDto> Steps,
     IEnumerable<JobSkillDto> RequiredSkills,
+    IEnumerable<JobRequiredDocumentDto> RequiredDocuments,
     DateTime CreatedAt,
     string? CreatedByName);

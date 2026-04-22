@@ -15,6 +15,15 @@ public class DocumentTypeRepository(ApplicationDbContext context) : IDocumentTyp
             .OrderBy(d => d.Name)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyCollection<(int Id, string Name)>> GetGloballyRequiredAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await context.DocumentTypes
+            .Where(d => d.IsDefaultRequired)
+            .Select(d => new { d.Id, d.Name })
+            .ToListAsync(cancellationToken);
+        return rows.Select(x => (x.Id, x.Name)).ToList();
+    }
+
     public async Task<DocumentType?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await context.DocumentTypes
             .Include(d => d.MimeTypes)
