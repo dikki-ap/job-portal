@@ -12,6 +12,7 @@ public record ApplicationStepItemDto(
 public record ApplicationDocumentDto(
     int Id,
     string DocumentType,
+    string OriginalFileName,
     string FilePath,
     string FileType,
     DateTime CreatedAt);

@@ -222,6 +222,7 @@ export interface ApplicationStepDto {
 export interface ApplicationDocumentDto {
   id: number;
   documentType: string;
+  originalFileName: string;
   filePath: string;
   fileType: string;
   createdAt: string;

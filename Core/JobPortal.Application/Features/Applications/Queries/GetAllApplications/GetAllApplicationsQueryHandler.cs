@@ -39,6 +39,7 @@ public class GetAllApplicationsQueryHandler(
             s.JobStep?.IsRequired ?? true, s.Status, s.CompletedAt)),
         a.Documents.Select(d => new ApplicationDocumentDto(
             d.Id, d.DocumentType,
+            d.Document?.OriginalFileName ?? string.Empty,
             d.Document?.FilePath ?? string.Empty,
             d.Document?.FileType ?? string.Empty,
             d.CreatedAt)));

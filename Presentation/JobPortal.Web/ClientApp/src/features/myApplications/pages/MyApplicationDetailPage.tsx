@@ -13,6 +13,17 @@ const STATUS_BADGE: Record<string, string> = {
 };
 const STATUS_LABEL: Record<string, string> = { InReview: 'In Review' };
 
+const MIME_LABELS: Record<string, string> = {
+  'application/pdf': 'PDF',
+  'application/msword': 'DOC',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+  'image/jpeg': 'JPEG',
+  'image/png': 'PNG',
+};
+function friendlyFileType(mime: string) {
+  return MIME_LABELS[mime] ?? mime.split('/').pop()?.toUpperCase() ?? mime;
+}
+
 function StepIcon({ status }: { status: string }) {
   if (status === 'Passed')
     return <CheckCircle2 className="h-5 w-5 text-green-500" />;
@@ -151,8 +162,12 @@ export function MyApplicationDetailPage() {
             {application.documents.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium text-gray-900">{doc.documentType}</span>
-                  <span className="text-xs text-gray-400">{doc.fileType} · Uploaded {formatDate(doc.createdAt)}</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {doc.documentType}{' '}
+                    <span className="font-normal text-gray-400">[{friendlyFileType(doc.fileType)}]</span>
+                    {doc.originalFileName && <span className="font-normal text-gray-500"> — {doc.originalFileName}</span>}
+                  </span>
+                  <span className="text-xs text-gray-400">Uploaded {formatDate(doc.createdAt)}</span>
                 </div>
                 <Button
                   variant="ghost"

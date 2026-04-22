@@ -29,6 +29,17 @@ const STEP_STATUS_BADGE: Record<string, string> = {
 
 const APP_STATUS_LABEL: Record<string, string> = { InReview: 'In Review' };
 
+const MIME_LABELS: Record<string, string> = {
+  'application/pdf': 'PDF',
+  'application/msword': 'DOC',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+  'image/jpeg': 'JPEG',
+  'image/png': 'PNG',
+};
+function friendlyFileType(mime: string) {
+  return MIME_LABELS[mime] ?? mime.split('/').pop()?.toUpperCase() ?? mime;
+}
+
 export function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const appId = Number(id);
@@ -207,8 +218,7 @@ export function ApplicationDetailPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <th className="pb-2 pr-4">Document Type</th>
-                  <th className="pb-2 pr-4">File Type</th>
+                  <th className="pb-2 pr-4">Document</th>
                   <th className="pb-2 pr-4">Uploaded At</th>
                   <th className="pb-2 text-right">Action</th>
                 </tr>
@@ -216,8 +226,13 @@ export function ApplicationDetailPage() {
               <tbody className="divide-y divide-gray-100">
                 {application.documents.map((doc) => (
                   <tr key={doc.id}>
-                    <td className="py-2 pr-4 font-medium text-gray-900">{doc.documentType}</td>
-                    <td className="py-2 pr-4 text-gray-500">{doc.fileType}</td>
+                    <td className="py-2 pr-4 font-medium text-gray-900">
+                      {doc.documentType}{' '}
+                      <span className="font-normal text-gray-400">[{friendlyFileType(doc.fileType)}]</span>
+                      {doc.originalFileName && (
+                        <span className="font-normal text-gray-500"> — {doc.originalFileName}</span>
+                      )}
+                    </td>
                     <td className="py-2 pr-4 text-gray-500">{formatDate(doc.createdAt)}</td>
                     <td className="py-2 text-right">
                       <Button

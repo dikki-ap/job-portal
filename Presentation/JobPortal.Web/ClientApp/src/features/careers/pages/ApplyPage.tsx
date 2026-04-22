@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, CheckCircle2, X, Loader2, Building2, LogIn, UserCircle } from 'lucide-react';
+import { myApplicationsApi } from '../../myApplications/api/myApplicationsApi';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
@@ -76,12 +78,13 @@ function LoginWall({ jobTitle }: { jobTitle?: string }) {
   );
 }
 
-function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile }: {
+function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile, onSwitchToUpload }: {
   entry: DocEntry;
   dt: DocumentTypeDto;
   locked: boolean;
   onToggleOff: () => void;
   onSetFile: (file: File | null) => void;
+  onSwitchToUpload: () => void;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -103,14 +106,23 @@ function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile }: {
       </div>
 
       <div className="ml-7">
-        {entry.uploadedId ? (
-          <div className="flex items-center gap-2 text-sm text-green-700">
-            <CheckCircle2 className="h-4 w-4" />
+        {entry.uploadedId && !entry.file ? (
+          <div className="flex items-center gap-3 text-sm text-green-700">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
             {entry.fromProfile ? (
-              <span className="flex items-center gap-1.5">
-                <UserCircle className="h-3.5 w-3.5" />
-                From your profile
-              </span>
+              <>
+                <span className="flex items-center gap-1.5">
+                  <UserCircle className="h-3.5 w-3.5" />
+                  From your profile
+                </span>
+                <button
+                  type="button"
+                  onClick={onSwitchToUpload}
+                  className="text-xs text-blue-600 hover:underline ml-1"
+                >
+                  Use different file
+                </button>
+              </>
             ) : (
               <span>{entry.file?.name} — uploaded</span>
             )}
@@ -145,6 +157,7 @@ export function ApplyPage() {
   const { id } = useParams<{ id: string }>();
   const jobPostId = Number(id);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { toasts, addToast, dismissToast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
@@ -213,6 +226,10 @@ export function ApplyPage() {
     setEntries((e) => ({ ...e, [typeId]: { ...e[typeId], file, uploadedId: null, fromProfile: false, error: null } }));
   };
 
+  const switchToUpload = (typeId: number) => {
+    setEntries((e) => ({ ...e, [typeId]: { ...e[typeId], uploadedId: null, fromProfile: false, file: null } }));
+  };
+
   const handleSubmit = async () => {
     const entryList = Object.values(entries);
 
@@ -252,6 +269,7 @@ export function ApplyPage() {
 
     try {
       await applyToJob({ jobPostId, documentIds }).unwrap();
+      dispatch(myApplicationsApi.util.invalidateTags(['MyApplication']));
       setSubmitted(true);
       addToast('Application submitted successfully!', 'success');
       setTimeout(() => navigate('/my-applications'), 1500);
@@ -347,6 +365,7 @@ export function ApplyPage() {
                       locked={entry.isRequired}
                       onToggleOff={() => removeOptionalDoc(entry.typeId)}
                       onSetFile={(file) => setFile(entry.typeId, file)}
+                      onSwitchToUpload={() => switchToUpload(entry.typeId)}
                     />
                   </div>
                 );
@@ -362,6 +381,7 @@ export function ApplyPage() {
                       locked={false}
                       onToggleOff={() => removeOptionalDoc(entry.typeId)}
                       onSetFile={(file) => setFile(entry.typeId, file)}
+                      onSwitchToUpload={() => switchToUpload(entry.typeId)}
                     />
                   </div>
                 );
