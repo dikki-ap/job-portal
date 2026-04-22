@@ -172,11 +172,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           ))}
         </nav>
 
-        {isCandidate && (
-          <div className="mt-auto border-t border-white/20 px-4 py-3">
-            <p className="text-xs text-blue-200">Logged in as Candidate</p>
-          </div>
-        )}
       </aside>
     </>
   );
