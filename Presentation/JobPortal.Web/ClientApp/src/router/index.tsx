@@ -18,6 +18,8 @@ import { JobPostsPage } from '../features/jobPosts/pages/JobPostsPage';
 import { CreateJobPostPage } from '../features/jobPosts/pages/CreateJobPostPage';
 import { EditJobPostPage } from '../features/jobPosts/pages/EditJobPostPage';
 import { HiringTemplatesPage } from '../features/hiringTemplates/pages/HiringTemplatesPage';
+import { ApplicationsPage } from '../features/applications/pages/ApplicationsPage';
+import { ApplicationDetailPage } from '../features/applications/pages/ApplicationDetailPage';
 
 export function AppRouter() {
   return (
@@ -46,7 +48,8 @@ export function AppRouter() {
         <Route path="jobs" element={<JobPostsPage />} />
         <Route path="jobs/create" element={<CreateJobPostPage />} />
         <Route path="jobs/:id/edit" element={<EditJobPostPage />} />
-        <Route path="applications" element={<ComingSoonPage title="Applications" />} />
+        <Route path="applications" element={<ApplicationsPage />} />
+        <Route path="applications/:id" element={<ApplicationDetailPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

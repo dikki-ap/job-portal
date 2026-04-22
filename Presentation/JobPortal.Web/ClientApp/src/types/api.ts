@@ -167,6 +167,38 @@ export interface HiringTemplateDto {
   updatedByName: string | null;
 }
 
+export interface ApplicationStepDto {
+  id: number;
+  jobStepId: number;
+  stepName: string;
+  stepOrder: number;
+  isRequired: boolean;
+  status: string;
+  completedAt: string | null;
+}
+
+export interface ApplicationDocumentDto {
+  id: number;
+  documentType: string;
+  filePath: string;
+  fileType: string;
+  createdAt: string;
+}
+
+export interface ApplicationDto {
+  id: number;
+  jobPostId: number;
+  jobPostTitle: string;
+  userId: number;
+  candidateName: string;
+  candidateEmail: string;
+  status: string;
+  appliedAt: string;
+  updatedAt: string;
+  steps: ApplicationStepDto[];
+  documents: ApplicationDocumentDto[];
+}
+
 export interface EducationMajorDto {
   id: number;
   name: string;
