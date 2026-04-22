@@ -1,3 +1,5 @@
+using JobPortal.Application.Interfaces.Services;
+using JobPortal.Domain.Entities.Documents;
 using JobPortal.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,29 +10,82 @@ namespace JobPortal.Web.Controllers;
 [ApiController]
 [Route("api/documents")]
 [Authorize]
-public class DocumentsController(ApplicationDbContext context, ILogger<DocumentsController> logger) : ControllerBase
+public class DocumentsController(
+    ApplicationDbContext context,
+    IStorageService storageService,
+    ICurrentUserService currentUserService,
+    ILogger<DocumentsController> logger) : ControllerBase
 {
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload(
+        [FromForm] IFormFile file,
+        [FromForm] int documentTypeId,
+        CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "No file provided." });
+
+        var userId = currentUserService.GetCurrentUserId();
+        var externalId = currentUserService.GetCurrentUserExternalId();
+        if (userId is null || externalId is null)
+            return Unauthorized();
+
+        var docType = await context.DocumentTypes
+            .Include(dt => dt.MimeTypes)
+            .FirstOrDefaultAsync(dt => dt.Id == documentTypeId, cancellationToken);
+
+        if (docType is null)
+            return NotFound(new { error = "Document type not found." });
+
+        var allowedMimes = docType.MimeTypes.Select(m => m.MimeType).ToHashSet();
+        if (allowedMimes.Count > 0 && !allowedMimes.Contains(file.ContentType))
+            return BadRequest(new { error = $"File type '{file.ContentType}' is not allowed for this document type." });
+
+        var maxBytes = (long)docType.MaxFileSizeMb * 1024 * 1024;
+        if (file.Length > maxBytes)
+            return BadRequest(new { error = $"File exceeds the maximum size of {docType.MaxFileSizeMb} MB." });
+
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        string storageKey;
+        await using (var stream = file.OpenReadStream())
+        {
+            storageKey = await storageService.UploadAsync(stream, extension, file.ContentType, externalId, cancellationToken);
+        }
+
+        var doc = new Document
+        {
+            FilePath = storageKey,
+            OriginalFileName = file.FileName,
+            FileType = file.ContentType,
+            CreatedAt = DateTime.UtcNow,
+            CreatedByUserId = userId.Value,
+        };
+        context.Documents.Add(doc);
+        await context.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Upload: document id={Id} key={Key} user={UserId}", doc.Id, storageKey, userId);
+        return Ok(new { id = doc.Id, originalFileName = doc.OriginalFileName });
+    }
+
     [HttpGet("{id:int}/download")]
     public async Task<IActionResult> Download(int id, CancellationToken cancellationToken)
     {
-        var doc = await context.ApplicationDocuments
+        var appDoc = await context.ApplicationDocuments
             .Include(ad => ad.Document)
             .FirstOrDefaultAsync(ad => ad.Id == id, cancellationToken);
 
-        if (doc?.Document is null)
+        if (appDoc?.Document is null)
         {
             logger.LogWarning("Download: document id={Id} not found", id);
             return NotFound();
         }
 
-        if (!System.IO.File.Exists(doc.Document.FilePath))
-        {
-            logger.LogWarning("Download: file not found on disk path={Path}", doc.Document.FilePath);
-            return NotFound();
-        }
+        var presignedUrl = await storageService.GeneratePresignedUrlAsync(
+            appDoc.Document.FilePath,
+            expiryMinutes: 15,
+            cancellationToken: cancellationToken);
 
-        var fileName = Path.GetFileName(doc.Document.FilePath);
-        logger.LogInformation("Download: serving document id={Id} file={File}", id, fileName);
-        return PhysicalFile(doc.Document.FilePath, doc.Document.FileType, fileName);
+        logger.LogInformation("Download: redirecting document id={Id}", id);
+        return Redirect(presignedUrl);
     }
 }

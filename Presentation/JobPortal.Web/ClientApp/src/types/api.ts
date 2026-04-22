@@ -27,6 +27,19 @@ export interface SkillDto {
   updatedByName: string | null;
 }
 
+export interface JobSkillDto {
+  id: number;
+  name: string;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export interface WorkModeDto {
   id: number;
   name: string;
@@ -144,7 +157,7 @@ export interface JobPostDto {
   publishDate: string | null;
   closeDate: string | null;
   steps: JobStepDto[];
-  requiredSkillIds: number[];
+  requiredSkills: JobSkillDto[];
   createdAt: string;
   createdByName: string | null;
 }
@@ -165,6 +178,11 @@ export interface HiringTemplateDto {
   createdByName: string | null;
   updatedAt: string | null;
   updatedByName: string | null;
+}
+
+export interface UploadDocumentResult {
+  id: number;
+  originalFileName: string;
 }
 
 export interface ApplicationStepDto {

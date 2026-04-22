@@ -75,7 +75,7 @@ public class UpdateJobPostCommandHandler(
                 jobPost.CurrencyTypeId, jobPost.CurrencyType?.Prefix,
                 jobPost.Quota, jobPost.PublishDate, jobPost.CloseDate,
                 jobPost.JobSteps.OrderBy(s => s.StepOrder).Select(s => new JobStepDto(s.Id, s.Name, s.StepOrder, s.IsRequired)),
-                jobPost.RequiredSkills.Select(s => s.SkillId),
+                jobPost.RequiredSkills.Select(s => new JobSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty)),
                 jobPost.CreatedAt,
                 jobPost.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null);
         }

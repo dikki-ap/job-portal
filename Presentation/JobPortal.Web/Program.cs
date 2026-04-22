@@ -1,5 +1,7 @@
 using FluentValidation;
 using JobPortal.Application.Interfaces.Services;
+using JobPortal.Infrastructure;
+using JobPortal.Infrastructure.Options;
 using JobPortal.Persistence;
 using JobPortal.Web.Middleware;
 using JobPortal.Web.Services;
@@ -41,6 +43,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddPersistence(builder.Configuration);
+builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Storage"));
+builder.Services.AddInfrastructure();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();

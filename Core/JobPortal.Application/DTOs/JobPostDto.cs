@@ -2,6 +2,10 @@ namespace JobPortal.Application.DTOs;
 
 public record JobStepDto(int Id, string Name, int StepOrder, bool IsRequired);
 
+public record JobSkillDto(int Id, string Name);
+
+public record PagedResult<T>(IEnumerable<T> Items, int TotalCount, int Page, int PageSize, int TotalPages);
+
 public record JobPostDto(
     int Id,
     string Title,
@@ -31,6 +35,6 @@ public record JobPostDto(
     DateTime? PublishDate,
     DateTime? CloseDate,
     IEnumerable<JobStepDto> Steps,
-    IEnumerable<int> RequiredSkillIds,
+    IEnumerable<JobSkillDto> RequiredSkills,
     DateTime CreatedAt,
     string? CreatedByName);

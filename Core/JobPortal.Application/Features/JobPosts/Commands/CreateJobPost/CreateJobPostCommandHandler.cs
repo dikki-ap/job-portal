@@ -75,7 +75,7 @@ public class CreateJobPostCommandHandler(
                 jobPost.CurrencyTypeId, null,
                 jobPost.Quota, jobPost.PublishDate, jobPost.CloseDate,
                 jobPost.JobSteps.Select(s => new JobStepDto(s.Id, s.Name, s.StepOrder, s.IsRequired)),
-                jobPost.RequiredSkills.Select(s => s.SkillId),
+                jobPost.RequiredSkills.Select(s => new JobSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty)),
                 jobPost.CreatedAt, null);
         }
         catch (Exception ex)

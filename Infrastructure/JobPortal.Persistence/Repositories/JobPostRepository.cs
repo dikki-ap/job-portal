@@ -11,7 +11,7 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
     public async Task<IEnumerable<JobPost>> GetAllAsync(CancellationToken cancellationToken = default)
         => await context.JobPosts
             .Include(j => j.JobSteps)
-            .Include(j => j.RequiredSkills)
+            .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
             .Include(j => j.Department)
             .Include(j => j.JobCategory)
             .Include(j => j.JobLevel)
@@ -26,7 +26,7 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
     public async Task<JobPost?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await context.JobPosts
             .Include(j => j.JobSteps)
-            .Include(j => j.RequiredSkills)
+            .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
             .Include(j => j.Department)
             .Include(j => j.JobCategory)
             .Include(j => j.JobLevel)
@@ -40,7 +40,7 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
     public async Task<JobPost?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
         => await context.JobPosts
             .Include(j => j.JobSteps)
-            .Include(j => j.RequiredSkills)
+            .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
             .Include(j => j.Department)
             .Include(j => j.JobCategory)
             .Include(j => j.JobLevel)
@@ -53,7 +53,7 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
     public async Task<IEnumerable<JobPost>> GetAllPublishedAsync(CancellationToken cancellationToken = default)
         => await context.JobPosts
             .Include(j => j.JobSteps)
-            .Include(j => j.RequiredSkills)
+            .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
             .Include(j => j.Department)
             .Include(j => j.JobCategory)
             .Include(j => j.JobLevel)
@@ -64,6 +64,38 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
             .Where(j => j.Status == "Published")
             .OrderByDescending(j => j.PublishDate)
             .ToListAsync(cancellationToken);
+
+    public async Task<(IEnumerable<JobPost> Items, int TotalCount)> GetPublishedPagedAsync(
+        string? search, int? categoryId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = context.JobPosts
+            .Include(j => j.JobSteps)
+            .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
+            .Include(j => j.Department)
+            .Include(j => j.JobCategory)
+            .Include(j => j.JobLevel)
+            .Include(j => j.EmploymentType)
+            .Include(j => j.WorkMode)
+            .Include(j => j.MinEducationLevel)
+            .Include(j => j.CurrencyType)
+            .Where(j => j.Status == "Published")
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(j => j.Title.Contains(search) || j.Location.Contains(search));
+
+        if (categoryId.HasValue)
+            query = query.Where(j => j.JobCategoryId == categoryId.Value);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(j => j.PublishDate)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
 
     public async Task<bool> ExistsBySlugAsync(string slug, int? excludeId = null, CancellationToken cancellationToken = default)
         => await context.JobPosts.AnyAsync(

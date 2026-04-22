@@ -35,7 +35,7 @@ public class GetAllJobPostsQueryHandler(IJobPostRepository repository, ILogger<G
         j.CurrencyTypeId, j.CurrencyType?.Prefix,
         j.Quota, j.PublishDate, j.CloseDate,
         j.JobSteps.OrderBy(s => s.StepOrder).Select(s => new JobStepDto(s.Id, s.Name, s.StepOrder, s.IsRequired)),
-        j.RequiredSkills.Select(s => s.SkillId),
+        j.RequiredSkills.Select(s => new JobSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty)),
         j.CreatedAt,
         j.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null);
 }
