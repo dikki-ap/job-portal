@@ -7,6 +7,7 @@ using JobPortal.Persistence.Interceptors;
 using JobPortal.Persistence.Repositories;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,8 +23,11 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
             options.UseMySql(connStr, ServerVersion.AutoDetect(connStr),
-                mySql => mySql.CommandTimeout(120))
-                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>()));
+                mySql => mySql.CommandTimeout(120)
+                              .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>())
+                   .ConfigureWarnings(w => w.Ignore(
+                       CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning)));
 
         var applicationAssembly = typeof(GetAllDepartmentsQuery).Assembly;
 
