@@ -28,6 +28,15 @@ public class UpdateApplicationStepCommandHandler(
             if (step.Status != ApplicationStepStatus.Pending)
                 throw new InvalidOperationException("Only pending steps can be updated.");
 
+            // Sequential validation: all required steps with lower order must be Passed first
+            var hasBlockingPreviousStep = application.Steps
+                .Any(s => s.StepOrder < step.StepOrder
+                          && (s.JobStep?.IsRequired ?? true)
+                          && s.Status != ApplicationStepStatus.Passed);
+
+            if (hasBlockingPreviousStep)
+                throw new InvalidOperationException("Previous steps must be completed before this step can be updated.");
+
             var now = DateTime.UtcNow;
             step.Status = request.StepStatus;
             step.CompletedAt = now;
@@ -39,12 +48,11 @@ public class UpdateApplicationStepCommandHandler(
             }
             else if (request.StepStatus == ApplicationStepStatus.Passed)
             {
-                var allRequiredPassed = application.Steps
-                    .Where(s => s.JobStep?.IsRequired ?? true)
-                    .All(s => s.Status == ApplicationStepStatus.Passed);
+                var isLastRequiredStep = !application.Steps
+                    .Any(s => s.StepOrder > step.StepOrder && (s.JobStep?.IsRequired ?? true));
 
-                if (allRequiredPassed)
-                    application.Status = ApplicationStatus.InReview;
+                if (isLastRequiredStep)
+                    application.Status = ApplicationStatus.Accepted;
             }
 
             await repository.UpdateAsync(application, cancellationToken);

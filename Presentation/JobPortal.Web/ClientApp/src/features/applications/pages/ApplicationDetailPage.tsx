@@ -5,11 +5,11 @@ import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { useToast } from '../../../hooks/useToast';
 import { formatDate, formatDateTime } from '../../../lib/format';
+import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
 import {
   useGetApplicationByIdQuery,
   usePassStepMutation,
   useFailStepMutation,
-  useAcceptApplicationMutation,
   useRejectApplicationMutation,
 } from '../api/applicationsApi';
 import type { ApplicationStepDto } from '../../../types/api';
@@ -37,7 +37,6 @@ export function ApplicationDetailPage() {
   const { data: application, isLoading, isError } = useGetApplicationByIdQuery(appId);
   const [passStep, { isLoading: passingId }] = usePassStepMutation();
   const [failStep, { isLoading: failingId }] = useFailStepMutation();
-  const [acceptApplication, { isLoading: accepting }] = useAcceptApplicationMutation();
   const [rejectApplication, { isLoading: rejecting }] = useRejectApplicationMutation();
 
   const handlePassStep = async (step: ApplicationStepDto) => {
@@ -57,16 +56,6 @@ export function ApplicationDetailPage() {
     } catch (err: unknown) {
       const data = (err as { data?: { error?: string } })?.data;
       addToast(data?.error ?? 'Failed to update step.', 'error');
-    }
-  };
-
-  const handleAccept = async () => {
-    try {
-      await acceptApplication(appId).unwrap();
-      addToast('Candidate accepted successfully.', 'success');
-    } catch (err: unknown) {
-      const data = (err as { data?: { error?: string } })?.data;
-      addToast(data?.error ?? 'Failed to accept candidate.', 'error');
     }
   };
 
@@ -101,9 +90,9 @@ export function ApplicationDetailPage() {
     );
   }
 
-  const isFinalized = application.status === 'Accepted' || application.status === 'Rejected';
-  const canAccept = application.status === 'InReview';
-  const canReject = application.status !== 'Accepted' && application.status !== 'Rejected';
+  const derivedStatus = deriveStatus(application);
+  const isFinalized = derivedStatus === 'Accepted' || derivedStatus === 'Rejected';
+  const canReject = !isFinalized;
 
   return (
     <div className="flex flex-col gap-6">
@@ -154,7 +143,7 @@ export function ApplicationDetailPage() {
         ) : (
           <div className="flex flex-col divide-y divide-gray-100">
             {application.steps.map((step) => {
-              const canAct = step.status === 'Pending' && !isFinalized;
+              const canAct = step.status === 'Pending' && !isFinalized && canActOnStep(step, application.steps);
               return (
                 <div key={step.id} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
                   <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold flex items-center justify-center shrink-0">
@@ -174,28 +163,32 @@ export function ApplicationDetailPage() {
                       <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(step.completedAt)}</p>
                     )}
                   </div>
-                  {canAct && (
-                    <div className="flex gap-2 shrink-0">
-                      <Button
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white gap-1.5"
-                        onClick={() => handlePassStep(step)}
-                        loading={passingId}
-                        disabled={failingId}
-                      >
-                        <CheckCircle className="h-3.5 w-3.5" /> Pass
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        className="gap-1.5"
-                        onClick={() => handleFailStep(step)}
-                        loading={failingId}
-                        disabled={passingId}
-                      >
-                        <XCircle className="h-3.5 w-3.5" /> Fail
-                      </Button>
-                    </div>
+                  {step.status === 'Pending' && !isFinalized && (
+                    canAct ? (
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white gap-1.5"
+                          onClick={() => handlePassStep(step)}
+                          loading={passingId}
+                          disabled={failingId}
+                        >
+                          <CheckCircle className="h-3.5 w-3.5" /> Pass
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          className="gap-1.5"
+                          onClick={() => handleFailStep(step)}
+                          loading={failingId}
+                          disabled={passingId}
+                        >
+                          <XCircle className="h-3.5 w-3.5" /> Fail
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic shrink-0">Waiting previous step</span>
+                    )
                   )}
                 </div>
               );
@@ -245,23 +238,11 @@ export function ApplicationDetailPage() {
       </div>
 
       {/* Footer actions */}
-      {(canAccept || canReject) && (
+      {canReject && (
         <div className="flex justify-end gap-3 rounded-xl border border-gray-200 bg-white px-6 py-4">
-          {canReject && (
-            <Button variant="danger" onClick={handleReject} loading={rejecting} disabled={accepting}>
-              Reject Candidate
-            </Button>
-          )}
-          {canAccept && (
-            <Button
-              className="bg-green-600 hover:bg-green-700 text-white"
-              onClick={handleAccept}
-              loading={accepting}
-              disabled={rejecting}
-            >
-              Accept Candidate
-            </Button>
-          )}
+          <Button variant="danger" onClick={handleReject} loading={rejecting}>
+            Reject Candidate
+          </Button>
         </div>
       )}
 
