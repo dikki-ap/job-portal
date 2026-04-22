@@ -64,7 +64,7 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
     }
 
     public async Task<UserProfile?> LinkCvAsync(
-        int userId, int documentId, int documentTypeId, string originalFileName, CancellationToken cancellationToken = default)
+        int userId, int documentId, CancellationToken cancellationToken = default)
     {
         var profile = await context.UserProfiles
             .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
@@ -79,7 +79,6 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
                 NIK = $"TMP{userId:D17}",
                 PhoneNumber = string.Empty,
                 CvDocumentId = documentId,
-                CvDocumentTypeId = documentTypeId,
                 CreatedAt = DateTime.UtcNow,
                 CreatedByUserId = userId,
             };
@@ -88,7 +87,6 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         else
         {
             profile.CvDocumentId = documentId;
-            profile.CvDocumentTypeId = documentTypeId;
             profile.UpdatedAt = DateTime.UtcNow;
             profile.UpdatedByUserId = userId;
             context.UserProfiles.Update(profile);
@@ -104,7 +102,6 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         if (profile is null) return false;
 
         profile.CvDocumentId = null;
-        profile.CvDocumentTypeId = null;
         profile.UpdatedAt = DateTime.UtcNow;
         profile.UpdatedByUserId = userId;
         context.UserProfiles.Update(profile);

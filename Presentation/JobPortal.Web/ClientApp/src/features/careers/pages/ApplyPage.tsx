@@ -166,7 +166,7 @@ export function ApplyPage() {
     for (const reqDoc of job.requiredDocuments) {
       const dt = allDocTypes.find((d) => d.id === reqDoc.documentTypeId);
       if (!dt) continue;
-      const isProfileCv = profile?.cvDocumentId != null && profile.cvDocumentTypeId === dt.id;
+      const isProfileCv = profile?.cvDocumentId != null && dt.isDefaultRequired;
       initialEntries[dt.id] = {
         typeId: dt.id,
         typeName: dt.name,

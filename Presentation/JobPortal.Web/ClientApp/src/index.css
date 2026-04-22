@@ -20,3 +20,49 @@ body {
 #root {
   min-height: 100svh;
 }
+
+/* react-phone-number-input overrides */
+.phone-input-wrapper {
+  --PhoneInputCountryFlag-height: 1em;
+}
+.phone-input-wrapper .PhoneInputInput {
+  height: 2.5rem;
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.phone-input-wrapper .PhoneInputInput:focus {
+  border-color: #004181;
+  box-shadow: 0 0 0 3px rgba(0, 65, 129, 0.12);
+}
+.phone-input-wrapper .PhoneInputCountrySelect {
+  height: 2.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+  margin-right: 0.5rem;
+  cursor: pointer;
+  outline: none;
+}
+.phone-input-wrapper .PhoneInputCountrySelect:focus {
+  border-color: #004181;
+  box-shadow: 0 0 0 3px rgba(0, 65, 129, 0.12);
+}
+.phone-input-error .PhoneInputInput,
+.phone-input-error .PhoneInputCountrySelect {
+  border-color: #ef4444;
+}
+.phone-input-error .PhoneInputInput:focus,
+.phone-input-error .PhoneInputCountrySelect:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}

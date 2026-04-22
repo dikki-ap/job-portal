@@ -148,9 +148,7 @@ export interface CandidateProfileDto {
   educationLevelId: number | null;
   educationLevelName: string | null;
   cvDocumentId: number | null;
-  cvDocumentTypeId: number | null;
   cvOriginalFileName: string | null;
-  skills: CandidateSkillDto[];
 }
 
 export interface JobPostDto {
