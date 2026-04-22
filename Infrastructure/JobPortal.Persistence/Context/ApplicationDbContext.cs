@@ -39,7 +39,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     // Jobs
     public DbSet<JobPost> JobPosts => Set<JobPost>();
+    public DbSet<JobPostSkill> JobPostSkills => Set<JobPostSkill>();
     public DbSet<JobStep> JobSteps => Set<JobStep>();
+    public DbSet<HiringTemplate> HiringTemplates => Set<HiringTemplate>();
+    public DbSet<HiringTemplateStep> HiringTemplateSteps => Set<HiringTemplateStep>();
     public DbSet<JobApprovalInstance> JobApprovalInstances => Set<JobApprovalInstance>();
     public DbSet<JobApprovalInstanceStep> JobApprovalInstanceSteps => Set<JobApprovalInstanceStep>();
 

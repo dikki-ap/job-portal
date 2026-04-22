@@ -29,6 +29,7 @@ const navItems: NavItem[] = [
       { label: 'Education Level', to: '/master/education-levels' },
       { label: 'Education Major', to: '/master/education-majors' },
       { label: 'Employment Type', to: '/master/employment-types' },
+      { label: 'Hiring Template', to: '/master/hiring-templates' },
       { label: 'Job Category', to: '/master/job-categories' },
       { label: 'Job Level', to: '/master/job-levels' },
       { label: 'Skill', to: '/master/skills' },

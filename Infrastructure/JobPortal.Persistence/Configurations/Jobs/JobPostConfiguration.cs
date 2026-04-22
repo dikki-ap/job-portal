@@ -57,7 +57,13 @@ public class JobPostConfiguration : IEntityTypeConfiguration<JobPost>
 
         builder.HasMany(j => j.JobSteps)
             .WithOne(s => s.JobPost)
-            .HasForeignKey(s => s.JobPostId);
+            .HasForeignKey(s => s.JobPostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(j => j.RequiredSkills)
+            .WithOne(s => s.JobPost)
+            .HasForeignKey(s => s.JobPostId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(j => j.ApprovalInstances)
             .WithOne(a => a.JobPost)

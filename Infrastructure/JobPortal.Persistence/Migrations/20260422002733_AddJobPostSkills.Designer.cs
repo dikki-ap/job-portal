@@ -4,6 +4,7 @@ using JobPortal.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobPortal.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260422002733_AddJobPostSkills")]
+    partial class AddJobPostSkills
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -218,73 +221,6 @@ namespace JobPortal.Persistence.Migrations
                     b.HasIndex("UpdatedByUserId");
 
                     b.ToTable("Documents");
-                });
-
-            modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.HiringTemplate", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("UpdatedByUserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("UpdatedByUserId");
-
-                    b.ToTable("HiringTemplates");
-                });
-
-            modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.HiringTemplateStep", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("HiringTemplateId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsRequired")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
-
-                    b.Property<int>("StepOrder")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HiringTemplateId");
-
-                    b.ToTable("HiringTemplateSteps", (string)null);
                 });
 
             modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.JobApprovalInstance", b =>
@@ -1551,35 +1487,6 @@ namespace JobPortal.Persistence.Migrations
                     b.Navigation("UpdatedByUser");
                 });
 
-            modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.HiringTemplate", b =>
-                {
-                    b.HasOne("JobPortal.Domain.Entities.Users.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("JobPortal.Domain.Entities.Users.User", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("UpdatedByUser");
-                });
-
-            modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.HiringTemplateStep", b =>
-                {
-                    b.HasOne("JobPortal.Domain.Entities.Jobs.HiringTemplate", "HiringTemplate")
-                        .WithMany("Steps")
-                        .HasForeignKey("HiringTemplateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HiringTemplate");
-                });
-
             modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.JobApprovalInstance", b =>
                 {
                     b.HasOne("JobPortal.Domain.Entities.Jobs.JobPost", "JobPost")
@@ -2152,11 +2059,6 @@ namespace JobPortal.Persistence.Migrations
                 {
                     b.Navigation("Documents");
 
-                    b.Navigation("Steps");
-                });
-
-            modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.HiringTemplate", b =>
-                {
                     b.Navigation("Steps");
                 });
 

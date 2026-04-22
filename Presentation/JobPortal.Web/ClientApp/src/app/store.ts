@@ -9,6 +9,8 @@ import { currencyTypesApi } from '../features/currencyTypes/api/currencyTypesApi
 import { documentTypesApi } from '../features/documentTypes/api/documentTypesApi';
 import { educationLevelsApi } from '../features/educationLevels/api/educationLevelsApi';
 import { educationMajorsApi } from '../features/educationMajors/api/educationMajorsApi';
+import { jobPostsApi } from '../features/jobPosts/api/jobPostsApi';
+import { hiringTemplatesApi } from '../features/hiringTemplates/api/hiringTemplatesApi';
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +24,8 @@ export const store = configureStore({
     [documentTypesApi.reducerPath]: documentTypesApi.reducer,
     [educationLevelsApi.reducerPath]: educationLevelsApi.reducer,
     [educationMajorsApi.reducerPath]: educationMajorsApi.reducer,
+    [jobPostsApi.reducerPath]: jobPostsApi.reducer,
+    [hiringTemplatesApi.reducerPath]: hiringTemplatesApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -34,7 +38,9 @@ export const store = configureStore({
       .concat(currencyTypesApi.middleware)
       .concat(documentTypesApi.middleware)
       .concat(educationLevelsApi.middleware)
-      .concat(educationMajorsApi.middleware),
+      .concat(educationMajorsApi.middleware)
+      .concat(jobPostsApi.middleware)
+      .concat(hiringTemplatesApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

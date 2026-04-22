@@ -14,6 +14,10 @@ import { DocumentTypesPage } from '../features/documentTypes/pages/DocumentTypes
 import { EducationLevelsPage } from '../features/educationLevels/pages/EducationLevelsPage';
 import { EducationMajorsPage } from '../features/educationMajors/pages/EducationMajorsPage';
 import { ComingSoonPage } from '../pages/ComingSoonPage';
+import { JobPostsPage } from '../features/jobPosts/pages/JobPostsPage';
+import { CreateJobPostPage } from '../features/jobPosts/pages/CreateJobPostPage';
+import { EditJobPostPage } from '../features/jobPosts/pages/EditJobPostPage';
+import { HiringTemplatesPage } from '../features/hiringTemplates/pages/HiringTemplatesPage';
 
 export function AppRouter() {
   return (
@@ -38,7 +42,10 @@ export function AppRouter() {
         <Route path="master/document-types" element={<DocumentTypesPage />} />
         <Route path="master/education-levels" element={<EducationLevelsPage />} />
         <Route path="master/education-majors" element={<EducationMajorsPage />} />
-        <Route path="jobs" element={<ComingSoonPage title="Job Management" />} />
+        <Route path="master/hiring-templates" element={<HiringTemplatesPage />} />
+        <Route path="jobs" element={<JobPostsPage />} />
+        <Route path="jobs/create" element={<CreateJobPostPage />} />
+        <Route path="jobs/:id/edit" element={<EditJobPostPage />} />
         <Route path="applications" element={<ComingSoonPage title="Applications" />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

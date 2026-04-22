@@ -42,6 +42,8 @@ public static class DependencyInjection
         services.AddScoped<IDocumentTypeRepository, DocumentTypeRepository>();
         services.AddScoped<IEducationLevelRepository, EducationLevelRepository>();
         services.AddScoped<IEducationMajorRepository, EducationMajorRepository>();
+        services.AddScoped<IJobPostRepository, JobPostRepository>();
+        services.AddScoped<IHiringTemplateRepository, HiringTemplateRepository>();
 
         return services;
     }
