@@ -12,6 +12,9 @@ import { educationMajorsApi } from '../features/educationMajors/api/educationMaj
 import { jobPostsApi } from '../features/jobPosts/api/jobPostsApi';
 import { hiringTemplatesApi } from '../features/hiringTemplates/api/hiringTemplatesApi';
 import { applicationsApi } from '../features/applications/api/applicationsApi';
+import { careersApi } from '../features/careers/api/careersApi';
+import { documentsApi } from '../features/documents/api/documentsApi';
+import { myApplicationsApi } from '../features/myApplications/api/myApplicationsApi';
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +31,9 @@ export const store = configureStore({
     [jobPostsApi.reducerPath]: jobPostsApi.reducer,
     [hiringTemplatesApi.reducerPath]: hiringTemplatesApi.reducer,
     [applicationsApi.reducerPath]: applicationsApi.reducer,
+    [careersApi.reducerPath]: careersApi.reducer,
+    [documentsApi.reducerPath]: documentsApi.reducer,
+    [myApplicationsApi.reducerPath]: myApplicationsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -43,7 +49,10 @@ export const store = configureStore({
       .concat(educationMajorsApi.middleware)
       .concat(jobPostsApi.middleware)
       .concat(hiringTemplatesApi.middleware)
-      .concat(applicationsApi.middleware),
+      .concat(applicationsApi.middleware)
+      .concat(careersApi.middleware)
+      .concat(documentsApi.middleware)
+      .concat(myApplicationsApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

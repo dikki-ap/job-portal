@@ -1,5 +1,4 @@
 using JobPortal.Application.Interfaces.Repositories;
-using JobPortal.Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -7,7 +6,6 @@ namespace JobPortal.Application.Features.JobPosts.Commands.DeleteJobPost;
 
 public class DeleteJobPostCommandHandler(
     IJobPostRepository repository,
-    ICurrentUserService currentUserService,
     ILogger<DeleteJobPostCommandHandler> logger)
     : IRequestHandler<DeleteJobPostCommand, Unit>
 {

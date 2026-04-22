@@ -1,7 +1,33 @@
+import { useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import keycloak from '../lib/keycloak'
 
 export function LoginPage() {
-  const { login, register } = useAuth()
+  const { isAuthenticated, isLoading, register } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: string } | null)?.from
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate(from ?? '/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, isLoading, navigate, from])
+
+  const handleLogin = () => {
+    const redirectUri = from
+      ? window.location.origin + from
+      : window.location.origin + '/dashboard'
+    keycloak.login({ redirectUri })
+  }
+
+  const handleRegister = () => {
+    const redirectUri = from
+      ? window.location.origin + from
+      : window.location.origin + '/dashboard'
+    keycloak.register({ redirectUri })
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -50,7 +76,7 @@ export function LoginPage() {
 
           <div className="space-y-3">
             <button
-              onClick={login}
+              onClick={handleLogin}
               className="w-full py-3 px-4 rounded-xl font-semibold text-white text-sm transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md"
               style={{ backgroundColor: '#004181' }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#003166')}
@@ -69,7 +95,7 @@ export function LoginPage() {
             </div>
 
             <button
-              onClick={register}
+              onClick={handleRegister}
               className="w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-[0.98] border-2"
               style={{ borderColor: '#004181', color: '#004181' }}
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f0f5ff' }}

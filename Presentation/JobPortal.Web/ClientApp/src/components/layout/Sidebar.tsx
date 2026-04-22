@@ -7,6 +7,8 @@ import {
   FileText,
   ChevronDown,
   Building2,
+  Globe,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -38,6 +40,14 @@ const navItems: NavItem[] = [
   },
   { label: 'Job Management', to: '/jobs', icon: <Briefcase className="h-5 w-5" /> },
   { label: 'Applications', to: '/applications', icon: <FileText className="h-5 w-5" /> },
+  {
+    label: 'Candidate Portal',
+    icon: <Globe className="h-5 w-5" />,
+    children: [
+      { label: 'Open Positions', to: '/careers' },
+      { label: 'My Applications', to: '/my-applications' },
+    ],
+  },
 ];
 
 function NavGroup({ item }: { item: NavItem }) {
@@ -131,7 +141,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
             <Building2 className="h-5 w-5 text-[#004181]" />
           </div>
-          <span className="text-lg font-bold text-white">JobPortal</span>
+          <span className="text-lg font-bold text-white flex-1">JobPortal</span>
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View Company Site"
+            className="text-blue-200 hover:text-white transition-colors"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
         </div>
 
         <nav className="flex flex-col gap-1 overflow-y-auto p-4">

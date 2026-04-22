@@ -94,7 +94,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
       setPublishDate(editing.publishDate ? editing.publishDate.split('T')[0] : '');
       setCloseDate(editing.closeDate ? editing.closeDate.split('T')[0] : '');
       setSteps(editing.steps.map((s) => ({ tempId: crypto.randomUUID(), name: s.name, isRequired: s.isRequired })));
-      setRequiredSkillIds([...editing.requiredSkillIds]);
+      setRequiredSkillIds(editing.requiredSkills.map((s) => s.id));
     }
   }, [editing]);
 
