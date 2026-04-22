@@ -108,6 +108,65 @@ export interface EducationLevelDto {
   updatedByName: string | null;
 }
 
+export interface JobStepDto {
+  id: number;
+  name: string;
+  stepOrder: number;
+  isRequired: boolean;
+}
+
+export interface JobPostDto {
+  id: number;
+  title: string;
+  slug: string;
+  status: string;
+  location: string;
+  description: string;
+  departmentId: number;
+  departmentName: string;
+  jobCategoryId: number;
+  jobCategoryName: string;
+  jobLevelId: number;
+  jobLevelName: string;
+  employmentTypeId: number;
+  employmentTypeName: string;
+  workModeId: number;
+  workModeName: string;
+  minEducationLevelId: number | null;
+  minEducationLevelName: string | null;
+  minExperienceYears: number;
+  minSalary: number | null;
+  maxSalary: number | null;
+  isSalaryVisible: boolean;
+  currencyTypeId: number | null;
+  currencyTypePrefix: string | null;
+  quota: number;
+  publishDate: string | null;
+  closeDate: string | null;
+  steps: JobStepDto[];
+  requiredSkillIds: number[];
+  createdAt: string;
+  createdByName: string | null;
+}
+
+export interface HiringTemplateStepDto {
+  id: number;
+  name: string;
+  stepOrder: number;
+  isRequired: boolean;
+}
+
+export interface HiringTemplateDto {
+  id: number;
+  name: string;
+  description: string | null;
+  steps: HiringTemplateStepDto[];
+  createdAt: string;
+  createdByName: string | null;
+  updatedAt: string | null;
+  updatedByName: string | null;
+}
+
 export interface EducationMajorDto {
   id: number;
   name: string;

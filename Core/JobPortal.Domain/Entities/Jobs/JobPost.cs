@@ -34,6 +34,7 @@ public class JobPost : SoftDeletableEntity
     public EducationLevel? MinEducationLevel { get; set; }
     public CurrencyType? CurrencyType { get; set; }
     public ICollection<JobStep> JobSteps { get; set; } = [];
+    public ICollection<JobPostSkill> RequiredSkills { get; set; } = [];
     public ICollection<JobApprovalInstance> ApprovalInstances { get; set; } = [];
     public ICollection<Application> Applications { get; set; } = [];
 }

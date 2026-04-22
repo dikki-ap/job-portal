@@ -1,0 +1,36 @@
+namespace JobPortal.Application.DTOs;
+
+public record JobStepDto(int Id, string Name, int StepOrder, bool IsRequired);
+
+public record JobPostDto(
+    int Id,
+    string Title,
+    string Slug,
+    string Status,
+    string Location,
+    string Description,
+    int DepartmentId,
+    string DepartmentName,
+    int JobCategoryId,
+    string JobCategoryName,
+    int JobLevelId,
+    string JobLevelName,
+    int EmploymentTypeId,
+    string EmploymentTypeName,
+    int WorkModeId,
+    string WorkModeName,
+    int? MinEducationLevelId,
+    string? MinEducationLevelName,
+    int MinExperienceYears,
+    decimal? MinSalary,
+    decimal? MaxSalary,
+    bool IsSalaryVisible,
+    int? CurrencyTypeId,
+    string? CurrencyTypePrefix,
+    int Quota,
+    DateTime? PublishDate,
+    DateTime? CloseDate,
+    IEnumerable<JobStepDto> Steps,
+    IEnumerable<int> RequiredSkillIds,
+    DateTime CreatedAt,
+    string? CreatedByName);

@@ -11,4 +11,6 @@ public interface IJobPostRepository
     Task AddAsync(JobPost jobPost, CancellationToken cancellationToken = default);
     Task UpdateAsync(JobPost jobPost, CancellationToken cancellationToken = default);
     Task DeleteAsync(JobPost jobPost, CancellationToken cancellationToken = default);
+    Task<bool> ExistsBySlugAsync(string slug, int? excludeId = null, CancellationToken cancellationToken = default);
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
