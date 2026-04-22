@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Infrastructure;
 using JobPortal.Infrastructure.Options;
@@ -48,6 +49,7 @@ builder.Services.AddInfrastructure();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IClaimsTransformation, KeycloakRolesClaimsTransformation>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -62,7 +64,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("HrOrAdmin", policy => policy.RequireRole("Admin", "HR"));
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
 
 var app = builder.Build();
 

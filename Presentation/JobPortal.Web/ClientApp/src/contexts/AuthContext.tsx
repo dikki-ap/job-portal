@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import keycloak, { initKeycloak } from '../lib/keycloak'
 import type { UserDto } from '../types/api'
 
+const CLIENT_ID = 'job-portal-web'
+
 interface AuthContextValue {
   isAuthenticated: boolean
   isLoading: boolean
@@ -9,6 +11,10 @@ interface AuthContextValue {
   token: string | undefined
   userEmail: string | undefined
   userName: string | undefined
+  roles: string[]
+  isAdmin: boolean
+  isHR: boolean
+  isCandidate: boolean
   login: () => void
   logout: () => void
   register: () => void
@@ -28,16 +34,22 @@ async function syncCurrentUser(): Promise<UserDto | null> {
   }
 }
 
+function getClientRoles(): string[] {
+  return (keycloak.resourceAccess?.[CLIENT_ID]?.roles as string[] | undefined) ?? []
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null)
+  const [roles, setRoles] = useState<string[]>([])
 
   useEffect(() => {
     initKeycloak()
       .then(async (authenticated) => {
         setIsAuthenticated(authenticated)
         if (authenticated) {
+          setRoles(getClientRoles())
           const user = await syncCurrentUser()
           setCurrentUser(user)
         }
@@ -45,6 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => {})
       .finally(() => setIsLoading(false))
   }, [])
+
+  const isAdmin = roles.includes('Admin')
+  const isHR = roles.includes('HR')
+  const isCandidate = isAuthenticated && !isAdmin && !isHR
 
   return (
     <AuthContext.Provider
@@ -55,9 +71,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token: keycloak.token,
         userEmail: keycloak.tokenParsed?.email,
         userName: keycloak.tokenParsed?.name,
-        login: () => keycloak.login({ redirectUri: window.location.origin + '/dashboard' }),
+        roles,
+        isAdmin,
+        isHR,
+        isCandidate,
+        login: () => keycloak.login({ redirectUri: window.location.origin + '/login' }),
         logout: () => keycloak.logout({ redirectUri: window.location.origin }),
-        register: () => keycloak.register(),
+        register: () => keycloak.register({ redirectUri: window.location.origin + '/login' }),
       }}
     >
       {children}

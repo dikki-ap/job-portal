@@ -20,7 +20,11 @@ export const myApplicationsApi = createApi({
       query: () => '',
       providesTags: ['MyApplication'],
     }),
+    getMyApplicationById: builder.query<ApplicationDto, number>({
+      query: (id) => `/${id}`,
+      providesTags: (_result, _err, id) => [{ type: 'MyApplication', id }],
+    }),
   }),
 });
 
-export const { useGetMyApplicationsQuery } = myApplicationsApi;
+export const { useGetMyApplicationsQuery, useGetMyApplicationByIdQuery } = myApplicationsApi;

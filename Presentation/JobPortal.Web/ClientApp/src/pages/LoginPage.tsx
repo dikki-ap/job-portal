@@ -4,29 +4,29 @@ import { useAuth } from '../contexts/AuthContext'
 import keycloak from '../lib/keycloak'
 
 export function LoginPage() {
-  const { isAuthenticated, isLoading, register } = useAuth()
+  const { isAuthenticated, isLoading, isAdmin, isHR } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate(from ?? '/dashboard', { replace: true })
+      if (from) {
+        navigate(from, { replace: true })
+      } else if (isAdmin || isHR) {
+        navigate('/dashboard', { replace: true })
+      } else {
+        navigate('/my-applications', { replace: true })
+      }
     }
-  }, [isAuthenticated, isLoading, navigate, from])
+  }, [isAuthenticated, isLoading, isAdmin, isHR, navigate, from])
 
   const handleLogin = () => {
-    const redirectUri = from
-      ? window.location.origin + from
-      : window.location.origin + '/dashboard'
-    keycloak.login({ redirectUri })
+    keycloak.login({ redirectUri: window.location.origin + '/login' })
   }
 
   const handleRegister = () => {
-    const redirectUri = from
-      ? window.location.origin + from
-      : window.location.origin + '/dashboard'
-    keycloak.register({ redirectUri })
+    keycloak.register({ redirectUri: window.location.origin + '/login' })
   }
 
   return (
