@@ -36,7 +36,7 @@ public class UpsertCandidateProfileCommandHandler(
                 NIK = string.Empty,
             };
 
-            var skills = request.Skills.Select(s => new UserSkill
+            var skills = (request.Skills ?? []).Select(s => new UserSkill
             {
                 UserId = userId,
                 SkillId = s.SkillId,
@@ -54,8 +54,7 @@ public class UpsertCandidateProfileCommandHandler(
                 user.FirstName, user.LastName,
                 request.PhoneNumber,
                 request.EducationLevelId, null,
-                null, null, null,
-                request.Skills.Select(s => new CandidateSkillDto(s.SkillId, string.Empty, s.SkillLevel)));
+                null, null);
         }
         catch (Exception ex) when (ex is not UnauthorizedAccessException and not KeyNotFoundException)
         {

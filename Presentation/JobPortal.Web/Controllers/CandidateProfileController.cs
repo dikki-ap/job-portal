@@ -42,10 +42,17 @@ public class CandidateProfileController(
         catch (UnauthorizedAccessException ex) { return Unauthorized(new { error = ex.Message }); }
     }
 
+    private static readonly HashSet<string> CvAllowedMimes =
+    [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    private const int CvMaxMb = 3;
+
     [HttpPost("cv")]
     public async Task<IActionResult> UploadCv(
         [FromForm] IFormFile file,
-        [FromForm] int documentTypeId,
         CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
@@ -55,20 +62,11 @@ public class CandidateProfileController(
         var externalId = currentUserService.GetCurrentUserExternalId();
         if (userId is null || externalId is null) return Unauthorized();
 
-        var docType = await dbContext.DocumentTypes
-            .Include(dt => dt.MimeTypes)
-            .FirstOrDefaultAsync(dt => dt.Id == documentTypeId, cancellationToken);
+        if (!CvAllowedMimes.Contains(file.ContentType))
+            return BadRequest(new { error = "Only PDF, DOC, and DOCX files are allowed." });
 
-        if (docType is null)
-            return NotFound(new { error = "Document type not found." });
-
-        var allowedMimes = docType.MimeTypes.Select(m => m.MimeType).ToHashSet();
-        if (allowedMimes.Count > 0 && !allowedMimes.Contains(file.ContentType))
-            return BadRequest(new { error = $"File type '{file.ContentType}' is not allowed for this document type." });
-
-        var maxBytes = (long)docType.MaxFileSizeMb * 1024 * 1024;
-        if (file.Length > maxBytes)
-            return BadRequest(new { error = $"File exceeds the maximum size of {docType.MaxFileSizeMb} MB." });
+        if (file.Length > (long)CvMaxMb * 1024 * 1024)
+            return BadRequest(new { error = $"File exceeds the maximum size of {CvMaxMb} MB." });
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         string storageKey;
@@ -86,11 +84,11 @@ public class CandidateProfileController(
         dbContext.Documents.Add(doc);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await profileRepository.LinkCvAsync(userId.Value, doc.Id, documentTypeId, file.FileName, cancellationToken);
+        await profileRepository.LinkCvAsync(userId.Value, doc.Id, cancellationToken);
         await profileRepository.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("CV uploaded: user={UserId} document={DocId}", userId, doc.Id);
-        return Ok(new { documentId = doc.Id, documentTypeId, originalFileName = file.FileName });
+        return Ok(new { documentId = doc.Id, originalFileName = file.FileName });
     }
 
     [HttpDelete("cv")]

@@ -1,18 +1,16 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import keycloak from '../../../lib/keycloak';
-import type { CandidateProfileDto, CandidateSkillDto } from '../../../types/api';
+import type { CandidateProfileDto } from '../../../types/api';
 
 interface UpsertProfileRequest {
   firstName: string;
   lastName: string;
   phoneNumber: string;
   educationLevelId: number | null;
-  skills: { skillId: number; skillLevel: string }[];
 }
 
 interface UploadCvResult {
   documentId: number;
-  documentTypeId: number;
   originalFileName: string;
 }
 
@@ -38,11 +36,10 @@ export const candidateProfileApi = createApi({
       query: (body) => ({ url: '', method: 'PUT', body }),
       invalidatesTags: ['CandidateProfile'],
     }),
-    uploadCv: builder.mutation<UploadCvResult, { file: File; documentTypeId: number }>({
-      query: ({ file, documentTypeId }) => {
+    uploadCv: builder.mutation<UploadCvResult, { file: File }>({
+      query: ({ file }) => {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('documentTypeId', String(documentTypeId));
         return { url: '/cv', method: 'POST', body: formData };
       },
       invalidatesTags: ['CandidateProfile'],
@@ -60,4 +57,4 @@ export const {
   useUploadCvMutation,
   useRemoveCvMutation,
 } = candidateProfileApi;
-export type { UpsertProfileRequest, CandidateSkillDto };
+export type { UpsertProfileRequest };

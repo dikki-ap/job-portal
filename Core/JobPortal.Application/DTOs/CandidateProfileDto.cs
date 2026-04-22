@@ -1,7 +1,5 @@
 namespace JobPortal.Application.DTOs;
 
-public record CandidateSkillDto(int SkillId, string SkillName, string SkillLevel);
-
 public record CandidateProfileDto(
     string FirstName,
     string LastName,
@@ -9,6 +7,4 @@ public record CandidateProfileDto(
     int? EducationLevelId,
     string? EducationLevelName,
     int? CvDocumentId,
-    int? CvDocumentTypeId,
-    string? CvOriginalFileName,
-    IEnumerable<CandidateSkillDto> Skills);
+    string? CvOriginalFileName);
