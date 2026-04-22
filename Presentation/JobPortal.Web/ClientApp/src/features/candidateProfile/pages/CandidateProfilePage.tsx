@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, CheckCircle2, Trash2, Loader2, X } from 'lucide-react';
+import { Upload, CheckCircle2, Trash2, Loader2, X, Download } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
@@ -7,6 +7,8 @@ import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { PhoneInput } from '../../../components/ui/PhoneInput';
 import { useToast } from '../../../hooks/useToast';
+import { useAuth } from '../../../contexts/AuthContext';
+import { downloadWithAuth } from '../../../lib/download';
 import { useGetEducationLevelsQuery } from '../../educationLevels/api/educationLevelsApi';
 import {
   useGetProfileQuery,
@@ -18,6 +20,7 @@ import {
 const CV_ACCEPT = '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 export function CandidateProfilePage() {
+  const { token } = useAuth();
   const { toasts, addToast, dismissToast } = useToast();
   const { data: profile, isLoading: profileLoading } = useGetProfileQuery();
   const { data: educationLevels = [] } = useGetEducationLevelsQuery();
@@ -162,6 +165,14 @@ export function CandidateProfilePage() {
             <span className="flex-1 text-sm font-medium text-gray-900 truncate">
               {profile.cvOriginalFileName}
             </span>
+            <button
+              type="button"
+              onClick={() => downloadWithAuth('/api/candidate-profile/cv/download', token, profile.cvOriginalFileName ?? 'cv')}
+              className="shrink-0 text-gray-400 hover:text-[#004181] transition-colors"
+              title="Download CV"
+            >
+              <Download className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={handleRemoveCv}

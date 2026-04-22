@@ -60,6 +60,17 @@ public class MinioStorageService : IStorageService
         return url;
     }
 
+    public async Task<(Stream Stream, string ContentType)> DownloadAsync(string storageKey, CancellationToken cancellationToken = default)
+    {
+        var response = await _s3.GetObjectAsync(new GetObjectRequest
+        {
+            BucketName = _opts.BucketName,
+            Key = storageKey,
+        }, cancellationToken);
+
+        return (response.ResponseStream, response.Headers.ContentType);
+    }
+
     private async Task EnsureBucketAsync(CancellationToken cancellationToken)
     {
         if (_bucketReady) return;

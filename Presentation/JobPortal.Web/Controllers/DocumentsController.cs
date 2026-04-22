@@ -80,12 +80,10 @@ public class DocumentsController(
             return NotFound();
         }
 
-        var presignedUrl = await storageService.GeneratePresignedUrlAsync(
-            appDoc.Document.FilePath,
-            expiryMinutes: 15,
-            cancellationToken: cancellationToken);
+        var (stream, contentType) = await storageService.DownloadAsync(appDoc.Document.FilePath, cancellationToken);
+        var fileName = appDoc.Document.OriginalFileName;
 
-        logger.LogInformation("Download: redirecting document id={Id}", id);
-        return Redirect(presignedUrl);
+        logger.LogInformation("Download: streaming document id={Id}", id);
+        return File(stream, contentType, fileName);
     }
 }

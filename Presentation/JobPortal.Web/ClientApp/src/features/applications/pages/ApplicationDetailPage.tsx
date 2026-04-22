@@ -4,6 +4,8 @@ import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { useToast } from '../../../hooks/useToast';
+import { useAuth } from '../../../contexts/AuthContext';
+import { downloadWithAuth } from '../../../lib/download';
 import { formatDate, formatDateTime } from '../../../lib/format';
 import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
 import {
@@ -43,6 +45,7 @@ function friendlyFileType(mime: string) {
 export function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const appId = Number(id);
+  const { token } = useAuth();
   const { toasts, addToast, dismissToast } = useToast();
 
   const { data: application, isLoading, isError } = useGetApplicationByIdQuery(appId);
@@ -239,7 +242,7 @@ export function ApplicationDetailPage() {
                         variant="ghost"
                         size="sm"
                         className="gap-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                        onClick={() => window.open(`/api/documents/${doc.id}/download`, '_blank')}
+                        onClick={() => downloadWithAuth(`/api/documents/${doc.id}/download`, token, doc.originalFileName)}
                       >
                         <Download className="h-3.5 w-3.5" /> Download
                       </Button>
