@@ -1,0 +1,58 @@
+using JobPortal.Application.Common;
+using JobPortal.Application.DTOs;
+using JobPortal.Application.Interfaces.Repositories;
+using MediatR;
+using Microsoft.Extensions.Logging;
+
+namespace JobPortal.Application.Features.Applications.Commands.BulkAcceptApplication;
+
+public class BulkAcceptApplicationCommandHandler(
+    IApplicationRepository repository,
+    ILogger<BulkAcceptApplicationCommandHandler> logger)
+    : IRequestHandler<BulkAcceptApplicationCommand, BulkOperationResultDto>
+{
+    public async Task<BulkOperationResultDto> Handle(BulkAcceptApplicationCommand request, CancellationToken cancellationToken)
+    {
+        var ids = request.ApplicationIds.Distinct().ToList();
+        var now = DateTime.UtcNow;
+
+        var applications = await repository.GetByIdsAsync(ids, cancellationToken);
+
+        var stepIdsToPass  = new List<int>();
+        var appIdsToAccept = new List<int>();
+        var skipped = 0;
+
+        foreach (var app in applications)
+        {
+            if (app.Status is ApplicationStatus.Accepted or ApplicationStatus.Rejected)
+            {
+                skipped++;
+                continue;
+            }
+
+            appIdsToAccept.Add(app.Id);
+
+            // Pass the current active step if one exists
+            var currentStep = ApplicationStepHelper.FindCurrentActiveStep(app);
+            if (currentStep is not null)
+                stepIdsToPass.Add(currentStep.Id);
+        }
+
+        skipped += ids.Count - applications.Count;
+        var succeeded = appIdsToAccept.Count;
+
+        if (succeeded > 0)
+        {
+            await repository.ExecuteInTransactionAsync(async () =>
+            {
+                if (stepIdsToPass.Count > 0)
+                    await repository.BulkPassStepsAsync(stepIdsToPass, now, cancellationToken);
+                await repository.BulkAcceptAsync(appIdsToAccept, now, cancellationToken);
+            }, cancellationToken);
+        }
+
+        logger.LogInformation("BulkAccept succeeded={S} skipped={Sk}", succeeded, skipped);
+
+        return new BulkOperationResultDto(succeeded, skipped, []);
+    }
+}

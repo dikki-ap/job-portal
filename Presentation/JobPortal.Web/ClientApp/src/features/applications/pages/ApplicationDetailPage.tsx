@@ -18,6 +18,7 @@ import type { ApplicationStepDto } from '../../../types/api';
 
 const APP_STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
+  InProgress: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
   InReview: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
   Accepted: 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200',
   Rejected: 'bg-red-50 text-red-600 ring-1 ring-inset ring-red-200',
@@ -29,7 +30,10 @@ const STEP_STATUS_BADGE: Record<string, string> = {
   Failed: 'bg-red-50 text-red-600 ring-1 ring-inset ring-red-200',
 };
 
-const APP_STATUS_LABEL: Record<string, string> = { InReview: 'In Review' };
+const APP_STATUS_LABEL: Record<string, string> = {
+  InProgress: 'In Review',
+  InReview: 'In Review',
+};
 
 const MIME_LABELS: Record<string, string> = {
   'application/pdf': 'PDF',
@@ -117,8 +121,8 @@ export function ApplicationDetailPage() {
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-900">Application #{application.id}</h1>
-          <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-medium ${APP_STATUS_BADGE[application.status] ?? 'bg-gray-100 text-gray-600'}`}>
-            {APP_STATUS_LABEL[application.status] ?? application.status}
+          <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-medium ${APP_STATUS_BADGE[derivedStatus] ?? 'bg-gray-100 text-gray-600'}`}>
+            {APP_STATUS_LABEL[derivedStatus] ?? derivedStatus}
           </span>
         </div>
       </div>

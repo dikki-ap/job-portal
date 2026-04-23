@@ -53,6 +53,8 @@ public class UpdateApplicationStepCommandHandler(
 
                 if (isLastRequiredStep)
                     application.Status = ApplicationStatus.Accepted;
+                else if (application.Status == ApplicationStatus.Pending)
+                    application.Status = ApplicationStatus.InReview;
             }
 
             await repository.UpdateAsync(application, cancellationToken);
