@@ -12,6 +12,21 @@ interface UpdateStepParams {
   stepId: number;
 }
 
+export interface BulkOperationResult {
+  succeeded: number;
+  skipped: number;
+  errors: string[];
+}
+
+interface BulkStepParams {
+  applicationIds: number[];
+  action: 'Passed' | 'Failed';
+}
+
+interface BulkIdsParams {
+  applicationIds: number[];
+}
+
 export const applicationsApi = createApi({
   reducerPath: 'applicationsApi',
   baseQuery: fetchBaseQuery({
@@ -68,6 +83,18 @@ export const applicationsApi = createApi({
       query: (id) => ({ url: `/${id}/reject`, method: 'POST' }),
       invalidatesTags: (_result, _err, id) => [{ type: 'Application', id }, 'Application'],
     }),
+    bulkUpdateStep: builder.mutation<BulkOperationResult, BulkStepParams>({
+      query: (body) => ({ url: '/bulk-step', method: 'POST', body }),
+      invalidatesTags: ['Application'],
+    }),
+    bulkAccept: builder.mutation<BulkOperationResult, BulkIdsParams>({
+      query: (body) => ({ url: '/bulk-accept', method: 'POST', body }),
+      invalidatesTags: ['Application'],
+    }),
+    bulkReject: builder.mutation<BulkOperationResult, BulkIdsParams>({
+      query: (body) => ({ url: '/bulk-reject', method: 'POST', body }),
+      invalidatesTags: ['Application'],
+    }),
   }),
 });
 
@@ -78,4 +105,7 @@ export const {
   useFailStepMutation,
   useAcceptApplicationMutation,
   useRejectApplicationMutation,
+  useBulkUpdateStepMutation,
+  useBulkAcceptMutation,
+  useBulkRejectMutation,
 } = applicationsApi;

@@ -1,14 +1,38 @@
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../../../lib/format';
-import { deriveStatus, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
+import { deriveStatus, getCurrentStepInfo, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
 import type { ApplicationDto } from '../../../types/api';
 
 interface ApplicationsTableProps {
   applications: ApplicationDto[];
+  selectedIds: Set<number>;
+  onSelectionChange: (ids: Set<number>) => void;
 }
 
-export function ApplicationsTable({ applications }: ApplicationsTableProps) {
+export function ApplicationsTable({ applications, selectedIds, onSelectionChange }: ApplicationsTableProps) {
   const navigate = useNavigate();
+
+  const allSelected = applications.length > 0 && applications.every((a) => selectedIds.has(a.id));
+  const someSelected = applications.some((a) => selectedIds.has(a.id));
+
+  const toggleAll = () => {
+    if (allSelected) {
+      const next = new Set(selectedIds);
+      applications.forEach((a) => next.delete(a.id));
+      onSelectionChange(next);
+    } else {
+      const next = new Set(selectedIds);
+      applications.forEach((a) => next.add(a.id));
+      onSelectionChange(next);
+    }
+  };
+
+  const toggleOne = (id: number) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSelectionChange(next);
+  };
 
   if (applications.length === 0) {
     return (
@@ -23,33 +47,57 @@ export function ApplicationsTable({ applications }: ApplicationsTableProps) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-            <th className="px-6 py-3 w-12">No</th>
-            <th className="px-6 py-3">Candidate</th>
-            <th className="px-6 py-3 hidden md:table-cell">Job Post</th>
-            <th className="px-6 py-3 hidden lg:table-cell">Applied At</th>
-            <th className="px-6 py-3">Status</th>
+            <th className="px-4 py-3 w-10">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                onChange={toggleAll}
+                className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181]/20 cursor-pointer"
+              />
+            </th>
+            <th className="px-4 py-3 w-10">No</th>
+            <th className="px-4 py-3">Candidate</th>
+            <th className="px-4 py-3 hidden md:table-cell">Job Post</th>
+            <th className="px-4 py-3 hidden lg:table-cell">Applied At</th>
+            <th className="px-4 py-3">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {applications.map((app, idx) => {
             const status = deriveStatus(app);
+            const stepInfo = getCurrentStepInfo(app);
+            const checked = selectedIds.has(app.id);
             return (
               <tr
                 key={app.id}
                 onClick={() => navigate(`/applications/${app.id}`)}
-                className="hover:bg-gray-50 transition-colors cursor-pointer"
+                className={`transition-colors cursor-pointer ${checked ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'}`}
               >
-                <td className="px-6 py-4 text-gray-400 font-mono text-xs">{idx + 1}</td>
-                <td className="px-6 py-4">
+                <td className="px-4 py-4" onClick={(e) => { e.stopPropagation(); toggleOne(app.id); }}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleOne(app.id)}
+                    className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181]/20 cursor-pointer"
+                  />
+                </td>
+                <td className="px-4 py-4 text-gray-400 font-mono text-xs">{idx + 1}</td>
+                <td className="px-4 py-4">
                   <div className="font-medium text-gray-900">{app.candidateName || '—'}</div>
                   <div className="text-xs text-gray-400">{app.candidateEmail}</div>
                 </td>
-                <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{app.jobPostTitle}</td>
-                <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">{formatDate(app.appliedAt)}</td>
-                <td className="px-6 py-4">
+                <td className="px-4 py-4 text-gray-500 hidden md:table-cell">{app.jobPostTitle}</td>
+                <td className="px-4 py-4 text-gray-500 hidden lg:table-cell">{formatDate(app.appliedAt)}</td>
+                <td className="px-4 py-4">
                   <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
                     {STATUS_LABEL[status] ?? status}
                   </span>
+                  {stepInfo && (
+                    <div className="mt-1 text-xs text-gray-400">
+                      Step {stepInfo.stepOrder}/{stepInfo.total} · {stepInfo.stepName}
+                    </div>
+                  )}
                 </td>
               </tr>
             );

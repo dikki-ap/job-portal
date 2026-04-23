@@ -1,5 +1,8 @@
 using JobPortal.Application.Common;
 using JobPortal.Application.Features.Applications.Commands.AcceptApplication;
+using JobPortal.Application.Features.Applications.Commands.BulkAcceptApplication;
+using JobPortal.Application.Features.Applications.Commands.BulkRejectApplication;
+using JobPortal.Application.Features.Applications.Commands.BulkUpdateApplicationStep;
 using JobPortal.Application.Features.Applications.Commands.RejectApplication;
 using JobPortal.Application.Features.Applications.Commands.UpdateApplicationStep;
 using JobPortal.Application.Features.Applications.Queries.GetAllApplications;
@@ -84,5 +87,43 @@ public class ApplicationsController(IMediator mediator, ILogger<ApplicationsCont
         }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    [HttpPost("bulk-step")]
+    public async Task<IActionResult> BulkUpdateStep(
+        [FromBody] BulkUpdateApplicationStepCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (command.ApplicationIds is null || command.ApplicationIds.Count == 0)
+            return BadRequest(new { error = "No application IDs provided." });
+        if (command.Action is not (ApplicationStepStatus.Passed or ApplicationStepStatus.Failed))
+            return BadRequest(new { error = "Action must be 'Passed' or 'Failed'." });
+
+        var result = await mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("bulk-accept")]
+    public async Task<IActionResult> BulkAccept(
+        [FromBody] BulkAcceptApplicationCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (command.ApplicationIds is null || command.ApplicationIds.Count == 0)
+            return BadRequest(new { error = "No application IDs provided." });
+
+        var result = await mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("bulk-reject")]
+    public async Task<IActionResult> BulkReject(
+        [FromBody] BulkRejectApplicationCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (command.ApplicationIds is null || command.ApplicationIds.Count == 0)
+            return BadRequest(new { error = "No application IDs provided." });
+
+        var result = await mediator.Send(command, cancellationToken);
+        return Ok(result);
     }
 }

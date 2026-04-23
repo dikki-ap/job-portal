@@ -1,3 +1,4 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,15 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .Include(a => a.Documents).ThenInclude(d => d.Document)
             .Where(a => !a.IsDeleted)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+
+    public async Task<List<ApplicationEntity>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.ToList();
+        return await context.Applications
+            .Include(a => a.Steps).ThenInclude(s => s.JobStep)
+            .Where(a => !a.IsDeleted && idList.Contains(a.Id))
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task<IEnumerable<ApplicationEntity>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
         => await context.Applications
@@ -63,4 +73,80 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => await context.SaveChangesAsync(cancellationToken);
+
+    // --- Bulk operations ---
+
+    public async Task<int> BulkRejectAsync(IEnumerable<int> appIds, DateTime updatedAt, CancellationToken cancellationToken = default)
+    {
+        var ids = appIds.ToList();
+        return await context.Applications
+            .Where(a => ids.Contains(a.Id) && !a.IsDeleted
+                     && a.Status != ApplicationStatus.Accepted
+                     && a.Status != ApplicationStatus.Rejected)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.Status, ApplicationStatus.Rejected)
+                .SetProperty(x => x.UpdatedAt, updatedAt),
+                cancellationToken);
+    }
+
+    public async Task<int> BulkAcceptAsync(IEnumerable<int> appIds, DateTime updatedAt, CancellationToken cancellationToken = default)
+    {
+        var ids = appIds.ToList();
+        return await context.Applications
+            .Where(a => ids.Contains(a.Id) && !a.IsDeleted
+                     && a.Status != ApplicationStatus.Accepted
+                     && a.Status != ApplicationStatus.Rejected)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.Status, ApplicationStatus.Accepted)
+                .SetProperty(x => x.UpdatedAt, updatedAt),
+                cancellationToken);
+    }
+
+    public async Task BulkSetInReviewAsync(IEnumerable<int> appIds, DateTime updatedAt, CancellationToken cancellationToken = default)
+    {
+        var ids = appIds.ToList();
+        await context.Applications
+            .Where(a => ids.Contains(a.Id) && !a.IsDeleted && a.Status == ApplicationStatus.Pending)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.Status, ApplicationStatus.InReview)
+                .SetProperty(x => x.UpdatedAt, updatedAt),
+                cancellationToken);
+    }
+
+    public async Task BulkPassStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, CancellationToken cancellationToken = default)
+    {
+        var ids = stepIds.ToList();
+        await context.ApplicationSteps
+            .Where(s => ids.Contains(s.Id))
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.Status, ApplicationStepStatus.Passed)
+                .SetProperty(x => x.CompletedAt, completedAt),
+                cancellationToken);
+    }
+
+    public async Task BulkFailStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, CancellationToken cancellationToken = default)
+    {
+        var ids = stepIds.ToList();
+        await context.ApplicationSteps
+            .Where(s => ids.Contains(s.Id))
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.Status, ApplicationStepStatus.Failed)
+                .SetProperty(x => x.CompletedAt, completedAt),
+                cancellationToken);
+    }
+
+    public async Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default)
+    {
+        await using var tx = await context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await action();
+            await tx.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await tx.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 }

@@ -5,6 +5,7 @@ using JobPortal.Application.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
+
 namespace JobPortal.Application.Features.Applications.Commands.RejectApplication;
 
 public class RejectApplicationCommandHandler(
@@ -22,8 +23,16 @@ public class RejectApplicationCommandHandler(
             if (application.Status == ApplicationStatus.Accepted)
                 throw new InvalidOperationException("An accepted application cannot be rejected.");
 
+            var now = DateTime.UtcNow;
             application.Status = ApplicationStatus.Rejected;
-            application.UpdatedAt = DateTime.UtcNow;
+            application.UpdatedAt = now;
+
+            var currentStep = ApplicationStepHelper.FindCurrentActiveStep(application);
+            if (currentStep is not null)
+            {
+                currentStep.Status = ApplicationStepStatus.Failed;
+                currentStep.CompletedAt = now;
+            }
 
             await repository.UpdateAsync(application, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
