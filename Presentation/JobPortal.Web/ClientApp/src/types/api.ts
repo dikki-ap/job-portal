@@ -127,6 +127,10 @@ export interface JobStepDto {
   name: string;
   stepOrder: number;
   isRequired: boolean;
+  passEmailSubject: string | null;
+  passEmailBody: string | null;
+  failEmailSubject: string | null;
+  failEmailBody: string | null;
 }
 
 export interface JobRequiredDocumentDto {
@@ -191,6 +195,10 @@ export interface HiringTemplateStepDto {
   name: string;
   stepOrder: number;
   isRequired: boolean;
+  passEmailSubject: string | null;
+  passEmailBody: string | null;
+  failEmailSubject: string | null;
+  failEmailBody: string | null;
 }
 
 export interface HiringTemplateDto {

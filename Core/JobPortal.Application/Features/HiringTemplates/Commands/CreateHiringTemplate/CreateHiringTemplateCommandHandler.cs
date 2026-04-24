@@ -32,6 +32,10 @@ public class CreateHiringTemplateCommandHandler(
                     Name = s.Name,
                     StepOrder = i + 1,
                     IsRequired = s.IsRequired,
+                    PassEmailSubject = s.PassEmailSubject,
+                    PassEmailBody = s.PassEmailBody,
+                    FailEmailSubject = s.FailEmailSubject,
+                    FailEmailBody = s.FailEmailBody,
                 }).ToList(),
             };
 

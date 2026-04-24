@@ -1,13 +1,17 @@
 using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
+using JobPortal.Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using ApplicationEntity = JobPortal.Domain.Entities.Applications.Application;
+using ApplicationStep = JobPortal.Domain.Entities.Applications.ApplicationStep;
 
 namespace JobPortal.Application.Features.Applications.Commands.BulkRejectApplication;
 
 public class BulkRejectApplicationCommandHandler(
     IApplicationRepository repository,
+    IEmailService emailService,
     ILogger<BulkRejectApplicationCommandHandler> logger)
     : IRequestHandler<BulkRejectApplicationCommand, BulkOperationResultDto>
 {
@@ -20,6 +24,7 @@ public class BulkRejectApplicationCommandHandler(
 
         var stepIdsToFail  = new List<int>();
         var appIdsToReject = new List<int>();
+        var emailQueue = new List<(ApplicationEntity App, ApplicationStep Step, bool Passed)>();
         var skipped = 0;
 
         foreach (var app in applications)
@@ -35,7 +40,10 @@ public class BulkRejectApplicationCommandHandler(
             // Fail the current active step if one exists
             var currentStep = ApplicationStepHelper.FindCurrentActiveStep(app);
             if (currentStep is not null)
+            {
                 stepIdsToFail.Add(currentStep.Id);
+                emailQueue.Add((app, currentStep, false));
+            }
         }
 
         skipped += ids.Count - applications.Count;
@@ -52,6 +60,8 @@ public class BulkRejectApplicationCommandHandler(
         }
 
         logger.LogInformation("BulkReject succeeded={S} skipped={Sk}", succeeded, skipped);
+
+        StepEmailHelper.FireAndForgetBulkEmails(emailService, logger, emailQueue);
 
         return new BulkOperationResultDto(succeeded, skipped, []);
     }

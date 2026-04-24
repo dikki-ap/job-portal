@@ -55,6 +55,10 @@ public class UpdateJobPostCommandHandler(
                     existingSteps[i].Name = incomingSteps[i].Name;
                     existingSteps[i].StepOrder = i + 1;
                     existingSteps[i].IsRequired = incomingSteps[i].IsRequired;
+                    existingSteps[i].PassEmailSubject = incomingSteps[i].PassEmailSubject;
+                    existingSteps[i].PassEmailBody = incomingSteps[i].PassEmailBody;
+                    existingSteps[i].FailEmailSubject = incomingSteps[i].FailEmailSubject;
+                    existingSteps[i].FailEmailBody = incomingSteps[i].FailEmailBody;
                 }
                 else
                 {
@@ -63,6 +67,10 @@ public class UpdateJobPostCommandHandler(
                         Name = incomingSteps[i].Name,
                         StepOrder = i + 1,
                         IsRequired = incomingSteps[i].IsRequired,
+                        PassEmailSubject = incomingSteps[i].PassEmailSubject,
+                        PassEmailBody = incomingSteps[i].PassEmailBody,
+                        FailEmailSubject = incomingSteps[i].FailEmailSubject,
+                        FailEmailBody = incomingSteps[i].FailEmailBody,
                         CreatedAt = now,
                         CreatedByUserId = userId ?? 0,
                     });
@@ -102,7 +110,8 @@ public class UpdateJobPostCommandHandler(
                 jobPost.MinSalary, jobPost.MaxSalary, jobPost.IsSalaryVisible,
                 jobPost.CurrencyTypeId, jobPost.CurrencyType?.Prefix,
                 jobPost.Quota, jobPost.PublishDate, jobPost.CloseDate,
-                jobPost.JobSteps.OrderBy(s => s.StepOrder).Select(s => new JobStepDto(s.Id, s.Name, s.StepOrder, s.IsRequired)),
+                jobPost.JobSteps.OrderBy(s => s.StepOrder).Select(s => new JobStepDto(s.Id, s.Name, s.StepOrder, s.IsRequired,
+                    s.PassEmailSubject, s.PassEmailBody, s.FailEmailSubject, s.FailEmailBody)),
                 jobPost.RequiredSkills.Select(s => new JobSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty)),
                 jobPost.RequiredDocuments.Select(d => new JobRequiredDocumentDto(d.DocumentTypeId, d.DocumentType?.Name ?? string.Empty, d.IsRequired)),
                 jobPost.CreatedAt,

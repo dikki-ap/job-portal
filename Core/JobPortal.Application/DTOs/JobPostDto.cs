@@ -1,6 +1,14 @@
 namespace JobPortal.Application.DTOs;
 
-public record JobStepDto(int Id, string Name, int StepOrder, bool IsRequired);
+public record JobStepDto(
+    int Id,
+    string Name,
+    int StepOrder,
+    bool IsRequired,
+    string? PassEmailSubject,
+    string? PassEmailBody,
+    string? FailEmailSubject,
+    string? FailEmailBody);
 
 public record JobSkillDto(int Id, string Name);
 

@@ -5,6 +5,10 @@ import type { JobPostDto } from '../../../types/api';
 interface JobStepInput {
   name: string;
   isRequired: boolean;
+  passEmailSubject?: string | null;
+  passEmailBody?: string | null;
+  failEmailSubject?: string | null;
+  failEmailBody?: string | null;
 }
 
 interface CreateJobPostInput {

@@ -5,6 +5,10 @@ import keycloak from "../../../lib/keycloak";
 interface StepRequest {
   name: string;
   isRequired: boolean;
+  passEmailSubject?: string | null;
+  passEmailBody?: string | null;
+  failEmailSubject?: string | null;
+  failEmailBody?: string | null;
 }
 
 interface CreateHiringTemplateRequest {

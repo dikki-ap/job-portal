@@ -2,6 +2,7 @@ using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Features.Applications.Queries.GetAllApplications;
 using JobPortal.Application.Interfaces.Repositories;
+using JobPortal.Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -9,6 +10,7 @@ namespace JobPortal.Application.Features.Applications.Commands.UpdateApplication
 
 public class UpdateApplicationStepCommandHandler(
     IApplicationRepository repository,
+    IEmailService emailService,
     ILogger<UpdateApplicationStepCommandHandler> logger)
     : IRequestHandler<UpdateApplicationStepCommand, ApplicationDto>
 {
@@ -61,6 +63,10 @@ public class UpdateApplicationStepCommandHandler(
             await repository.SaveChangesAsync(cancellationToken);
 
             logger.LogInformation("ApplicationStep updated id={StepId} status={Status}", step.Id, step.Status);
+
+            var passed = request.StepStatus == ApplicationStepStatus.Passed;
+            _ = StepEmailHelper.SendStepEmailAsync(emailService, logger, application, step, passed, CancellationToken.None);
+
             return GetAllApplicationsQueryHandler.MapToDto(application);
         }
         catch (Exception ex) when (ex is not KeyNotFoundException and not InvalidOperationException)

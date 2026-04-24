@@ -1,13 +1,17 @@
 using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
+using JobPortal.Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using ApplicationEntity = JobPortal.Domain.Entities.Applications.Application;
+using ApplicationStep = JobPortal.Domain.Entities.Applications.ApplicationStep;
 
 namespace JobPortal.Application.Features.Applications.Commands.BulkUpdateApplicationStep;
 
 public class BulkUpdateApplicationStepCommandHandler(
     IApplicationRepository repository,
+    IEmailService emailService,
     ILogger<BulkUpdateApplicationStepCommandHandler> logger)
     : IRequestHandler<BulkUpdateApplicationStepCommand, BulkOperationResultDto>
 {
@@ -24,6 +28,7 @@ public class BulkUpdateApplicationStepCommandHandler(
         var appIdsToAccept  = new List<int>();
         var appIdsToReject  = new List<int>();
         var appIdsToInReview = new List<int>();
+        var emailQueue = new List<(ApplicationEntity App, ApplicationStep Step, bool Passed)>();
         var skipped = 0;
 
         foreach (var app in applications)
@@ -44,6 +49,7 @@ public class BulkUpdateApplicationStepCommandHandler(
             if (request.Action == ApplicationStepStatus.Passed)
             {
                 stepIdsToPass.Add(currentStep.Id);
+                emailQueue.Add((app, currentStep, true));
                 if (ApplicationStepHelper.IsLastRequiredStep(app, currentStep))
                 {
                     appIdsToAccept.Add(app.Id);
@@ -57,6 +63,7 @@ public class BulkUpdateApplicationStepCommandHandler(
             {
                 stepIdsToFail.Add(currentStep.Id);
                 appIdsToReject.Add(app.Id);
+                emailQueue.Add((app, currentStep, false));
             }
         }
 
@@ -82,6 +89,8 @@ public class BulkUpdateApplicationStepCommandHandler(
 
         logger.LogInformation("BulkUpdateStep action={Action} succeeded={S} skipped={Sk}",
             request.Action, succeeded, skipped);
+
+        StepEmailHelper.FireAndForgetBulkEmails(emailService, logger, emailQueue);
 
         return new BulkOperationResultDto(succeeded, skipped, []);
     }

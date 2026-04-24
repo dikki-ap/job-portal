@@ -45,6 +45,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Storage"));
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddInfrastructure();
 
 builder.Services.AddHttpContextAccessor();

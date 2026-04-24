@@ -2,14 +2,15 @@ using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Features.Applications.Queries.GetAllApplications;
 using JobPortal.Application.Interfaces.Repositories;
+using JobPortal.Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
-
 
 namespace JobPortal.Application.Features.Applications.Commands.RejectApplication;
 
 public class RejectApplicationCommandHandler(
     IApplicationRepository repository,
+    IEmailService emailService,
     ILogger<RejectApplicationCommandHandler> logger)
     : IRequestHandler<RejectApplicationCommand, ApplicationDto>
 {
@@ -38,6 +39,10 @@ public class RejectApplicationCommandHandler(
             await repository.SaveChangesAsync(cancellationToken);
 
             logger.LogInformation("Application rejected id={Id}", request.Id);
+
+            if (currentStep is not null)
+                _ = StepEmailHelper.SendStepEmailAsync(emailService, logger, application, currentStep, false, CancellationToken.None);
+
             return GetAllApplicationsQueryHandler.MapToDto(application);
         }
         catch (Exception ex) when (ex is not KeyNotFoundException and not InvalidOperationException)

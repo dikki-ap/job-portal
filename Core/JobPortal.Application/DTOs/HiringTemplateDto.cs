@@ -1,6 +1,14 @@
 namespace JobPortal.Application.DTOs;
 
-public record HiringTemplateStepDto(int Id, string Name, int StepOrder, bool IsRequired);
+public record HiringTemplateStepDto(
+    int Id,
+    string Name,
+    int StepOrder,
+    bool IsRequired,
+    string? PassEmailSubject,
+    string? PassEmailBody,
+    string? FailEmailSubject,
+    string? FailEmailBody);
 
 public record HiringTemplateDto(
     int Id,
