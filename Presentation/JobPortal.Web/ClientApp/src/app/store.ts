@@ -16,6 +16,8 @@ import { careersApi } from '../features/careers/api/careersApi';
 import { documentsApi } from '../features/documents/api/documentsApi';
 import { myApplicationsApi } from '../features/myApplications/api/myApplicationsApi';
 import { candidateProfileApi } from '../features/candidateProfile/api/candidateProfileApi';
+import { approvalLevelsApi } from '../features/approvalLevels/api/approvalLevelsApi';
+import { approvalsApi } from '../features/approvals/api/approvalsApi';
 
 export const store = configureStore({
   reducer: {
@@ -36,6 +38,8 @@ export const store = configureStore({
     [documentsApi.reducerPath]: documentsApi.reducer,
     [myApplicationsApi.reducerPath]: myApplicationsApi.reducer,
     [candidateProfileApi.reducerPath]: candidateProfileApi.reducer,
+    [approvalLevelsApi.reducerPath]: approvalLevelsApi.reducer,
+    [approvalsApi.reducerPath]: approvalsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -55,7 +59,9 @@ export const store = configureStore({
       .concat(careersApi.middleware)
       .concat(documentsApi.middleware)
       .concat(myApplicationsApi.middleware)
-      .concat(candidateProfileApi.middleware),
+      .concat(candidateProfileApi.middleware)
+      .concat(approvalLevelsApi.middleware)
+      .concat(approvalsApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

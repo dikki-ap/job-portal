@@ -33,7 +33,7 @@ public class SmtpEmailService(IOptions<SmtpOptions> options, ILogger<SmtpEmailSe
             await client.ConnectAsync(_smtp.Host, _smtp.Port, socketOptions, cancellationToken);
 
             if (!string.IsNullOrWhiteSpace(_smtp.Username))
-                await client.AuthenticateAsync(_smtp.Username, _smtp.Password, cancellationToken);
+                await client.AuthenticateAsync(_smtp.Username, _smtp.Password ?? string.Empty, cancellationToken);
 
             await client.SendAsync(message, cancellationToken);
             await client.DisconnectAsync(true, cancellationToken);

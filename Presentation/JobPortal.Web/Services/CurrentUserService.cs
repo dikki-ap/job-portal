@@ -1,9 +1,10 @@
 using System.Security.Claims;
 using JobPortal.Application.Interfaces.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace JobPortal.Web.Services;
 
-public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
+public class CurrentUserService(IHttpContextAccessor httpContextAccessor, IConfiguration configuration) : ICurrentUserService
 {
     public int? GetCurrentUserId()
     {
@@ -13,4 +14,16 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
 
     public string? GetCurrentUserExternalId()
         => httpContextAccessor.HttpContext?.User.FindFirstValue("sub");
+
+    public string? GetCurrentUserEmail()
+        => httpContextAccessor.HttpContext?.User.FindFirstValue("email");
+
+    public string GetBaseUrl()
+    {
+        var configured = configuration["App:BaseUrl"];
+        if (!string.IsNullOrWhiteSpace(configured)) return configured.TrimEnd('/');
+        var req = httpContextAccessor.HttpContext?.Request;
+        if (req is null) return string.Empty;
+        return $"{req.Scheme}://{req.Host}";
+    }
 }

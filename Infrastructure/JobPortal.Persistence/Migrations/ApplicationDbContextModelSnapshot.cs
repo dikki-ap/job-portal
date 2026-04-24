@@ -225,6 +225,59 @@ namespace JobPortal.Persistence.Migrations
                     b.ToTable("Documents");
                 });
 
+            modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.ApprovalLevel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApproverEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("varchar(320)");
+
+                    b.Property<string>("ApproverName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("LevelOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("LevelOrder")
+                        .IsUnique();
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.ToTable("ApprovalLevels");
+                });
+
             modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.HiringTemplate", b =>
                 {
                     b.Property<int>("Id")
@@ -356,8 +409,15 @@ namespace JobPortal.Persistence.Migrations
                     b.Property<int>("ApprovalInstanceId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ApproverUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("ApproverEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("varchar(320)");
+
+                    b.Property<string>("ApproverName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("Comment")
                         .HasMaxLength(1000)
@@ -374,8 +434,6 @@ namespace JobPortal.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApprovalInstanceId");
-
-                    b.HasIndex("ApproverUserId");
 
                     b.ToTable("JobApprovalInstanceSteps");
                 });
@@ -1598,6 +1656,24 @@ namespace JobPortal.Persistence.Migrations
                     b.Navigation("UpdatedByUser");
                 });
 
+            modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.ApprovalLevel", b =>
+                {
+                    b.HasOne("JobPortal.Domain.Entities.Users.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("JobPortal.Domain.Entities.Users.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
             modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.HiringTemplate", b =>
                 {
                     b.HasOne("JobPortal.Domain.Entities.Users.User", "CreatedByUser")
@@ -1646,15 +1722,7 @@ namespace JobPortal.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("JobPortal.Domain.Entities.Users.User", "Approver")
-                        .WithMany()
-                        .HasForeignKey("ApproverUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("ApprovalInstance");
-
-                    b.Navigation("Approver");
                 });
 
             modelBuilder.Entity("JobPortal.Domain.Entities.Jobs.JobPost", b =>

@@ -260,3 +260,39 @@ export interface EducationMajorDto {
   updatedByUserId: number | null;
   updatedByName: string | null;
 }
+
+export interface ApprovalLevelDto {
+  id: number;
+  name: string;
+  levelOrder: number;
+  approverName: string;
+  approverEmail: string;
+  isActive: boolean;
+  createdAt: string;
+  createdByName: string | null;
+}
+
+export interface PendingApprovalDto {
+  jobPostId: number;
+  jobTitle: string;
+  department: string;
+  currentStepOrder: number;
+  totalSteps: number;
+  submittedAt: string;
+}
+
+export interface ApprovalStepStatusDto {
+  stepOrder: number;
+  approverName: string;
+  approverEmail: string;
+  status: string;
+  comment: string | null;
+  actionAt: string | null;
+}
+
+export interface ApprovalStatusDto {
+  instanceStatus: string;
+  startedAt: string;
+  completedAt: string | null;
+  steps: ApprovalStepStatusDto[];
+}
