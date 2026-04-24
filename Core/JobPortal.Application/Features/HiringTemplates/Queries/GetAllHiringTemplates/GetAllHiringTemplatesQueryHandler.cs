@@ -28,7 +28,9 @@ public class GetAllHiringTemplatesQueryHandler(
         t.Id,
         t.Name,
         t.Description,
-        t.Steps.OrderBy(s => s.StepOrder).Select(s => new HiringTemplateStepDto(s.Id, s.Name, s.StepOrder, s.IsRequired)),
+        t.Steps.OrderBy(s => s.StepOrder).Select(s => new HiringTemplateStepDto(
+            s.Id, s.Name, s.StepOrder, s.IsRequired,
+            s.PassEmailSubject, s.PassEmailBody, s.FailEmailSubject, s.FailEmailBody)),
         t.CreatedAt,
         t.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null,
         t.UpdatedAt,

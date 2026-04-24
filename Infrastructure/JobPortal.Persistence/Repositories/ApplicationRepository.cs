@@ -34,6 +34,8 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
     {
         var idList = ids.ToList();
         return await context.Applications
+            .Include(a => a.User)
+            .Include(a => a.JobPost)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
             .Where(a => !a.IsDeleted && idList.Contains(a.Id))
             .ToListAsync(cancellationToken);

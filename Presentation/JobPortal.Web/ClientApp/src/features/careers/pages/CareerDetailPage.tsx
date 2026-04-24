@@ -108,7 +108,7 @@ export function CareerDetailPage() {
       {/* Description */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-3">
         <h2 className="text-base font-semibold text-gray-900">Job Description</h2>
-        <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{job.description}</div>
+        <div className="prose" dangerouslySetInnerHTML={{ __html: job.description }} />
       </div>
 
       {/* Hiring Pipeline */}
