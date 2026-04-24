@@ -7,11 +7,12 @@ import { Pagination } from '../../../components/ui/Pagination';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { JobPostsTable } from '../components/JobPostsTable';
 import { useGetJobPostsQuery } from '../api/jobPostsApi';
+import { useGetApprovalLevelsQuery } from '../../approvalLevels/api/approvalLevelsApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useToast } from '../../../hooks/useToast';
 
-const STATUS_FILTERS = ['All', 'Draft', 'Published', 'Closed'] as const;
-type StatusFilter = (typeof STATUS_FILTERS)[number];
+const STATUS_FILTERS = ['All', 'Draft', 'PendingApproval', 'Published', 'Closed', 'Rejected'] as const;
+type StatusFilter = typeof STATUS_FILTERS[number];
 
 export function JobPostsPage() {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ export function JobPostsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
   const { toasts, addToast, dismissToast } = useToast();
   const { data: jobPosts = [], isLoading, isError } = useGetJobPostsQuery();
+  const { data: approvalLevels = [] } = useGetApprovalLevelsQuery();
+  const hasActiveLevels = approvalLevels.some((l) => l.isActive);
 
   const filtered = useMemo(() => jobPosts.filter((jp) => {
     const matchSearch = jp.title.toLowerCase().includes(search.toLowerCase());
@@ -36,11 +39,11 @@ export function JobPostsPage() {
       </div>
 
       {/* Status filter tabs */}
-      <div className="flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 w-fit">
+      <div className="flex flex-wrap gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1 w-fit">
         {STATUS_FILTERS.map((f) => (
           <button key={f} type="button" onClick={() => setStatusFilter(f)}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${statusFilter === f ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            {f}
+            {f === 'PendingApproval' ? 'Pending Approval' : f}
           </button>
         ))}
       </div>
@@ -59,7 +62,7 @@ export function JobPostsPage() {
       {isError && <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">Failed to load job posts. Please try again.</div>}
       {!isLoading && !isError && (
         <>
-          <JobPostsTable jobPosts={paginated} onSuccess={(msg) => addToast(msg, 'success')} onError={(msg) => addToast(msg, 'error')} />
+          <JobPostsTable jobPosts={paginated} hasActiveLevels={hasActiveLevels} onSuccess={(msg) => addToast(msg, 'success')} onError={(msg) => addToast(msg, 'error')} />
           <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} from={from} to={to} pageSize={pageSize} onPageChange={goToPage} onPageSizeChange={setPageSize} />
         </>
       )}

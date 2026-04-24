@@ -8,12 +8,9 @@ public class JobApprovalInstanceStepConfiguration : IEntityTypeConfiguration<Job
 {
     public void Configure(EntityTypeBuilder<JobApprovalInstanceStep> builder)
     {
+        builder.Property(s => s.ApproverEmail).HasMaxLength(320).IsRequired();
+        builder.Property(s => s.ApproverName).HasMaxLength(200).IsRequired();
         builder.Property(s => s.Status).HasMaxLength(50).IsRequired();
         builder.Property(s => s.Comment).HasMaxLength(1000);
-
-        builder.HasOne(s => s.Approver)
-            .WithMany()
-            .HasForeignKey(s => s.ApproverUserId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

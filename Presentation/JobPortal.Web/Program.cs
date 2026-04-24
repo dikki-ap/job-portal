@@ -104,6 +104,16 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = 404;
             await context.Response.WriteAsJsonAsync(new { error = ex.Message });
         }
+        else if (ex is InvalidOperationException)
+        {
+            context.Response.StatusCode = 400;
+            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+        }
+        else if (ex is UnauthorizedAccessException)
+        {
+            context.Response.StatusCode = 403;
+            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+        }
         else
         {
             context.Response.StatusCode = 500;

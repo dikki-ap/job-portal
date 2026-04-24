@@ -44,6 +44,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<JobStep> JobSteps => Set<JobStep>();
     public DbSet<HiringTemplate> HiringTemplates => Set<HiringTemplate>();
     public DbSet<HiringTemplateStep> HiringTemplateSteps => Set<HiringTemplateStep>();
+    public DbSet<ApprovalLevel> ApprovalLevels => Set<ApprovalLevel>();
     public DbSet<JobApprovalInstance> JobApprovalInstances => Set<JobApprovalInstance>();
     public DbSet<JobApprovalInstanceStep> JobApprovalInstanceSteps => Set<JobApprovalInstanceStep>();
 

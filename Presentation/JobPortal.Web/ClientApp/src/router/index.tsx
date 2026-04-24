@@ -28,6 +28,9 @@ import { ApplyPage } from '../features/careers/pages/ApplyPage';
 import { MyApplicationsPage } from '../features/myApplications/pages/MyApplicationsPage';
 import { MyApplicationDetailPage } from '../features/myApplications/pages/MyApplicationDetailPage';
 import { CandidateProfilePage } from '../features/candidateProfile/pages/CandidateProfilePage';
+import { ApprovalLevelsPage } from '../features/approvalLevels/pages/ApprovalLevelsPage';
+import { MyApprovalsPage } from '../features/approvals/pages/MyApprovalsPage';
+import { JobPostApprovalReviewPage } from '../features/approvals/pages/JobPostApprovalReviewPage';
 
 const HR_ADMIN_ROLES = ['Admin', 'HR'];
 const ADMIN_ROLES = ['Admin'];
@@ -71,6 +74,10 @@ export function AppRouter() {
           <Route path="applications/:id" element={<ApplicationDetailPage />} />
         </Route>
 
+        {/* Approvals — all authenticated users (content filtered by API) */}
+        <Route path="approvals" element={<MyApprovalsPage />} />
+        <Route path="jobs/:id/approve" element={<JobPostApprovalReviewPage />} />
+
         {/* Admin-only routes */}
         <Route element={<RoleRoute roles={ADMIN_ROLES} />}>
           <Route path="master/departments" element={<DepartmentsPage />} />
@@ -84,6 +91,7 @@ export function AppRouter() {
           <Route path="master/education-levels" element={<EducationLevelsPage />} />
           <Route path="master/education-majors" element={<EducationMajorsPage />} />
           <Route path="master/hiring-templates" element={<HiringTemplatesPage />} />
+          <Route path="master/approval-levels" element={<ApprovalLevelsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/my-applications" replace />} />

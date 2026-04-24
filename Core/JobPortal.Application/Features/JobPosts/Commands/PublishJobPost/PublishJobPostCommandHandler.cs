@@ -8,6 +8,7 @@ namespace JobPortal.Application.Features.JobPosts.Commands.PublishJobPost;
 
 public class PublishJobPostCommandHandler(
     IJobPostRepository repository,
+    IApprovalLevelRepository approvalLevelRepository,
     ICurrentUserService currentUserService,
     ILogger<PublishJobPostCommandHandler> logger)
     : IRequestHandler<PublishJobPostCommand, Unit>
@@ -21,6 +22,10 @@ public class PublishJobPostCommandHandler(
 
             if (jobPost.Status != JobPostStatus.Draft)
                 throw new InvalidOperationException("Only Draft job posts can be published.");
+
+            var activeLevels = await approvalLevelRepository.GetActiveOrderedAsync(cancellationToken);
+            if (activeLevels.Any())
+                throw new InvalidOperationException("Job posts must go through the approval process before publishing.");
 
             jobPost.Status = JobPostStatus.Published;
             jobPost.PublishDate ??= DateTime.UtcNow;

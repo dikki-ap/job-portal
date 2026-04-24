@@ -4,4 +4,6 @@ public interface ICurrentUserService
 {
     int? GetCurrentUserId();
     string? GetCurrentUserExternalId();
+    string? GetCurrentUserEmail();
+    string GetBaseUrl();
 }

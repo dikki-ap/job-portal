@@ -11,9 +11,11 @@ import {
   ExternalLink,
   ClipboardList,
   UserCircle,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
+import { useIsApproverQuery } from '../../features/approvals/api/approvalsApi';
 
 interface NavItem {
   label: string;
@@ -94,7 +96,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const { isAdmin, isHR, isCandidate } = useAuth();
+  const { isAdmin, isCandidate } = useAuth();
+  const { data: isApprover } = useIsApproverQuery(undefined, { skip: isCandidate });
 
   const hrAdminItems: NavItem[] = [
     { label: 'Dashboard', to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -108,6 +111,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         { label: 'Education Level', to: '/master/education-levels' },
         { label: 'Education Major', to: '/master/education-majors' },
         { label: 'Employment Type', to: '/master/employment-types' },
+        { label: 'Approval Levels', to: '/master/approval-levels' },
         { label: 'Hiring Template', to: '/master/hiring-templates' },
         { label: 'Job Category', to: '/master/job-categories' },
         { label: 'Job Level', to: '/master/job-levels' },
@@ -117,6 +121,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     }] : []),
     { label: 'Job Management', to: '/jobs', icon: <Briefcase className="h-5 w-5" /> },
     { label: 'Applications', to: '/applications', icon: <FileText className="h-5 w-5" /> },
+    ...(isAdmin || isApprover ? [{ label: 'Approvals', to: '/approvals', icon: <ClipboardCheck className="h-5 w-5" /> }] : []),
     {
       label: 'Candidate Portal',
       icon: <Globe className="h-5 w-5" />,
