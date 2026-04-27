@@ -68,7 +68,7 @@ export function AppRouter() {
         {/* Candidate-accessible routes (any authenticated user) */}
         <Route path="profile" element={<CandidateProfilePage />} />
         <Route path="my-applications" element={<MyApplicationsPage />} />
-        <Route path="my-applications/:id" element={<MyApplicationDetailPage />} />
+        <Route path="my-applications/:code" element={<MyApplicationDetailPage />} />
 
         {/* HR + Admin routes */}
         <Route element={<RoleRoute roles={HR_ADMIN_ROLES} />}>

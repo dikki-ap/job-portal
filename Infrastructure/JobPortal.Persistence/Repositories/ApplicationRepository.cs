@@ -33,7 +33,10 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
     public async Task<ApplicationEntity?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
         => await context.Applications
             .Include(a => a.User).ThenInclude(u => u.Profile)
-            .Include(a => a.JobPost)
+            .Include(a => a.JobPost).ThenInclude(j => j.Department)
+            .Include(a => a.JobPost).ThenInclude(j => j.WorkMode)
+            .Include(a => a.JobPost).ThenInclude(j => j.EmploymentType)
+            .Include(a => a.JobPost).ThenInclude(j => j.JobLevel)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
             .Include(a => a.Documents).ThenInclude(d => d.Document)
             .Where(a => !a.IsDeleted)
@@ -52,7 +55,10 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
 
     public async Task<IEnumerable<ApplicationEntity>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
         => await context.Applications
-            .Include(a => a.JobPost)
+            .Include(a => a.JobPost).ThenInclude(j => j.Department)
+            .Include(a => a.JobPost).ThenInclude(j => j.WorkMode)
+            .Include(a => a.JobPost).ThenInclude(j => j.EmploymentType)
+            .Include(a => a.JobPost).ThenInclude(j => j.JobLevel)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
             .Include(a => a.Documents).ThenInclude(d => d.Document)
             .Where(a => !a.IsDeleted && a.UserId == userId)

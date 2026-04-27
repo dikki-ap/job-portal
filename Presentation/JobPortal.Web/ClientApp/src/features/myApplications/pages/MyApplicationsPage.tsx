@@ -51,12 +51,12 @@ export function MyApplicationsPage() {
                       return (
                         <tr
                           key={app.id}
-                          onClick={() => navigate(`/my-applications/${app.id}`)}
+                          onClick={() => navigate(`/my-applications/${app.code}`)}
                           className="hover:bg-gray-50 transition-colors cursor-pointer"
                         >
                           <td className="px-6 py-4">
                             <div className="font-medium text-gray-900">{app.jobPostTitle}</div>
-                            <div className="text-xs text-gray-400">Application #{app.id}</div>
+                            <div className="text-xs text-gray-400">#{app.code}</div>
                           </td>
                           <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{formatDate(app.appliedAt)}</td>
                           <td className="px-6 py-4">
