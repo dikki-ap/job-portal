@@ -250,6 +250,12 @@ export interface ApplicationDto {
   code: string;
   jobPostId: number;
   jobPostTitle: string;
+  jobPostSlug: string | null;
+  jobPostLocation: string | null;
+  jobPostDepartmentName: string | null;
+  jobPostEmploymentTypeName: string | null;
+  jobPostWorkModeName: string | null;
+  jobPostJobLevelName: string | null;
   userId: number;
   candidateName: string;
   candidateEmail: string;

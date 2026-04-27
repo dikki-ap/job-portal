@@ -1,4 +1,4 @@
-using JobPortal.Application.Features.Applications.Queries.GetApplicationById;
+using JobPortal.Application.Features.Applications.Queries.GetApplicationByCode;
 using JobPortal.Application.Features.Applications.Queries.GetMyApplications;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
@@ -23,10 +23,10 @@ public class MyApplicationsController(IMediator mediator, ICurrentUserService cu
         catch (UnauthorizedAccessException ex) { return Unauthorized(new { error = ex.Message }); }
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
+    [HttpGet("{code}")]
+    public async Task<IActionResult> GetByCode(string code, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetApplicationByIdQuery(id), cancellationToken);
+        var result = await mediator.Send(new GetApplicationByCodeQuery(code), cancellationToken);
         if (result is null) return NotFound();
 
         var currentUserId = currentUserService.GetCurrentUserId();

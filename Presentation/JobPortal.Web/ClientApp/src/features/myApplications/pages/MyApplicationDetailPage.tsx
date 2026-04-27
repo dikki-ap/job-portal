@@ -1,8 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, XCircle, Clock, Download, MapPin, Briefcase } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Clock, Download, MapPin, Briefcase, Building2, ExternalLink, BarChart2 } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Button } from '../../../components/ui/Button';
-import { useGetMyApplicationByIdQuery } from '../api/myApplicationsApi';
+import { useGetMyApplicationByCodeQuery } from '../api/myApplicationsApi';
 import { useAuth } from '../../../contexts/AuthContext';
 import { downloadWithAuth } from '../../../lib/download';
 import { formatDate, formatDateTime } from '../../../lib/format';
@@ -35,9 +35,9 @@ function StepIcon({ status }: { status: string }) {
 }
 
 export function MyApplicationDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { code } = useParams<{ code: string }>();
   const { token } = useAuth();
-  const { data: application, isLoading, isError } = useGetMyApplicationByIdQuery(Number(id));
+  const { data: application, isLoading, isError } = useGetMyApplicationByCodeQuery(code!);
 
   if (isLoading) {
     return (
@@ -74,7 +74,7 @@ export function MyApplicationDetailPage() {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex flex-col gap-1">
             <h1 className="text-xl font-bold text-gray-900">{application.jobPostTitle}</h1>
-            <p className="text-sm text-gray-500">Application #{application.id}</p>
+            <p className="text-sm text-gray-500">#{application.code}</p>
           </div>
           <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-medium ${STATUS_BADGE[application.status] ?? 'bg-gray-100 text-gray-600'}`}>
             {STATUS_LABEL[application.status] ?? application.status}
@@ -83,6 +83,53 @@ export function MyApplicationDetailPage() {
         <div className="flex flex-wrap gap-4 text-sm text-gray-500 pt-1 border-t border-gray-100">
           <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-gray-400" />Applied {formatDate(application.appliedAt)}</span>
           <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4 text-gray-400" />Last updated {formatDateTime(application.updatedAt)}</span>
+        </div>
+      </div>
+
+      {/* Job Details */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-gray-900">Job Details</h2>
+          {application.jobPostSlug && (
+            <Link
+              to={`/careers/${application.jobPostSlug}`}
+              className="inline-flex items-center gap-1 text-xs text-[#004181] hover:underline font-medium"
+            >
+              View listing <ExternalLink className="h-3 w-3" />
+            </Link>
+          )}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-700">
+          {application.jobPostDepartmentName && (
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-gray-400 shrink-0" />
+              <span>{application.jobPostDepartmentName}</span>
+            </div>
+          )}
+          {application.jobPostLocation && (
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
+              <span>{application.jobPostLocation}</span>
+            </div>
+          )}
+          {application.jobPostEmploymentTypeName && (
+            <div className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4 text-gray-400 shrink-0" />
+              <span>{application.jobPostEmploymentTypeName}</span>
+            </div>
+          )}
+          {application.jobPostWorkModeName && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+              <span>{application.jobPostWorkModeName}</span>
+            </div>
+          )}
+          {application.jobPostJobLevelName && (
+            <div className="flex items-center gap-2">
+              <BarChart2 className="h-4 w-4 text-gray-400 shrink-0" />
+              <span>{application.jobPostJobLevelName}</span>
+            </div>
+          )}
         </div>
       </div>
 
