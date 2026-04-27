@@ -16,6 +16,7 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
 
         var profile = await context.UserProfiles
             .Include(p => p.EducationLevel)
+            .Include(p => p.EducationMajor)
             .Include(p => p.CvDocument)
             .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
 
@@ -48,6 +49,8 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         {
             existing.PhoneNumber = profile.PhoneNumber;
             existing.EducationLevelId = profile.EducationLevelId;
+            existing.EducationMajorId = profile.EducationMajorId;
+            existing.EducationMajorCustom = profile.EducationMajorCustom;
             existing.UpdatedAt = profile.UpdatedAt;
             existing.UpdatedByUserId = profile.UpdatedByUserId;
             context.UserProfiles.Update(existing);

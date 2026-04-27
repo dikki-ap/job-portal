@@ -10,4 +10,6 @@ public record UpsertCandidateProfileCommand(
     string LastName,
     string PhoneNumber,
     int? EducationLevelId,
+    int? EducationMajorId = null,
+    string? EducationMajorCustom = null,
     List<UpsertSkillItem>? Skills = null) : IRequest<CandidateProfileDto>;

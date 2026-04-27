@@ -15,13 +15,13 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
-        [FromQuery] int? categoryId,
+        [FromQuery] int[]? categoryIds,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 9,
         CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(
-            new GetPublishedJobPostsQuery(search, categoryId, Math.Max(1, page), Math.Clamp(pageSize, 1, 50)),
+            new GetPublishedJobPostsQuery(search, categoryIds, Math.Max(1, page), Math.Clamp(pageSize, 1, 50)),
             cancellationToken);
         return Ok(result);
     }

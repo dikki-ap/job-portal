@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, CheckCircle2, Trash2, Loader2, X, Download } from 'lucide-react';
+import { Upload, CheckCircle2, Trash2, Loader2, X, Download, Search, ChevronDown, Check } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
@@ -9,21 +9,194 @@ import { PhoneInput } from '../../../components/ui/PhoneInput';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import { downloadWithAuth } from '../../../lib/download';
+import { cn } from '../../../lib/utils';
 import { useGetEducationLevelsQuery } from '../../educationLevels/api/educationLevelsApi';
+import { useGetEducationMajorsQuery } from '../../educationMajors/api/educationMajorsApi';
 import {
   useGetProfileQuery,
   useUpsertProfileMutation,
   useUploadCvMutation,
   useRemoveCvMutation,
 } from '../api/candidateProfileApi';
+import type { EducationMajorDto } from '../../../types/api';
 
 const CV_ACCEPT = '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const MAX_VISIBLE_MAJORS = 5;
+
+function MajorPicker({
+  majors,
+  majorId,
+  isOther,
+  customValue,
+  onSelect,
+  onCustomChange,
+}: {
+  majors: EducationMajorDto[];
+  majorId: number | null;
+  isOther: boolean;
+  customValue: string;
+  onSelect: (id: number | null, isOther: boolean) => void;
+  onCustomChange: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [showAll, setShowAll] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = majors.filter((m) =>
+    m.name.toLowerCase().includes(search.toLowerCase()),
+  );
+  const visible = showAll ? filtered : filtered.slice(0, MAX_VISIBLE_MAJORS);
+  const hasValue = isOther || majorId != null;
+  const displayLabel = isOther
+    ? 'Others'
+    : majorId != null
+      ? majors.find((m) => m.id === majorId)?.name ?? '—'
+      : 'Select education major...';
+
+  const selectItem = (id: number | null, other: boolean) => {
+    onSelect(id, other);
+    setOpen(false);
+    setSearch('');
+    setShowAll(false);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-medium text-gray-700">Education Major</label>
+      <div ref={ref} className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className={cn(
+            'h-10 w-full flex items-center justify-between gap-2 rounded-lg border bg-white px-3 text-sm text-left transition-colors',
+            open ? 'border-[#004181] ring-2 ring-[#004181]/20' : 'border-gray-300 hover:bg-gray-50',
+            hasValue ? 'text-gray-900' : 'text-gray-400',
+          )}
+        >
+          <span className="truncate">{displayLabel}</span>
+          <div className="flex items-center gap-1 shrink-0">
+            {hasValue && (
+              <span
+                role="button"
+                tabIndex={-1}
+                onClick={(e) => { e.stopPropagation(); onSelect(null, false); onCustomChange(''); }}
+                className="text-gray-400 hover:text-red-500 transition-colors"
+                title="Clear"
+              >
+                <X className="h-3.5 w-3.5" />
+              </span>
+            )}
+            <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', open && 'rotate-180')} />
+          </div>
+        </button>
+
+        {open && (
+          <div className="absolute left-0 top-full z-20 mt-1 w-full min-w-[240px] rounded-xl border border-gray-200 bg-white shadow-lg">
+            {/* Search */}
+            <div className="p-2 border-b border-gray-100">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Search major..."
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setShowAll(false); }}
+                  className="h-8 w-full rounded-md border border-gray-200 pl-8 pr-3 text-xs focus:border-[#004181] focus:outline-none focus:ring-1 focus:ring-[#004181]/20"
+                />
+              </div>
+            </div>
+
+            {/* Items from master */}
+            <div className="py-1">
+              {visible.length === 0 && (
+                <p className="px-3 py-2 text-xs text-gray-400 text-center">No results.</p>
+              )}
+              {visible.map((m) => {
+                const selected = majorId === m.id && !isOther;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => selectItem(m.id, false)}
+                    className={cn(
+                      'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
+                      selected ? 'bg-blue-50 text-[#004181] font-medium' : 'text-gray-700 hover:bg-gray-50',
+                    )}
+                  >
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                      {selected && <Check className="h-3.5 w-3.5" />}
+                    </span>
+                    {m.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Show more/less */}
+            {filtered.length > MAX_VISIBLE_MAJORS && (
+              <div className="border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAll((v) => !v)}
+                  className="w-full px-3 py-1.5 text-left text-xs font-medium text-[#004181] hover:bg-gray-50"
+                >
+                  {showAll ? 'Show less' : `Show ${filtered.length - MAX_VISIBLE_MAJORS} more`}
+                </button>
+              </div>
+            )}
+
+            {/* Others — always visible */}
+            <div className="border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => selectItem(null, true)}
+                className={cn(
+                  'flex w-full items-center gap-2 px-3 py-2 text-left text-sm italic transition-colors',
+                  isOther ? 'bg-blue-50 text-[#004181] font-medium' : 'text-gray-500 hover:bg-gray-50',
+                )}
+              >
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                  {isOther && <Check className="h-3.5 w-3.5" />}
+                </span>
+                Others (specify below)
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Custom input shown when Others is selected */}
+      {isOther && (
+        <input
+          type="text"
+          placeholder="Enter your major..."
+          value={customValue}
+          onChange={(e) => onCustomChange(e.target.value)}
+          maxLength={255}
+          autoFocus
+          className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20"
+        />
+      )}
+    </div>
+  );
+}
 
 export function CandidateProfilePage() {
   const { token } = useAuth();
   const { toasts, addToast, dismissToast } = useToast();
   const { data: profile, isLoading: profileLoading } = useGetProfileQuery();
   const { data: educationLevels = [] } = useGetEducationLevelsQuery();
+  const { data: educationMajors = [] } = useGetEducationMajorsQuery();
   const [upsertProfile] = useUpsertProfileMutation();
   const [uploadCv] = useUploadCvMutation();
   const [removeCv, { isLoading: removingCv }] = useRemoveCvMutation();
@@ -32,6 +205,9 @@ export function CandidateProfilePage() {
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [educationLevelId, setEducationLevelId] = useState<number | ''>('');
+  const [majorId, setMajorId] = useState<number | null>(null);
+  const [majorIsOther, setMajorIsOther] = useState(false);
+  const [majorCustom, setMajorCustom] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -44,6 +220,15 @@ export function CandidateProfilePage() {
     setLastName(profile.lastName);
     setPhoneNumber(profile.phoneNumber || '');
     setEducationLevelId(profile.educationLevelId ?? '');
+    if (profile.educationMajorCustom) {
+      setMajorId(null);
+      setMajorIsOther(true);
+      setMajorCustom(profile.educationMajorCustom);
+    } else {
+      setMajorId(profile.educationMajorId ?? null);
+      setMajorIsOther(false);
+      setMajorCustom('');
+    }
   }, [profile]);
 
   const validate = () => {
@@ -70,6 +255,8 @@ export function CandidateProfilePage() {
         lastName: lastName.trim(),
         phoneNumber,
         educationLevelId: educationLevelId !== '' ? Number(educationLevelId) : null,
+        educationMajorId: majorIsOther ? null : majorId,
+        educationMajorCustom: majorIsOther ? (majorCustom.trim() || null) : null,
       }).unwrap();
 
       addToast('Profile saved successfully.', 'success');
@@ -91,6 +278,7 @@ export function CandidateProfilePage() {
   };
 
   const sortedEducationLevels = [...educationLevels].sort((a, b) => b.level - a.level);
+  const sortedMajors = [...educationMajors].sort((a, b) => a.name.localeCompare(b.name));
 
   if (profileLoading) {
     return (
@@ -147,6 +335,14 @@ export function CandidateProfilePage() {
           onChange={(e) => setEducationLevelId(e.target.value !== '' ? Number(e.target.value) : '')}
           options={sortedEducationLevels.map((el) => ({ value: el.id, label: el.name }))}
           placeholder="— Select education level —"
+        />
+        <MajorPicker
+          majors={sortedMajors}
+          majorId={majorId}
+          isOther={majorIsOther}
+          customValue={majorCustom}
+          onSelect={(id, other) => { setMajorId(id); setMajorIsOther(other); if (!other) setMajorCustom(''); }}
+          onCustomChange={setMajorCustom}
         />
       </div>
 

@@ -28,7 +28,10 @@ public class GetCandidateProfileQueryHandler(
                 profile?.EducationLevelId,
                 profile?.EducationLevel?.Name,
                 profile?.CvDocumentId,
-                profile?.CvDocument?.OriginalFileName);
+                profile?.CvDocument?.OriginalFileName,
+                profile?.EducationMajorId,
+                profile?.EducationMajor?.Name,
+                profile?.EducationMajorCustom);
         }
         catch (KeyNotFoundException)
         {

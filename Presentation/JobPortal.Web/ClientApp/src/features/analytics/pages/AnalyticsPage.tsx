@@ -22,12 +22,13 @@ const STATUS_COLORS: Record<string, string> = {
   Rejected: '#ef4444',
 };
 
-type DateRange = '30d' | '3m' | '6m' | 'all';
+type DateRange = '30d' | '3m' | '6m' | '1y' | 'all';
 
 const DATE_RANGE_OPTIONS: { id: DateRange; label: string }[] = [
   { id: '30d', label: 'Last 30 days' },
   { id: '3m', label: 'Last 3 months' },
   { id: '6m', label: 'Last 6 months' },
+  { id: '1y', label: 'Last 1 year' },
   { id: 'all', label: 'All time' },
 ];
 
@@ -37,6 +38,7 @@ function filterByDateRange(applications: ApplicationDto[], range: DateRange): Ap
   if (range === '30d') cutoff.setDate(cutoff.getDate() - 30);
   else if (range === '3m') cutoff.setMonth(cutoff.getMonth() - 3);
   else if (range === '6m') cutoff.setMonth(cutoff.getMonth() - 6);
+  else if (range === '1y') cutoff.setFullYear(cutoff.getFullYear() - 1);
   return applications.filter((a) => new Date(a.appliedAt) >= cutoff);
 }
 
@@ -62,7 +64,7 @@ function buildExcelRows(applications: ApplicationDto[], jobPosts: JobPostDto[]) 
   const jpMap = new Map(jobPosts.map((jp) => [jp.id, jp]));
   return applications.map((a) => {
     const jp = jpMap.get(a.jobPostId);
-    const steps = a.steps
+    const steps = [...a.steps]
       .sort((x, y) => x.stepOrder - y.stepOrder)
       .map((s) => `${s.stepName}: ${s.status}`)
       .join(' | ');
@@ -124,7 +126,11 @@ export function AnalyticsPage() {
       .map(([name, value]) => ({ name: name === 'InReview' ? 'In Review' : name, value, key: name }));
   }, [filtered]);
 
-  const monthWindowSize = dateRange === '30d' ? 2 : dateRange === '3m' ? 3 : dateRange === '6m' ? 6 : 12;
+  const monthWindowSize =
+    dateRange === '30d' ? 2 :
+    dateRange === '3m' ? 3 :
+    dateRange === '6m' ? 6 :
+    12; // covers both '1y' and 'all'
 
   const byMonth = useMemo(() => {
     const now = new Date();
