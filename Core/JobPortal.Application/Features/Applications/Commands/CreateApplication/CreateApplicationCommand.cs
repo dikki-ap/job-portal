@@ -3,4 +3,6 @@ using MediatR;
 
 namespace JobPortal.Application.Features.Applications.Commands.CreateApplication;
 
-public record CreateApplicationCommand(int JobPostId, IReadOnlyList<int> DocumentIds) : IRequest<ApplicationDto>;
+public record DocumentInput(int DocumentId, string DocumentTypeName);
+
+public record CreateApplicationCommand(int JobPostId, IReadOnlyList<DocumentInput> Documents) : IRequest<ApplicationDto>;

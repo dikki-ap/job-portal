@@ -1,5 +1,6 @@
 using JobPortal.Application.Features.Applications.Commands.CreateApplication;
 using JobPortal.Application.Features.JobPosts.Queries.GetJobPostById;
+using JobPortal.Application.Features.JobPosts.Queries.GetJobPostBySlug;
 using JobPortal.Application.Features.JobPosts.Queries.GetPublishedJobPosts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +34,14 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
         return Ok(result);
     }
 
+    [HttpGet("{slug}")]
+    public async Task<IActionResult> GetBySlug(string slug, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetJobPostBySlugQuery(slug), cancellationToken);
+        if (result is null) return NotFound();
+        return Ok(result);
+    }
+
     [HttpPost("{id:int}/apply")]
     [Authorize]
     public async Task<IActionResult> Apply(int id, [FromBody] ApplyRequest request, CancellationToken cancellationToken)
@@ -40,9 +49,10 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
         logger.LogDebug("Apply: jobPostId={Id}", id);
         try
         {
-            var result = await mediator.Send(
-                new CreateApplicationCommand(id, request.DocumentIds ?? []),
-                cancellationToken);
+            var documents = request.Documents?
+                .Select(d => new DocumentInput(d.DocumentId, d.DocumentTypeName))
+                .ToList() ?? [];
+            var result = await mediator.Send(new CreateApplicationCommand(id, documents), cancellationToken);
             return Ok(result);
         }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
@@ -50,5 +60,6 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
         catch (UnauthorizedAccessException ex) { return Unauthorized(new { error = ex.Message }); }
     }
 
-    public record ApplyRequest(IReadOnlyList<int>? DocumentIds);
+    public record DocumentRequest(int DocumentId, string DocumentTypeName);
+    public record ApplyRequest(IReadOnlyList<DocumentRequest>? Documents);
 }

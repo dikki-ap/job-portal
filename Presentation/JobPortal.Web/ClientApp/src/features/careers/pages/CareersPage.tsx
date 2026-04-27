@@ -2,18 +2,44 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Briefcase, MapPin, Clock, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
-import { Button } from '../../../components/ui/Button';
 import { useGetPublishedJobsQuery } from '../api/careersApi';
 import { useGetJobCategoriesQuery } from '../../jobCategories/api/jobCategoriesApi';
+import { useGetMyApplicationsQuery } from '../../myApplications/api/myApplicationsApi';
+import { useAuth } from '../../../contexts/AuthContext';
 import type { JobPostDto } from '../../../types/api';
 
 const PAGE_SIZE = 9;
 
-function JobCard({ job, onView }: { job: JobPostDto; onView: () => void }) {
+const APP_STATUS_BADGE: Record<string, string> = {
+  Pending: 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
+  InProgress: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
+  InReview: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
+  Accepted: 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200',
+  Rejected: 'bg-red-50 text-red-600 ring-1 ring-inset ring-red-200',
+};
+
+const APP_STATUS_LABEL: Record<string, string> = {
+  InProgress: 'In Review',
+  InReview: 'In Review',
+};
+
+function JobCard({ job, appliedStatus, onClick }: { job: JobPostDto; appliedStatus?: string; onClick: () => void }) {
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 hover:border-[#004181]/30 hover:shadow-sm transition-all">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
+      className="relative flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 hover:border-[#004181]/30 hover:shadow-sm transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004181]/30"
+    >
+      {appliedStatus && (
+        <span className={`absolute top-4 right-4 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${APP_STATUS_BADGE[appliedStatus] ?? 'bg-gray-100 text-gray-600'}`}>
+          {APP_STATUS_LABEL[appliedStatus] ?? appliedStatus}
+        </span>
+      )}
+
       <div className="flex flex-col gap-1">
-        <h3 className="text-base font-semibold text-gray-900 leading-snug">{job.title}</h3>
+        <h3 className="text-base font-semibold text-gray-900 leading-snug pr-20">{job.title}</h3>
         <p className="text-sm text-gray-500">{job.departmentName}</p>
       </div>
 
@@ -32,7 +58,7 @@ function JobCard({ job, onView }: { job: JobPostDto; onView: () => void }) {
 
       <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
         <span className="text-xs text-gray-400">{job.steps.length} hiring step{job.steps.length !== 1 ? 's' : ''}</span>
-        <Button size="sm" onClick={onView}>View Details</Button>
+        <span className="text-xs font-medium text-[#004181]">View Details →</span>
       </div>
     </div>
   );
@@ -91,6 +117,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
 
 export function CareersPage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<number | undefined>(undefined);
@@ -101,9 +128,15 @@ export function CareersPage() {
     categoryId: categoryFilter,
     page,
     pageSize: PAGE_SIZE,
-  });
+  }, { refetchOnMountOrArgChange: true });
 
   const { data: categories = [] } = useGetJobCategoriesQuery();
+
+  const { data: myApplications = [] } = useGetMyApplicationsQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
+  const appliedMap = new Map(myApplications.map((a) => [a.jobPostId, a.status]));
 
   const debounceRef = useCallback(
     (() => {
@@ -184,7 +217,12 @@ export function CareersPage() {
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {jobs.map((job) => (
-                  <JobCard key={job.id} job={job} onView={() => navigate(`/careers/${job.id}`)} />
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    appliedStatus={appliedMap.get(job.id)}
+                    onClick={() => navigate(`/careers/${job.slug}`)}
+                  />
                 ))}
               </div>
               <Pagination page={page} totalPages={totalPages} onChange={setPage} />

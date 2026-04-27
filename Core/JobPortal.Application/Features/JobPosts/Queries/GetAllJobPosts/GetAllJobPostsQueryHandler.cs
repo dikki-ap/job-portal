@@ -42,6 +42,7 @@ public class GetAllJobPostsQueryHandler(
             s.PassEmailSubject, s.PassEmailBody, s.FailEmailSubject, s.FailEmailBody)),
         j.RequiredSkills.Select(s => new JobSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty)),
         MergeRequiredDocs(j, globalRequired),
+        j.PreferredEducationMajors.Select(m => new JobMajorDto(m.EducationMajorId, m.EducationMajor?.Name ?? string.Empty)),
         j.CreatedAt,
         j.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null);
 

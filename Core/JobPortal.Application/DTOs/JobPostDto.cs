@@ -12,6 +12,8 @@ public record JobStepDto(
 
 public record JobSkillDto(int Id, string Name);
 
+public record JobMajorDto(int Id, string Name);
+
 public record JobRequiredDocumentDto(int DocumentTypeId, string DocumentTypeName, bool IsRequired);
 
 public record PagedResult<T>(IEnumerable<T> Items, int TotalCount, int Page, int PageSize, int TotalPages);
@@ -47,5 +49,6 @@ public record JobPostDto(
     IEnumerable<JobStepDto> Steps,
     IEnumerable<JobSkillDto> RequiredSkills,
     IEnumerable<JobRequiredDocumentDto> RequiredDocuments,
+    IEnumerable<JobMajorDto> PreferredMajors,
     DateTime CreatedAt,
     string? CreatedByName);

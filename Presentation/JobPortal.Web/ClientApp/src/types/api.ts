@@ -32,6 +32,11 @@ export interface JobSkillDto {
   name: string;
 }
 
+export interface JobMajorDto {
+  id: number;
+  name: string;
+}
+
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;
@@ -186,6 +191,7 @@ export interface JobPostDto {
   steps: JobStepDto[];
   requiredSkills: JobSkillDto[];
   requiredDocuments: JobRequiredDocumentDto[];
+  preferredMajors: JobMajorDto[];
   createdAt: string;
   createdByName: string | null;
 }
@@ -238,11 +244,13 @@ export interface ApplicationDocumentDto {
 
 export interface ApplicationDto {
   id: number;
+  code: string;
   jobPostId: number;
   jobPostTitle: string;
   userId: number;
   candidateName: string;
   candidateEmail: string;
+  candidatePhone: string | null;
   status: string;
   appliedAt: string;
   updatedAt: string;

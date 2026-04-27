@@ -64,6 +64,9 @@ public class CreateJobPostCommandHandler(
                 RequiredDocuments = request.RequiredDocuments
                     .Select(d => new JobPostRequiredDocument { DocumentTypeId = d.DocumentTypeId, IsRequired = d.IsRequired })
                     .ToList(),
+                PreferredEducationMajors = request.PreferredMajorIds
+                    .Select(id => new JobPostEducationMajor { EducationMajorId = id })
+                    .ToList(),
             };
 
             await repository.AddAsync(jobPost, cancellationToken);
@@ -86,6 +89,7 @@ public class CreateJobPostCommandHandler(
                     s.PassEmailSubject, s.PassEmailBody, s.FailEmailSubject, s.FailEmailBody)),
                 jobPost.RequiredSkills.Select(s => new JobSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty)),
                 jobPost.RequiredDocuments.Select(d => new JobRequiredDocumentDto(d.DocumentTypeId, d.DocumentType?.Name ?? string.Empty, d.IsRequired)),
+                jobPost.PreferredEducationMajors.Select(m => new JobMajorDto(m.EducationMajorId, m.EducationMajor?.Name ?? string.Empty)),
                 jobPost.CreatedAt, null);
         }
         catch (Exception ex)

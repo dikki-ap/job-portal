@@ -94,6 +94,10 @@ public class UpdateJobPostCommandHandler(
             foreach (var doc in request.RequiredDocuments)
                 jobPost.RequiredDocuments.Add(new JobPostRequiredDocument { DocumentTypeId = doc.DocumentTypeId, IsRequired = doc.IsRequired });
 
+            jobPost.PreferredEducationMajors.Clear();
+            foreach (var id in request.PreferredMajorIds)
+                jobPost.PreferredEducationMajors.Add(new JobPostEducationMajor { EducationMajorId = id });
+
             await repository.UpdateAsync(jobPost, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
 
@@ -114,6 +118,7 @@ public class UpdateJobPostCommandHandler(
                     s.PassEmailSubject, s.PassEmailBody, s.FailEmailSubject, s.FailEmailBody)),
                 jobPost.RequiredSkills.Select(s => new JobSkillDto(s.SkillId, s.Skill?.Name ?? string.Empty)),
                 jobPost.RequiredDocuments.Select(d => new JobRequiredDocumentDto(d.DocumentTypeId, d.DocumentType?.Name ?? string.Empty, d.IsRequired)),
+                jobPost.PreferredEducationMajors.Select(m => new JobMajorDto(m.EducationMajorId, m.EducationMajor?.Name ?? string.Empty)),
                 jobPost.CreatedAt,
                 jobPost.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null);
         }

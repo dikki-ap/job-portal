@@ -11,6 +11,9 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<Domain.Entities
 
         builder.HasIndex(a => new { a.UserId, a.JobPostId }).IsUnique();
 
+        builder.Property(a => a.Code).HasMaxLength(60).IsRequired().HasDefaultValue(string.Empty);
+        builder.HasIndex(a => a.Code).IsUnique();
+
         builder.Property(a => a.Status).HasMaxLength(50).IsRequired();
 
         builder.HasMany(a => a.Documents)

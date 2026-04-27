@@ -71,7 +71,7 @@ export function ApplicationsTable({ applications, selectedIds, onSelectionChange
             return (
               <tr
                 key={app.id}
-                onClick={() => navigate(`/applications/${app.id}`)}
+                onClick={() => navigate(`/applications/${app.code}`)}
                 className={`transition-colors cursor-pointer ${checked ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'}`}
               >
                 <td className="px-4 py-4" onClick={(e) => { e.stopPropagation(); toggleOne(app.id); }}>

@@ -8,6 +8,7 @@ public class Application : BaseEntity
 {
     public int JobPostId { get; set; }
     public int UserId { get; set; }
+    public string Code { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public DateTime AppliedAt { get; set; }
     public bool IsDeleted { get; set; }

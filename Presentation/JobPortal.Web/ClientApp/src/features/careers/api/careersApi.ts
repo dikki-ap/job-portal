@@ -1,6 +1,8 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import keycloak from '../../../lib/keycloak';
 import type { JobPostDto, ApplicationDto, PagedResult } from '../../../types/api';
+import { applicationsApi } from '../../applications/api/applicationsApi';
+import { myApplicationsApi } from '../../myApplications/api/myApplicationsApi';
 
 export interface PublishedJobsParams {
   search?: string;
@@ -38,12 +40,21 @@ export const careersApi = createApi({
       query: (id) => `/${id}`,
       providesTags: (_result, _err, id) => [{ type: 'Career', id }],
     }),
-    applyToJob: builder.mutation<ApplicationDto, { jobPostId: number; documentIds: number[] }>({
-      query: ({ jobPostId, documentIds }) => ({
+    getCareerBySlug: builder.query<JobPostDto, string>({
+      query: (slug) => `/${slug}`,
+      providesTags: (_result, _err, slug) => [{ type: 'Career', id: slug }],
+    }),
+    applyToJob: builder.mutation<ApplicationDto, { jobPostId: number; documents: { documentId: number; documentTypeName: string }[] }>({
+      query: ({ jobPostId, documents }) => ({
         url: `/${jobPostId}/apply`,
         method: 'POST',
-        body: { documentIds },
+        body: { documents },
       }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(applicationsApi.util.invalidateTags(['Application']));
+        dispatch(myApplicationsApi.util.invalidateTags(['MyApplication']));
+      },
     }),
   }),
 });
@@ -51,5 +62,6 @@ export const careersApi = createApi({
 export const {
   useGetPublishedJobsQuery,
   useGetCareerByIdQuery,
+  useGetCareerBySlugQuery,
   useApplyToJobMutation,
 } = careersApi;

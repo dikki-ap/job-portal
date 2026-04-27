@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Features.Applications.Queries.GetAllApplications;
@@ -32,10 +33,15 @@ public class CreateApplicationCommandHandler(
 
         var now = DateTime.UtcNow;
 
+        var email = currentUserService.GetCurrentUserEmail() ?? string.Empty;
+        var prefix = Regex.Replace(email.Split('@')[0].ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+        var code = $"{prefix}-{Guid.NewGuid().ToString("N")[..8]}";
+
         var application = new Domain.Entities.Applications.Application
         {
             JobPostId = request.JobPostId,
             UserId = userId,
+            Code = code,
             Status = ApplicationStatus.Pending,
             AppliedAt = now,
             UpdatedAt = now,
@@ -49,11 +55,11 @@ public class CreateApplicationCommandHandler(
                     Status = ApplicationStepStatus.Pending,
                 })
                 .ToList(),
-            Documents = request.DocumentIds
-                .Select(docId => new ApplicationDocument
+            Documents = request.Documents
+                .Select(d => new ApplicationDocument
                 {
-                    DocumentId = docId,
-                    DocumentType = string.Empty,
+                    DocumentId = d.DocumentId,
+                    DocumentType = d.DocumentTypeName,
                     CreatedAt = now,
                     CreatedByUserId = userId,
                 })

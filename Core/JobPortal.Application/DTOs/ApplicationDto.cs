@@ -19,11 +19,13 @@ public record ApplicationDocumentDto(
 
 public record ApplicationDto(
     int Id,
+    string Code,
     int JobPostId,
     string JobPostTitle,
     int UserId,
     string CandidateName,
     string CandidateEmail,
+    string? CandidatePhone,
     string Status,
     DateTime AppliedAt,
     DateTime UpdatedAt,

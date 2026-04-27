@@ -41,6 +41,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<JobPost> JobPosts => Set<JobPost>();
     public DbSet<JobPostSkill> JobPostSkills => Set<JobPostSkill>();
     public DbSet<JobPostRequiredDocument> JobPostRequiredDocuments => Set<JobPostRequiredDocument>();
+    public DbSet<JobPostEducationMajor> JobPostEducationMajors => Set<JobPostEducationMajor>();
     public DbSet<JobStep> JobSteps => Set<JobStep>();
     public DbSet<HiringTemplate> HiringTemplates => Set<HiringTemplate>();
     public DbSet<HiringTemplateStep> HiringTemplateSteps => Set<HiringTemplateStep>();

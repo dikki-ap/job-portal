@@ -55,6 +55,10 @@ export const applicationsApi = createApi({
       query: (id) => `/${id}`,
       providesTags: (_result, _err, id) => [{ type: 'Application', id }],
     }),
+    getApplicationByCode: builder.query<ApplicationDto, string>({
+      query: (code) => `/${code}`,
+      providesTags: (_result, _err, code) => [{ type: 'Application', id: code }],
+    }),
     passStep: builder.mutation<ApplicationDto, UpdateStepParams>({
       query: ({ applicationId, stepId }) => ({
         url: `/${applicationId}/steps/${stepId}/pass`,
@@ -101,6 +105,7 @@ export const applicationsApi = createApi({
 export const {
   useGetApplicationsQuery,
   useGetApplicationByIdQuery,
+  useGetApplicationByCodeQuery,
   usePassStepMutation,
   useFailStepMutation,
   useAcceptApplicationMutation,
