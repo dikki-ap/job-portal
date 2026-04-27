@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard,
   Settings,
   Briefcase,
   FileText,
@@ -12,6 +11,7 @@ import {
   ClipboardList,
   UserCircle,
   ClipboardCheck,
+  BarChart2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
@@ -100,7 +100,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { data: isApprover } = useIsApproverQuery(undefined, { skip: isCandidate });
 
   const hrAdminItems: NavItem[] = [
-    { label: 'Dashboard', to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: 'Analytics', to: '/analytics', icon: <BarChart2 className="h-5 w-5" /> },
     ...(isAdmin ? [{
       label: 'Master Settings',
       icon: <Settings className="h-5 w-5" />,

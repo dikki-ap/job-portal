@@ -16,6 +16,11 @@ public class Application : BaseEntity
     public int? DeletedByUserId { get; set; }
     public DateTime UpdatedAt { get; set; }
 
+    public int? Rating { get; set; }
+    public string? RatingNote { get; set; }
+    public DateTime? RatedAt { get; set; }
+    public int? RatedByUserId { get; set; }
+
     public JobPost JobPost { get; set; } = null!;
     public User User { get; set; } = null!;
     public ICollection<ApplicationDocument> Documents { get; set; } = [];

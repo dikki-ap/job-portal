@@ -256,6 +256,9 @@ export interface ApplicationDto {
   updatedAt: string;
   steps: ApplicationStepDto[];
   documents: ApplicationDocumentDto[];
+  rating: number | null;
+  ratingNote: string | null;
+  ratedAt: string | null;
 }
 
 export interface EducationMajorDto {

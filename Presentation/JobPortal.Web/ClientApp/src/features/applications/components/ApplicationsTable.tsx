@@ -1,7 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../../../lib/format';
 import { deriveStatus, getCurrentStepInfo, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
+import { cn } from '../../../lib/utils';
 import type { ApplicationDto } from '../../../types/api';
+
+function ratingColor(r: number) {
+  if (r <= 4) return 'bg-red-50 text-red-600 ring-red-200';
+  if (r <= 7) return 'bg-amber-50 text-amber-700 ring-amber-200';
+  return 'bg-green-50 text-green-700 ring-green-200';
+}
 
 interface ApplicationsTableProps {
   applications: ApplicationDto[];
@@ -90,9 +97,16 @@ export function ApplicationsTable({ applications, selectedIds, onSelectionChange
                 <td className="px-4 py-4 text-gray-500 hidden md:table-cell">{app.jobPostTitle}</td>
                 <td className="px-4 py-4 text-gray-500 hidden lg:table-cell">{formatDate(app.appliedAt)}</td>
                 <td className="px-4 py-4">
-                  <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
-                    {STATUS_LABEL[status] ?? status}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
+                      {STATUS_LABEL[status] ?? status}
+                    </span>
+                    {app.rating != null && (
+                      <span className={cn('inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset', ratingColor(app.rating))}>
+                        {app.rating}/10
+                      </span>
+                    )}
+                  </div>
                   {stepInfo && (
                     <div className="mt-1 text-xs text-gray-400">
                       Step {stepInfo.stepOrder}/{stepInfo.total} · {stepInfo.stepName}
