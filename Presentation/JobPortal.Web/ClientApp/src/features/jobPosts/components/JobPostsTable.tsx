@@ -137,7 +137,7 @@ export function JobPostsTable({ jobPosts, hasActiveLevels, onSuccess, onError }:
                 <td className="px-6 py-4 text-gray-400 font-mono text-xs">{idx + 1}</td>
                 <td className="px-6 py-4">
                   <div className="font-medium text-gray-900">{jp.title}</div>
-                  <div className="text-xs text-gray-400">{jp.location}</div>
+                  <div className="text-xs text-gray-400">{jp.city}{jp.country ? `, ${jp.country}` : ''}</div>
                 </td>
                 <td className="px-6 py-4 text-gray-500 hidden md:table-cell">{jp.departmentName}</td>
                 <td className="px-6 py-4 text-gray-500 hidden lg:table-cell">{jp.jobCategoryName}</td>

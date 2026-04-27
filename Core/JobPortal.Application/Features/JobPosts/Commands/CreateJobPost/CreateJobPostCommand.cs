@@ -6,7 +6,8 @@ namespace JobPortal.Application.Features.JobPosts.Commands.CreateJobPost;
 public record CreateJobPostCommand(
     string Title,
     string Description,
-    string Location,
+    string City,
+    string Country,
     int DepartmentId,
     int WorkModeId,
     int EmploymentTypeId,

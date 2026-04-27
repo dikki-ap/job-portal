@@ -14,6 +14,7 @@ public class CreateApplicationCommandHandler(
     IApplicationRepository applicationRepository,
     IJobPostRepository jobPostRepository,
     ICurrentUserService currentUserService,
+    IEmailService emailService,
     ILogger<CreateApplicationCommandHandler> logger)
     : IRequestHandler<CreateApplicationCommand, ApplicationDto>
 {
@@ -27,6 +28,9 @@ public class CreateApplicationCommandHandler(
 
         if (jobPost.Status != "Published")
             throw new InvalidOperationException("This job post is not accepting applications.");
+
+        if (jobPost.CloseDate.HasValue && jobPost.CloseDate.Value < DateTime.UtcNow)
+            throw new InvalidOperationException("This job post is no longer accepting applications.");
 
         if (await applicationRepository.ExistsAsync(userId, request.JobPostId, cancellationToken))
             throw new InvalidOperationException("You have already applied to this job post.");
@@ -73,6 +77,7 @@ public class CreateApplicationCommandHandler(
             application.Id, userId, request.JobPostId);
 
         var full = await applicationRepository.GetByIdAsync(application.Id, cancellationToken);
+        _ = ApplicationEmailHelper.SendReceivedAsync(emailService, logger, full!, CancellationToken.None);
         return GetAllApplicationsQueryHandler.MapToDto(full!);
     }
 }

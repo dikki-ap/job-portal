@@ -39,23 +39,37 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
 
     public async Task<IEnumerable<JobPost>> GetAllPublishedAsync(CancellationToken cancellationToken = default)
         => await WithFullIncludes(context.JobPosts)
-            .Where(j => j.Status == "Published" && (j.PublishDate == null || j.PublishDate <= DateTime.UtcNow))
+            .Where(j => j.Status == "Published"
+                     && (j.PublishDate == null || j.PublishDate <= DateTime.UtcNow)
+                     && (j.CloseDate == null || j.CloseDate > DateTime.UtcNow))
             .OrderByDescending(j => j.PublishDate)
             .ToListAsync(cancellationToken);
 
     public async Task<(IEnumerable<JobPost> Items, int TotalCount)> GetPublishedPagedAsync(
-        string? search, IReadOnlyList<int>? categoryIds, int page, int pageSize, CancellationToken cancellationToken = default)
+        string? search, IReadOnlyList<int>? categoryIds, IReadOnlyList<int>? employmentTypeIds,
+        IReadOnlyList<int>? workModeIds, IReadOnlyList<string>? countries, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
         var query = WithFullIncludes(context.JobPosts)
-            .Where(j => j.Status == "Published" && (j.PublishDate == null || j.PublishDate <= now))
+            .Where(j => j.Status == "Published"
+                     && (j.PublishDate == null || j.PublishDate <= now)
+                     && (j.CloseDate == null || j.CloseDate > now))
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(j => j.Title.Contains(search) || j.Location.Contains(search));
+            query = query.Where(j => j.Title.Contains(search) || j.City.Contains(search) || j.Country.Contains(search));
 
         if (categoryIds is { Count: > 0 })
             query = query.Where(j => categoryIds.Contains(j.JobCategoryId));
+
+        if (employmentTypeIds is { Count: > 0 })
+            query = query.Where(j => employmentTypeIds.Contains(j.EmploymentTypeId));
+
+        if (workModeIds is { Count: > 0 })
+            query = query.Where(j => workModeIds.Contains(j.WorkModeId));
+
+        if (countries is { Count: > 0 })
+            query = query.Where(j => countries.Contains(j.Country));
 
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
@@ -65,6 +79,20 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
             .ToListAsync(cancellationToken);
 
         return (items, totalCount);
+    }
+
+    public async Task<IEnumerable<string>> GetPublishedCountriesAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        return await context.JobPosts
+            .Where(j => j.Status == "Published"
+                     && (j.PublishDate == null || j.PublishDate <= now)
+                     && (j.CloseDate == null || j.CloseDate > now)
+                     && j.Country != string.Empty)
+            .Select(j => j.Country)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<bool> ExistsBySlugAsync(string slug, int? excludeId = null, CancellationToken cancellationToken = default)

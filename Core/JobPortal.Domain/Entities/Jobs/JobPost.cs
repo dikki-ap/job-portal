@@ -14,7 +14,8 @@ public class JobPost : SoftDeletableEntity
     public string Slug { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string Location { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
     public int? MinEducationLevelId { get; set; }
     public int MinExperienceYears { get; set; }
     public decimal? MinSalary { get; set; }

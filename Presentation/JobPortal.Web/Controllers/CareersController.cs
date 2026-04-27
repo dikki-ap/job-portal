@@ -1,4 +1,5 @@
 using JobPortal.Application.Features.Applications.Commands.CreateApplication;
+using JobPortal.Application.Features.JobPosts.Queries.GetPublishedCountries;
 using JobPortal.Application.Features.JobPosts.Queries.GetJobPostById;
 using JobPortal.Application.Features.JobPosts.Queries.GetJobPostBySlug;
 using JobPortal.Application.Features.JobPosts.Queries.GetPublishedJobPosts;
@@ -16,13 +17,24 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
         [FromQuery] int[]? categoryIds,
+        [FromQuery] int[]? employmentTypeIds,
+        [FromQuery] int[]? workModeIds,
+        [FromQuery] string[]? countries,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 9,
         CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(
-            new GetPublishedJobPostsQuery(search, categoryIds, Math.Max(1, page), Math.Clamp(pageSize, 1, 50)),
+            new GetPublishedJobPostsQuery(search, categoryIds, employmentTypeIds, workModeIds,
+                countries, Math.Max(1, page), Math.Clamp(pageSize, 1, 50)),
             cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("countries")]
+    public async Task<IActionResult> GetCountries(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetPublishedCountriesQuery(), cancellationToken);
         return Ok(result);
     }
 

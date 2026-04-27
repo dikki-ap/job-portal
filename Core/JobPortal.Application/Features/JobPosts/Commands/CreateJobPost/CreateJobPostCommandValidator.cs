@@ -8,7 +8,8 @@ public class CreateJobPostCommandValidator : AbstractValidator<CreateJobPostComm
     {
         RuleFor(x => x.Title).NotEmpty().WithMessage("Title is required.").MaximumLength(255);
         RuleFor(x => x.Description).NotEmpty().WithMessage("Description is required.");
-        RuleFor(x => x.Location).NotEmpty().WithMessage("Location is required.").MaximumLength(255);
+        RuleFor(x => x.City).NotEmpty().WithMessage("City is required.").MaximumLength(255);
+        RuleFor(x => x.Country).NotEmpty().WithMessage("Country is required.").MaximumLength(255);
         RuleFor(x => x.DepartmentId).GreaterThan(0).WithMessage("Department is required.");
         RuleFor(x => x.JobCategoryId).GreaterThan(0).WithMessage("Job category is required.");
         RuleFor(x => x.JobLevelId).GreaterThan(0).WithMessage("Job level is required.");

@@ -70,7 +70,8 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
   // Field states
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [jobCategoryId, setJobCategoryId] = useState("");
   const [jobLevelId, setJobLevelId] = useState("");
@@ -132,7 +133,8 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
     if (editing) {
       setTitle(editing.title);
       setDescription(editing.description);
-      setLocation(editing.location);
+      setCity(editing.city);
+      setCountry(editing.country);
       setDepartmentId(String(editing.departmentId));
       setJobCategoryId(String(editing.jobCategoryId));
       setJobLevelId(String(editing.jobLevelId));
@@ -210,7 +212,8 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
     const errs: Record<string, string> = {};
     if (!title.trim()) errs.title = "Title is required.";
     if (!description.trim()) errs.description = "Description is required.";
-    if (!location.trim()) errs.location = "Location is required.";
+    if (!city.trim()) errs.city = "City is required.";
+    if (!country.trim()) errs.country = "Country is required.";
     if (!departmentId) errs.departmentId = "Department is required.";
     if (!jobCategoryId) errs.jobCategoryId = "Job category is required.";
     if (!jobLevelId) errs.jobLevelId = "Job level is required.";
@@ -231,7 +234,8 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
   const buildPayload = () => ({
     title: title.trim(),
     description: description.trim(),
-    location: location.trim(),
+    city: city.trim(),
+    country: country.trim(),
     departmentId: parseInt(departmentId),
     workModeId: parseInt(workModeId),
     employmentTypeId: parseInt(employmentTypeId),
@@ -317,18 +321,32 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
           minHeight="10rem"
           error={errors.description}
         />
-        <Input
-          id="jp-location"
-          label="Location"
-          placeholder="e.g. Jakarta, Indonesia"
-          value={location}
-          onChange={(e) => {
-            setLocation(e.target.value);
-            clearError("location");
-          }}
-          error={errors.location}
-          disabled={isLoading}
-        />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input
+            id="jp-city"
+            label="City"
+            placeholder="e.g. Jakarta"
+            value={city}
+            onChange={(e) => {
+              setCity(e.target.value);
+              clearError("city");
+            }}
+            error={errors.city}
+            disabled={isLoading}
+          />
+          <Input
+            id="jp-country"
+            label="Country"
+            placeholder="e.g. Indonesia"
+            value={country}
+            onChange={(e) => {
+              setCountry(e.target.value);
+              clearError("country");
+            }}
+            error={errors.country}
+            disabled={isLoading}
+          />
+        </div>
       </div>
 
       {/* Classification */}

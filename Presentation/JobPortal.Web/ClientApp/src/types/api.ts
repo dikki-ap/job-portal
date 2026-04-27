@@ -168,7 +168,8 @@ export interface JobPostDto {
   title: string;
   slug: string;
   status: string;
-  location: string;
+  city: string;
+  country: string;
   description: string;
   departmentId: number;
   departmentName: string;
@@ -251,7 +252,8 @@ export interface ApplicationDto {
   jobPostId: number;
   jobPostTitle: string;
   jobPostSlug: string | null;
-  jobPostLocation: string | null;
+  jobPostCity: string | null;
+  jobPostCountry: string | null;
   jobPostDepartmentName: string | null;
   jobPostEmploymentTypeName: string | null;
   jobPostWorkModeName: string | null;

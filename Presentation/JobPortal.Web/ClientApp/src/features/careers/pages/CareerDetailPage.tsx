@@ -94,7 +94,11 @@ export function CareerDetailPage() {
       hiringOrganization: { "@type": "Organization", name: COMPANY_NAME },
       jobLocation: {
         "@type": "Place",
-        address: { "@type": "PostalAddress", addressLocality: job.location },
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: job.city,
+          addressCountry: job.country,
+        },
       },
     };
     if (job.closeDate) ld.validThrough = job.closeDate.split("T")[0];
@@ -127,7 +131,10 @@ export function CareerDetailPage() {
     };
   }, [job]);
 
+  const isClosed = !!job?.closeDate && new Date(job.closeDate) < new Date();
+
   const handleApply = () => {
+    if (isClosed) return;
     if (!isAuthenticated) {
       navigate("/login", { state: { from: `/careers/${slug}/apply` } });
     } else if (consentSetting?.requireConsent && !consentStatus?.hasConsented) {
@@ -193,7 +200,7 @@ export function CareerDetailPage() {
         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
           <span className="flex items-center gap-1.5">
             <MapPin className="h-4 w-4 text-gray-400" />
-            {job.location}
+            {job.city}{job.country ? `, ${job.country}` : ''}
           </span>
           <span className="flex items-center gap-1.5">
             <Clock className="h-4 w-4 text-gray-400" />
@@ -331,7 +338,16 @@ export function CareerDetailPage() {
       {/* CTA */}
       <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white px-6 py-4">
         <div className="flex-1">
-          {appliedStatus ? (
+          {isClosed ? (
+            <>
+              <p className="text-sm font-medium text-gray-900">
+                Applications Closed
+              </p>
+              <p className="text-xs text-gray-500">
+                This position is no longer accepting applications.
+              </p>
+            </>
+          ) : appliedStatus ? (
             <>
               <p className="text-sm font-medium text-gray-900">
                 You've already applied
@@ -357,14 +373,16 @@ export function CareerDetailPage() {
         <Button
           onClick={handleApply}
           className="shrink-0"
-          disabled={!!appliedStatus}
+          disabled={isClosed || !!appliedStatus}
         >
           <CheckCircle2 className="h-4 w-4" />
-          {appliedStatus
-            ? "Applied"
-            : isAuthenticated
-              ? "Apply Now"
-              : "Sign In to Apply"}
+          {isClosed
+            ? "Closed"
+            : appliedStatus
+              ? "Applied"
+              : isAuthenticated
+                ? "Apply Now"
+                : "Sign In to Apply"}
         </Button>
       </div>
     </div>
