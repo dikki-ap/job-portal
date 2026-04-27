@@ -8,5 +8,7 @@ public interface IUserProfileRepository
     Task UpsertProfileAsync(User user, UserProfile profile, IEnumerable<UserSkill> skills, CancellationToken cancellationToken = default);
     Task<UserProfile?> LinkCvAsync(int userId, int documentId, CancellationToken cancellationToken = default);
     Task<bool> UnlinkCvAsync(int userId, CancellationToken cancellationToken = default);
+    Task<(bool HasConsented, DateTime? ConsentedAt)> GetConsentStatusAsync(int userId, CancellationToken cancellationToken = default);
+    Task<DateTime> RecordConsentAsync(int userId, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

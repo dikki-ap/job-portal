@@ -12,6 +12,7 @@ namespace JobPortal.Persistence.Context;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
     // Masters
+    public DbSet<AppSetting> AppSettings => Set<AppSetting>();
     public DbSet<EducationLevel> EducationLevels => Set<EducationLevel>();
     public DbSet<EducationMajor> EducationMajors => Set<EducationMajor>();
     public DbSet<CurrencyType> CurrencyTypes => Set<CurrencyType>();

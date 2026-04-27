@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, Navigate } from 'react-router-dom';
 import { ArrowLeft, Upload, CheckCircle2, X, Loader2, Building2, LogIn, UserCircle } from 'lucide-react';
 import { myApplicationsApi } from '../../myApplications/api/myApplicationsApi';
 import { Button } from '../../../components/ui/Button';
@@ -13,6 +13,10 @@ import { useGetCareerBySlugQuery, useApplyToJobMutation } from '../api/careersAp
 import { useUploadDocumentMutation } from '../../documents/api/documentsApi';
 import { useGetDocumentTypesQuery } from '../../documentTypes/api/documentTypesApi';
 import { useGetProfileQuery } from '../../candidateProfile/api/candidateProfileApi';
+import {
+  useGetPrivacyConsentSettingQuery,
+  useGetMyConsentStatusQuery,
+} from '../../privacyConsent/api/privacyConsentApi';
 import type { DocumentTypeDto } from '../../../types/api';
 
 interface DocEntry {
@@ -163,6 +167,10 @@ export function ApplyPage() {
   const { data: job, isLoading: jobLoading } = useGetCareerBySlugQuery(slug!);
   const { data: allDocTypes = [], isLoading: typesLoading } = useGetDocumentTypesQuery();
   const { data: profile } = useGetProfileQuery(undefined, { skip: !isAuthenticated });
+  const { data: consentSetting } = useGetPrivacyConsentSettingQuery();
+  const { data: consentStatus, isLoading: consentLoading } = useGetMyConsentStatusQuery(undefined, {
+    skip: !isAuthenticated,
+  });
   const [applyToJob, { isLoading: applying }] = useApplyToJobMutation();
   const [uploadDocument] = useUploadDocumentMutation();
 
@@ -292,6 +300,10 @@ export function ApplyPage() {
 
   if (!isAuthenticated) {
     return <LoginWall jobTitle={job?.title} />;
+  }
+
+  if (isAuthenticated && !consentLoading && consentSetting?.requireConsent && !consentStatus?.hasConsented) {
+    return <Navigate to={`/privacy-policy?redirect=/careers/${slug}/apply`} replace />;
   }
 
   if (jobLoading || typesLoading) {

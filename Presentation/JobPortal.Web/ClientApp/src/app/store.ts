@@ -18,6 +18,7 @@ import { myApplicationsApi } from '../features/myApplications/api/myApplications
 import { candidateProfileApi } from '../features/candidateProfile/api/candidateProfileApi';
 import { approvalLevelsApi } from '../features/approvalLevels/api/approvalLevelsApi';
 import { approvalsApi } from '../features/approvals/api/approvalsApi';
+import { privacyConsentApi } from '../features/privacyConsent/api/privacyConsentApi';
 
 export const store = configureStore({
   reducer: {
@@ -40,6 +41,7 @@ export const store = configureStore({
     [candidateProfileApi.reducerPath]: candidateProfileApi.reducer,
     [approvalLevelsApi.reducerPath]: approvalLevelsApi.reducer,
     [approvalsApi.reducerPath]: approvalsApi.reducer,
+    [privacyConsentApi.reducerPath]: privacyConsentApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -61,7 +63,8 @@ export const store = configureStore({
       .concat(myApplicationsApi.middleware)
       .concat(candidateProfileApi.middleware)
       .concat(approvalLevelsApi.middleware)
-      .concat(approvalsApi.middleware),
+      .concat(approvalsApi.middleware)
+      .concat(privacyConsentApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -32,6 +32,8 @@ import { ApprovalLevelsPage } from '../features/approvalLevels/pages/ApprovalLev
 import { MyApprovalsPage } from '../features/approvals/pages/MyApprovalsPage';
 import { JobPostApprovalReviewPage } from '../features/approvals/pages/JobPostApprovalReviewPage';
 import { AnalyticsPage } from '../features/analytics/pages/AnalyticsPage';
+import { PrivacyPolicyPage } from '../features/privacyConsent/pages/PrivacyPolicyPage';
+import { PrivacyConsentSettingPage } from '../features/privacyConsent/pages/PrivacyConsentSettingPage';
 
 const HR_ADMIN_ROLES = ['Admin', 'HR'];
 const ADMIN_ROLES = ['Admin'];
@@ -48,6 +50,9 @@ export function AppRouter() {
 
       {/* Apply page — standalone (has its own auth gate) */}
       <Route path="careers/:slug/apply" element={<ApplyPage />} />
+
+      {/* Privacy policy — public */}
+      <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
 
       {/* Login */}
       <Route path="/login" element={<LoginPage />} />
@@ -94,6 +99,7 @@ export function AppRouter() {
           <Route path="master/education-majors" element={<EducationMajorsPage />} />
           <Route path="master/hiring-templates" element={<HiringTemplatesPage />} />
           <Route path="master/approval-levels" element={<ApprovalLevelsPage />} />
+          <Route path="master/privacy-consent" element={<PrivacyConsentSettingPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/my-applications" replace />} />
