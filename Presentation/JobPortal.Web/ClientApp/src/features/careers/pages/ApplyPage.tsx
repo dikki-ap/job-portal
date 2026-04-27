@@ -331,6 +331,22 @@ export function ApplyPage() {
     );
   }
 
+  const isClosed = !!job.closeDate && new Date(job.closeDate) < new Date();
+  if (isClosed) {
+    return (
+      <ApplyLayout>
+        <div className="flex flex-col gap-4">
+          <Link to={`/careers/${slug}`} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 w-fit">
+            <ArrowLeft className="h-4 w-4" /> Back to {job.title}
+          </Link>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-6 py-4 text-sm text-gray-600">
+            Applications for <strong>{job.title}</strong> are closed and no longer accepting submissions.
+          </div>
+        </div>
+      </ApplyLayout>
+    );
+  }
+
   // Doc types not yet in entries (for "additional docs" section)
   const additionalDocTypes = allDocTypes.filter((dt) => !entries[dt.id]);
   const entryList = Object.values(entries);
@@ -347,7 +363,7 @@ export function ApplyPage() {
 
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-gray-900">Apply — {job.title}</h1>
-          <p className="text-sm text-gray-500">{job.departmentName} · {job.location}</p>
+          <p className="text-sm text-gray-500">{job.departmentName} · {job.city}{job.country ? `, ${job.country}` : ''}</p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-5">

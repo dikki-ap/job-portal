@@ -106,10 +106,10 @@ export function MyApplicationDetailPage() {
               <span>{application.jobPostDepartmentName}</span>
             </div>
           )}
-          {application.jobPostLocation && (
+          {(application.jobPostCity || application.jobPostCountry) && (
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
-              <span>{application.jobPostLocation}</span>
+              <span>{application.jobPostCity}{application.jobPostCity && application.jobPostCountry ? `, ${application.jobPostCountry}` : application.jobPostCountry}</span>
             </div>
           )}
           {application.jobPostEmploymentTypeName && (

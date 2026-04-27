@@ -27,7 +27,7 @@ public class GetAllJobPostsQueryHandler(
     }
 
     internal static JobPostDto MapToDto(Domain.Entities.Jobs.JobPost j, IReadOnlyCollection<(int Id, string Name)> globalRequired) => new(
-        j.Id, j.Title, j.Slug, j.Status, j.Location, j.Description,
+        j.Id, j.Title, j.Slug, j.Status, j.City, j.Country, j.Description,
         j.DepartmentId, j.Department?.Name ?? string.Empty,
         j.JobCategoryId, j.JobCategory?.Name ?? string.Empty,
         j.JobLevelId, j.JobLevel?.Name ?? string.Empty,

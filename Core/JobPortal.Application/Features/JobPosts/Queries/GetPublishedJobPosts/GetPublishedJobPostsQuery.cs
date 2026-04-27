@@ -6,5 +6,8 @@ namespace JobPortal.Application.Features.JobPosts.Queries.GetPublishedJobPosts;
 public record GetPublishedJobPostsQuery(
     string? Search,
     IReadOnlyList<int>? CategoryIds,
+    IReadOnlyList<int>? EmploymentTypeIds,
+    IReadOnlyList<int>? WorkModeIds,
+    IReadOnlyList<string>? Countries,
     int Page,
     int PageSize) : IRequest<PagedResult<JobPostDto>>;

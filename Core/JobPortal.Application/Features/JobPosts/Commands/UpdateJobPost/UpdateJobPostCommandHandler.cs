@@ -25,7 +25,8 @@ public class UpdateJobPostCommandHandler(
 
             jobPost.Title = request.Title;
             jobPost.Description = request.Description;
-            jobPost.Location = request.Location;
+            jobPost.City = request.City;
+            jobPost.Country = request.Country;
             jobPost.DepartmentId = request.DepartmentId;
             jobPost.WorkModeId = request.WorkModeId;
             jobPost.EmploymentTypeId = request.EmploymentTypeId;
@@ -103,7 +104,7 @@ public class UpdateJobPostCommandHandler(
 
             return new JobPostDto(
                 jobPost.Id, jobPost.Title, jobPost.Slug, jobPost.Status,
-                jobPost.Location, jobPost.Description,
+                jobPost.City, jobPost.Country, jobPost.Description,
                 jobPost.DepartmentId, jobPost.Department?.Name ?? string.Empty,
                 jobPost.JobCategoryId, jobPost.JobCategory?.Name ?? string.Empty,
                 jobPost.JobLevelId, jobPost.JobLevel?.Name ?? string.Empty,

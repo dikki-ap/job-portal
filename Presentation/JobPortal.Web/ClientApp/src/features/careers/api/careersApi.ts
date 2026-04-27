@@ -7,6 +7,9 @@ import { myApplicationsApi } from '../../myApplications/api/myApplicationsApi';
 export interface PublishedJobsParams {
   search?: string;
   categoryIds?: number[];
+  employmentTypeIds?: number[];
+  workModeIds?: number[];
+  countries?: string[];
   page: number;
   pageSize: number;
 }
@@ -26,15 +29,21 @@ export const careersApi = createApi({
   tagTypes: ['Career'],
   endpoints: (builder) => ({
     getPublishedJobs: builder.query<PagedResult<JobPostDto>, PublishedJobsParams>({
-      query: ({ search, categoryIds, page, pageSize }) => {
+      query: ({ search, categoryIds, employmentTypeIds, workModeIds, countries, page, pageSize }) => {
         const params = new URLSearchParams();
         if (search) params.set('search', search);
         categoryIds?.forEach((id) => params.append('categoryIds', String(id)));
+        employmentTypeIds?.forEach((id) => params.append('employmentTypeIds', String(id)));
+        workModeIds?.forEach((id) => params.append('workModeIds', String(id)));
+        countries?.forEach((c) => params.append('countries', c));
         params.set('page', String(page));
         params.set('pageSize', String(pageSize));
         return `?${params.toString()}`;
       },
       providesTags: ['Career'],
+    }),
+    getPublishedCountries: builder.query<string[], void>({
+      query: () => '/countries',
     }),
     getCareerById: builder.query<JobPostDto, number>({
       query: (id) => `/${id}`,
@@ -61,6 +70,7 @@ export const careersApi = createApi({
 
 export const {
   useGetPublishedJobsQuery,
+  useGetPublishedCountriesQuery,
   useGetCareerByIdQuery,
   useGetCareerBySlugQuery,
   useApplyToJobMutation,

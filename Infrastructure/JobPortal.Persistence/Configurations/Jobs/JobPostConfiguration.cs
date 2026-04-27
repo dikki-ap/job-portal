@@ -15,7 +15,8 @@ public class JobPostConfiguration : IEntityTypeConfiguration<JobPost>
         builder.Property(j => j.Slug).HasMaxLength(255).IsRequired();
         builder.Property(j => j.Title).HasMaxLength(255).IsRequired();
         builder.Property(j => j.Description).HasColumnType("longtext").IsRequired();
-        builder.Property(j => j.Location).HasMaxLength(255).IsRequired();
+        builder.Property(j => j.City).HasMaxLength(255).IsRequired();
+        builder.Property(j => j.Country).HasMaxLength(255).IsRequired();
         builder.Property(j => j.Status).HasMaxLength(50).IsRequired();
         builder.Property(j => j.MinSalary).HasPrecision(18, 2);
         builder.Property(j => j.MaxSalary).HasPrecision(18, 2);

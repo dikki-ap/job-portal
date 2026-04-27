@@ -28,7 +28,8 @@ public class CreateJobPostCommandHandler(
                 Title = request.Title,
                 Slug = slug,
                 Description = request.Description,
-                Location = request.Location,
+                City = request.City,
+                Country = request.Country,
                 Status = JobPostStatus.Draft,
                 DepartmentId = request.DepartmentId,
                 WorkModeId = request.WorkModeId,
@@ -74,7 +75,7 @@ public class CreateJobPostCommandHandler(
 
             return new JobPostDto(
                 jobPost.Id, jobPost.Title, jobPost.Slug, jobPost.Status,
-                jobPost.Location, jobPost.Description,
+                jobPost.City, jobPost.Country, jobPost.Description,
                 jobPost.DepartmentId, string.Empty,
                 jobPost.JobCategoryId, string.Empty,
                 jobPost.JobLevelId, string.Empty,

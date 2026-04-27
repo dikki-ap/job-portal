@@ -14,7 +14,8 @@ interface JobStepInput {
 interface CreateJobPostInput {
   title: string;
   description: string;
-  location: string;
+  city: string;
+  country: string;
   departmentId: number;
   workModeId: number;
   employmentTypeId: number;

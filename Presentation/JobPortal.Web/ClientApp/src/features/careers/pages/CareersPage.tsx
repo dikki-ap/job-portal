@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Briefcase, MapPin, Clock, Users, ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { cn } from '../../../lib/utils';
-import { useGetPublishedJobsQuery } from '../api/careersApi';
+import { useGetPublishedJobsQuery, useGetPublishedCountriesQuery } from '../api/careersApi';
 import { useGetJobCategoriesQuery } from '../../jobCategories/api/jobCategoriesApi';
+import { useGetEmploymentTypesQuery } from '../../employmentTypes/api/employmentTypesApi';
+import { useGetWorkModesQuery } from '../../workModes/api/workModesApi';
 import { useGetMyApplicationsQuery } from '../../myApplications/api/myApplicationsApi';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { JobPostDto } from '../../../types/api';
@@ -27,10 +29,12 @@ function CategoryFilter({
   categories,
   selected,
   onChange,
+  placeholder = 'All Categories',
 }: {
   categories: { id: number; name: string }[];
   selected: number[];
   onChange: (ids: number[]) => void;
+  placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -56,10 +60,10 @@ function CategoryFilter({
 
   const label =
     selected.length === 0
-      ? 'All Categories'
+      ? placeholder
       : selected.length === 1
         ? categories.find((c) => c.id === selected[0])?.name ?? '1 selected'
-        : `${selected.length} categories`;
+        : `${selected.length} selected`;
 
   return (
     <div ref={ref} className="relative">
@@ -157,6 +161,102 @@ function CategoryFilter({
   );
 }
 
+function StringFilter({
+  options,
+  selected,
+  onChange,
+  placeholder = 'All',
+}: {
+  options: string[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const toggle = (val: string) => {
+    onChange(selected.includes(val) ? selected.filter((x) => x !== val) : [...selected, val]);
+  };
+
+  const label =
+    selected.length === 0
+      ? placeholder
+      : selected.length === 1
+        ? selected[0]
+        : `${selected.length} selected`;
+
+  if (options.length === 0) return null;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          'h-10 flex items-center gap-2 rounded-lg border bg-white px-3 text-sm transition-colors',
+          open ? 'border-[#004181] ring-2 ring-[#004181]/20' : 'border-gray-300 hover:bg-gray-50',
+          selected.length > 0 ? 'text-[#004181] font-medium' : 'text-gray-700',
+        )}
+      >
+        <span className="max-w-[160px] truncate">{label}</span>
+        {selected.length > 0 && (
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#004181] text-[10px] font-bold text-white shrink-0">
+            {selected.length}
+          </span>
+        )}
+        <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform shrink-0', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 w-52 rounded-xl border border-gray-200 bg-white shadow-lg">
+          {selected.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className="w-full px-3 py-1.5 text-left text-xs font-medium text-[#004181] hover:bg-blue-50 border-b border-gray-100"
+            >
+              Clear all ({selected.length})
+            </button>
+          )}
+          <div className="py-1">
+            {options.map((val) => {
+              const checked = selected.includes(val);
+              return (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => toggle(val)}
+                  className={cn(
+                    'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
+                    checked ? 'bg-blue-50 text-[#004181]' : 'text-gray-700 hover:bg-gray-50',
+                  )}
+                >
+                  <span className={cn(
+                    'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+                    checked ? 'bg-[#004181] border-[#004181]' : 'border-gray-300',
+                  )}>
+                    {checked && <Check className="h-2.5 w-2.5 text-white" />}
+                  </span>
+                  <span className="truncate">{val}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function JobCard({ job, appliedStatus, onClick }: { job: JobPostDto; appliedStatus?: string; onClick: () => void }) {
   return (
     <div
@@ -178,7 +278,7 @@ function JobCard({ job, appliedStatus, onClick }: { job: JobPostDto; appliedStat
       </div>
 
       <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-        <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{job.location}</span>
+        <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{job.city}{job.country ? `, ${job.country}` : ''}</span>
         <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{job.employmentTypeName}</span>
         <span className="flex items-center gap-1"><Briefcase className="h-3.5 w-3.5" />{job.workModeName}</span>
         {job.quota > 0 && <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{job.quota} quota</span>}
@@ -255,16 +355,25 @@ export function CareersPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<number[]>([]);
+  const [employmentTypeFilter, setEmploymentTypeFilter] = useState<number[]>([]);
+  const [workModeFilter, setWorkModeFilter] = useState<number[]>([]);
+  const [countryFilter, setCountryFilter] = useState<string[]>([]);
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isError } = useGetPublishedJobsQuery({
     search: debouncedSearch || undefined,
     categoryIds: categoryFilter.length > 0 ? categoryFilter : undefined,
+    employmentTypeIds: employmentTypeFilter.length > 0 ? employmentTypeFilter : undefined,
+    workModeIds: workModeFilter.length > 0 ? workModeFilter : undefined,
+    countries: countryFilter.length > 0 ? countryFilter : undefined,
     page,
     pageSize: PAGE_SIZE,
   }, { refetchOnMountOrArgChange: true });
 
   const { data: categories = [] } = useGetJobCategoriesQuery();
+  const { data: employmentTypes = [] } = useGetEmploymentTypesQuery();
+  const { data: workModes = [] } = useGetWorkModesQuery();
+  const { data: availableCountries = [] } = useGetPublishedCountriesQuery();
 
   const { data: myApplications = [] } = useGetMyApplicationsQuery(undefined, {
     skip: !isAuthenticated,
@@ -296,6 +405,21 @@ export function CareersPage() {
     setPage(1);
   };
 
+  const handleEmploymentTypeChange = (ids: number[]) => {
+    setEmploymentTypeFilter(ids);
+    setPage(1);
+  };
+
+  const handleWorkModeChange = (ids: number[]) => {
+    setWorkModeFilter(ids);
+    setPage(1);
+  };
+
+  const handleCountryChange = (values: string[]) => {
+    setCountryFilter(values);
+    setPage(1);
+  };
+
   const jobs = data?.items ?? [];
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
@@ -319,10 +443,28 @@ export function CareersPage() {
             className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20"
           />
         </div>
+        <StringFilter
+          options={availableCountries}
+          selected={countryFilter}
+          onChange={handleCountryChange}
+          placeholder="Country"
+        />
         <CategoryFilter
           categories={categories}
           selected={categoryFilter}
           onChange={handleCategoryChange}
+        />
+        <CategoryFilter
+          categories={employmentTypes}
+          selected={employmentTypeFilter}
+          onChange={handleEmploymentTypeChange}
+          placeholder="Employment Type"
+        />
+        <CategoryFilter
+          categories={workModes}
+          selected={workModeFilter}
+          onChange={handleWorkModeChange}
+          placeholder="Work Mode"
         />
         {!isLoading && !isError && (
           <p className="text-xs text-gray-400 sm:ml-auto">
