@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Briefcase, MapPin, Clock, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Briefcase, MapPin, Clock, Users, ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
+import { cn } from '../../../lib/utils';
 import { useGetPublishedJobsQuery } from '../api/careersApi';
 import { useGetJobCategoriesQuery } from '../../jobCategories/api/jobCategoriesApi';
 import { useGetMyApplicationsQuery } from '../../myApplications/api/myApplicationsApi';
@@ -9,19 +10,152 @@ import { useAuth } from '../../../contexts/AuthContext';
 import type { JobPostDto } from '../../../types/api';
 
 const PAGE_SIZE = 9;
+const MAX_VISIBLE_CATEGORIES = 5;
 
 const APP_STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
-  InProgress: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
   InReview: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
   Accepted: 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200',
   Rejected: 'bg-red-50 text-red-600 ring-1 ring-inset ring-red-200',
 };
 
 const APP_STATUS_LABEL: Record<string, string> = {
-  InProgress: 'In Review',
   InReview: 'In Review',
 };
+
+function CategoryFilter({
+  categories,
+  selected,
+  onChange,
+}: {
+  categories: { id: number; name: string }[];
+  selected: number[];
+  onChange: (ids: number[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [showAll, setShowAll] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = categories.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()),
+  );
+  const visible = showAll ? filtered : filtered.slice(0, MAX_VISIBLE_CATEGORIES);
+
+  const toggle = (id: number) => {
+    onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+  };
+
+  const label =
+    selected.length === 0
+      ? 'All Categories'
+      : selected.length === 1
+        ? categories.find((c) => c.id === selected[0])?.name ?? '1 selected'
+        : `${selected.length} categories`;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          'h-10 flex items-center gap-2 rounded-lg border bg-white px-3 text-sm transition-colors',
+          open ? 'border-[#004181] ring-2 ring-[#004181]/20' : 'border-gray-300 hover:bg-gray-50',
+          selected.length > 0 ? 'text-[#004181] font-medium' : 'text-gray-700',
+        )}
+      >
+        <span className="max-w-[160px] truncate">{label}</span>
+        {selected.length > 0 && (
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#004181] text-[10px] font-bold text-white shrink-0">
+            {selected.length}
+          </span>
+        )}
+        <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform shrink-0', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-xl border border-gray-200 bg-white shadow-lg">
+          {/* Search */}
+          <div className="p-2 border-b border-gray-100">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Search categories..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setShowAll(false); }}
+                className="h-8 w-full rounded-md border border-gray-200 pl-8 pr-3 text-xs focus:border-[#004181] focus:outline-none focus:ring-1 focus:ring-[#004181]/20"
+              />
+            </div>
+          </div>
+
+          {/* Clear all */}
+          {selected.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className="w-full px-3 py-1.5 text-left text-xs font-medium text-[#004181] hover:bg-blue-50 border-b border-gray-100"
+            >
+              Clear all ({selected.length})
+            </button>
+          )}
+
+          {/* Items */}
+          <div className="py-1">
+            {visible.length === 0 ? (
+              <p className="px-3 py-3 text-xs text-gray-400 text-center">No categories found.</p>
+            ) : (
+              visible.map((c) => {
+                const checked = selected.includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggle(c.id)}
+                    className={cn(
+                      'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
+                      checked ? 'bg-blue-50 text-[#004181]' : 'text-gray-700 hover:bg-gray-50',
+                    )}
+                  >
+                    <span className={cn(
+                      'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+                      checked ? 'bg-[#004181] border-[#004181]' : 'border-gray-300',
+                    )}>
+                      {checked && <Check className="h-2.5 w-2.5 text-white" />}
+                    </span>
+                    <span className="truncate">{c.name}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          {/* Show more/less */}
+          {filtered.length > MAX_VISIBLE_CATEGORIES && (
+            <div className="border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setShowAll((v) => !v)}
+                className="w-full px-3 py-2 text-left text-xs font-medium text-[#004181] hover:bg-gray-50"
+              >
+                {showAll ? 'Show less' : `Show ${filtered.length - MAX_VISIBLE_CATEGORIES} more`}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function JobCard({ job, appliedStatus, onClick }: { job: JobPostDto; appliedStatus?: string; onClick: () => void }) {
   return (
@@ -120,12 +254,12 @@ export function CareersPage() {
   const { isAuthenticated } = useAuth();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<number | undefined>(undefined);
+  const [categoryFilter, setCategoryFilter] = useState<number[]>([]);
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isError } = useGetPublishedJobsQuery({
     search: debouncedSearch || undefined,
-    categoryId: categoryFilter,
+    categoryIds: categoryFilter.length > 0 ? categoryFilter : undefined,
     page,
     pageSize: PAGE_SIZE,
   }, { refetchOnMountOrArgChange: true });
@@ -157,8 +291,8 @@ export function CareersPage() {
     debounceRef(val);
   };
 
-  const handleCategory = (val: number | undefined) => {
-    setCategoryFilter(val);
+  const handleCategoryChange = (ids: number[]) => {
+    setCategoryFilter(ids);
     setPage(1);
   };
 
@@ -185,21 +319,11 @@ export function CareersPage() {
             className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20"
           />
         </div>
-        <div className="relative sm:w-48">
-          <select
-            value={categoryFilter ?? ''}
-            onChange={(e) => handleCategory(e.target.value ? Number(e.target.value) : undefined)}
-            className="h-10 w-full appearance-none rounded-lg border border-gray-300 bg-white pl-3 pr-9 text-sm text-gray-700 focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20"
-          >
-            <option value="">All Categories</option>
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-            <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
+        <CategoryFilter
+          categories={categories}
+          selected={categoryFilter}
+          onChange={handleCategoryChange}
+        />
         {!isLoading && !isError && (
           <p className="text-xs text-gray-400 sm:ml-auto">
             {totalCount} position{totalCount !== 1 ? 's' : ''} available

@@ -31,6 +31,8 @@ public class UpsertCandidateProfileCommandHandler(
                 UserId = userId,
                 PhoneNumber = request.PhoneNumber.Trim(),
                 EducationLevelId = request.EducationLevelId,
+                EducationMajorId = request.EducationMajorId,
+                EducationMajorCustom = string.IsNullOrWhiteSpace(request.EducationMajorCustom) ? null : request.EducationMajorCustom.Trim(),
                 UpdatedAt = now,
                 UpdatedByUserId = userId,
                 NIK = string.Empty,
@@ -54,7 +56,8 @@ public class UpsertCandidateProfileCommandHandler(
                 user.FirstName, user.LastName,
                 request.PhoneNumber,
                 request.EducationLevelId, null,
-                null, null);
+                null, null,
+                request.EducationMajorId, null, request.EducationMajorCustom);
         }
         catch (Exception ex) when (ex is not UnauthorizedAccessException and not KeyNotFoundException)
         {

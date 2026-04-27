@@ -7,4 +7,7 @@ public record CandidateProfileDto(
     int? EducationLevelId,
     string? EducationLevelName,
     int? CvDocumentId,
-    string? CvOriginalFileName);
+    string? CvOriginalFileName,
+    int? EducationMajorId,
+    string? EducationMajorName,
+    string? EducationMajorCustom);

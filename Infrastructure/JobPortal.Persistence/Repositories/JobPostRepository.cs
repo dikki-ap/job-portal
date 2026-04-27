@@ -44,7 +44,7 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
             .ToListAsync(cancellationToken);
 
     public async Task<(IEnumerable<JobPost> Items, int TotalCount)> GetPublishedPagedAsync(
-        string? search, int? categoryId, int page, int pageSize, CancellationToken cancellationToken = default)
+        string? search, IReadOnlyList<int>? categoryIds, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
         var query = WithFullIncludes(context.JobPosts)
@@ -54,8 +54,8 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(j => j.Title.Contains(search) || j.Location.Contains(search));
 
-        if (categoryId.HasValue)
-            query = query.Where(j => j.JobCategoryId == categoryId.Value);
+        if (categoryIds is { Count: > 0 })
+            query = query.Where(j => categoryIds.Contains(j.JobCategoryId));
 
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query

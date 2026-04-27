@@ -7,6 +7,8 @@ interface UpsertProfileRequest {
   lastName: string;
   phoneNumber: string;
   educationLevelId: number | null;
+  educationMajorId: number | null;
+  educationMajorCustom: string | null;
 }
 
 interface UploadCvResult {

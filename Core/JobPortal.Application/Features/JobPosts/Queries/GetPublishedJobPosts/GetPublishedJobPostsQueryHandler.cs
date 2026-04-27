@@ -17,7 +17,7 @@ public class GetPublishedJobPostsQueryHandler(
         try
         {
             var (items, totalCount) = await repository.GetPublishedPagedAsync(
-                request.Search, request.CategoryId, request.Page, request.PageSize, cancellationToken);
+                request.Search, request.CategoryIds, request.Page, request.PageSize, cancellationToken);
             var globalRequired = await documentTypeRepository.GetGloballyRequiredAsync(cancellationToken);
 
             var totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);

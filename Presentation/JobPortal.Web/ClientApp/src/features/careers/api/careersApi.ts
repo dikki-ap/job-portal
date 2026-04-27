@@ -6,7 +6,7 @@ import { myApplicationsApi } from '../../myApplications/api/myApplicationsApi';
 
 export interface PublishedJobsParams {
   search?: string;
-  categoryId?: number;
+  categoryIds?: number[];
   page: number;
   pageSize: number;
 }
@@ -26,10 +26,10 @@ export const careersApi = createApi({
   tagTypes: ['Career'],
   endpoints: (builder) => ({
     getPublishedJobs: builder.query<PagedResult<JobPostDto>, PublishedJobsParams>({
-      query: ({ search, categoryId, page, pageSize }) => {
+      query: ({ search, categoryIds, page, pageSize }) => {
         const params = new URLSearchParams();
         if (search) params.set('search', search);
-        if (categoryId) params.set('categoryId', String(categoryId));
+        categoryIds?.forEach((id) => params.append('categoryIds', String(id)));
         params.set('page', String(page));
         params.set('pageSize', String(pageSize));
         return `?${params.toString()}`;

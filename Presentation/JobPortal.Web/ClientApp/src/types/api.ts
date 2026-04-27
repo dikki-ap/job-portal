@@ -158,6 +158,9 @@ export interface CandidateProfileDto {
   educationLevelName: string | null;
   cvDocumentId: number | null;
   cvOriginalFileName: string | null;
+  educationMajorId: number | null;
+  educationMajorName: string | null;
+  educationMajorCustom: string | null;
 }
 
 export interface JobPostDto {

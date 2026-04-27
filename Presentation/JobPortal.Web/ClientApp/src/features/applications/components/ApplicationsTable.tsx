@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Star } from 'lucide-react';
 import { formatDate } from '../../../lib/format';
 import { deriveStatus, getCurrentStepInfo, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
 import { cn } from '../../../lib/utils';
@@ -102,7 +103,8 @@ export function ApplicationsTable({ applications, selectedIds, onSelectionChange
                       {STATUS_LABEL[status] ?? status}
                     </span>
                     {app.rating != null && (
-                      <span className={cn('inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset', ratingColor(app.rating))}>
+                      <span className={cn('inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset', ratingColor(app.rating))}>
+                        <Star className="h-3 w-3 shrink-0" />
                         {app.rating}/10
                       </span>
                     )}
