@@ -13,6 +13,7 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
             .Include(j => j.JobSteps)
             .Include(j => j.RequiredSkills).ThenInclude(s => s.Skill)
             .Include(j => j.RequiredDocuments).ThenInclude(d => d.DocumentType)
+            .Include(j => j.PreferredEducationMajors).ThenInclude(m => m.EducationMajor)
             .Include(j => j.Department)
             .Include(j => j.JobCategory)
             .Include(j => j.JobLevel)
@@ -38,15 +39,16 @@ public class JobPostRepository(ApplicationDbContext context, ICurrentUserService
 
     public async Task<IEnumerable<JobPost>> GetAllPublishedAsync(CancellationToken cancellationToken = default)
         => await WithFullIncludes(context.JobPosts)
-            .Where(j => j.Status == "Published")
+            .Where(j => j.Status == "Published" && (j.PublishDate == null || j.PublishDate <= DateTime.UtcNow))
             .OrderByDescending(j => j.PublishDate)
             .ToListAsync(cancellationToken);
 
     public async Task<(IEnumerable<JobPost> Items, int TotalCount)> GetPublishedPagedAsync(
         string? search, int? categoryId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
+        var now = DateTime.UtcNow;
         var query = WithFullIncludes(context.JobPosts)
-            .Where(j => j.Status == "Published")
+            .Where(j => j.Status == "Published" && (j.PublishDate == null || j.PublishDate <= now))
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))

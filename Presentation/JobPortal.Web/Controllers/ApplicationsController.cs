@@ -6,6 +6,7 @@ using JobPortal.Application.Features.Applications.Commands.BulkUpdateApplication
 using JobPortal.Application.Features.Applications.Commands.RejectApplication;
 using JobPortal.Application.Features.Applications.Commands.UpdateApplicationStep;
 using JobPortal.Application.Features.Applications.Queries.GetAllApplications;
+using JobPortal.Application.Features.Applications.Queries.GetApplicationByCode;
 using JobPortal.Application.Features.Applications.Queries.GetApplicationById;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +34,14 @@ public class ApplicationsController(IMediator mediator, ILogger<ApplicationsCont
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetApplicationByIdQuery(id), cancellationToken);
+        if (result is null) return NotFound();
+        return Ok(result);
+    }
+
+    [HttpGet("{code}")]
+    public async Task<IActionResult> GetByCode(string code, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetApplicationByCodeQuery(code), cancellationToken);
         if (result is null) return NotFound();
         return Ok(result);
     }

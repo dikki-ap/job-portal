@@ -9,7 +9,7 @@ import { ToastContainer } from '../../../components/ui/Toast';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import keycloak from '../../../lib/keycloak';
-import { useGetCareerByIdQuery, useApplyToJobMutation } from '../api/careersApi';
+import { useGetCareerBySlugQuery, useApplyToJobMutation } from '../api/careersApi';
 import { useUploadDocumentMutation } from '../../documents/api/documentsApi';
 import { useGetDocumentTypesQuery } from '../../documentTypes/api/documentTypesApi';
 import { useGetProfileQuery } from '../../candidateProfile/api/candidateProfileApi';
@@ -154,14 +154,13 @@ function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile, onSwitchToUpl
 }
 
 export function ApplyPage() {
-  const { id } = useParams<{ id: string }>();
-  const jobPostId = Number(id);
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { toasts, addToast, dismissToast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const { data: job, isLoading: jobLoading } = useGetCareerByIdQuery(jobPostId);
+  const { data: job, isLoading: jobLoading } = useGetCareerBySlugQuery(slug!);
   const { data: allDocTypes = [], isLoading: typesLoading } = useGetDocumentTypesQuery();
   const { data: profile } = useGetProfileQuery(undefined, { skip: !isAuthenticated });
   const [applyToJob, { isLoading: applying }] = useApplyToJobMutation();
@@ -246,10 +245,10 @@ export function ApplyPage() {
       return;
     }
 
-    // Collect already-uploaded document IDs (e.g. profile CV)
-    const documentIds: number[] = entryList
+    // Collect already-uploaded documents (e.g. profile CV)
+    const documents: { documentId: number; documentTypeName: string }[] = entryList
       .filter((e) => e.uploadedId && !e.file)
-      .map((e) => e.uploadedId!);
+      .map((e) => ({ documentId: e.uploadedId!, documentTypeName: e.typeName }));
 
     // Upload new files
     const withFiles = entryList.filter((e) => e.file);
@@ -257,7 +256,7 @@ export function ApplyPage() {
       setEntries((e) => ({ ...e, [entry.typeId]: { ...e[entry.typeId], uploading: true, error: null } }));
       try {
         const result = await uploadDocument({ file: entry.file!, documentTypeId: entry.typeId }).unwrap();
-        documentIds.push(result.id);
+        documents.push({ documentId: result.id, documentTypeName: entry.typeName });
         setEntries((e) => ({ ...e, [entry.typeId]: { ...e[entry.typeId], uploading: false, uploadedId: result.id } }));
       } catch (err: unknown) {
         const msg = (err as { data?: { error?: string } })?.data?.error ?? 'Failed to upload file.';
@@ -268,11 +267,11 @@ export function ApplyPage() {
     }
 
     try {
-      await applyToJob({ jobPostId, documentIds }).unwrap();
+      await applyToJob({ jobPostId: job!.id, documents }).unwrap();
       dispatch(myApplicationsApi.util.invalidateTags(['MyApplication']));
       setSubmitted(true);
       addToast('Application submitted successfully!', 'success');
-      setTimeout(() => navigate('/my-applications'), 1500);
+      setTimeout(() => navigate('/my-applications'), 1200);
     } catch (err: unknown) {
       const msg = (err as { data?: { error?: string } })?.data?.error ?? 'Failed to submit application.';
       addToast(msg, 'error');
@@ -330,7 +329,7 @@ export function ApplyPage() {
   return (
     <ApplyLayout>
       <div className="flex flex-col gap-6">
-        <Link to={`/careers/${jobPostId}`} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 w-fit">
+        <Link to={`/careers/${slug}`} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 w-fit">
           <ArrowLeft className="h-4 w-4" /> Back to {job.title}
         </Link>
 
@@ -410,7 +409,7 @@ export function ApplyPage() {
         </div>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => navigate(`/careers/${jobPostId}`)}>Cancel</Button>
+          <Button variant="outline" onClick={() => navigate(`/careers/${slug}`)}>Cancel</Button>
           <Button
             onClick={handleSubmit}
             loading={isUploading || applying}

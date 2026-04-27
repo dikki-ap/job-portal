@@ -10,7 +10,7 @@ import {
 import { RichTextEditor } from "../../../components/ui/RichTextEditor";
 import { useNavigate } from "react-router-dom";
 import { Input } from "../../../components/ui/Input";
-import { Select } from "../../../components/ui/Select";
+import { SearchableSelect } from "../../../components/ui/SearchableSelect";
 import { Button } from "../../../components/ui/Button";
 import { Spinner } from "../../../components/ui/Spinner";
 import { SkillPicker } from "../../../components/ui/SkillPicker";
@@ -26,6 +26,7 @@ import { useGetWorkModesQuery } from "../../workModes/api/workModesApi";
 import { useGetEducationLevelsQuery } from "../../educationLevels/api/educationLevelsApi";
 import { useGetCurrencyTypesQuery } from "../../currencyTypes/api/currencyTypesApi";
 import { useGetSkillsQuery } from "../../skills/api/skillsApi";
+import { useGetEducationMajorsQuery } from "../../educationMajors/api/educationMajorsApi";
 import { useGetHiringTemplatesQuery } from "../../hiringTemplates/api/hiringTemplatesApi";
 import { useGetDocumentTypesQuery } from "../../documentTypes/api/documentTypesApi";
 import type { JobPostDto } from "../../../types/api";
@@ -86,6 +87,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
   const [closeDate, setCloseDate] = useState("");
   const [steps, setSteps] = useState<StepItem[]>([emptyStep()]);
   const [requiredSkillIds, setRequiredSkillIds] = useState<number[]>([]);
+  const [preferredMajorIds, setPreferredMajorIds] = useState<number[]>([]);
   const [requiredDocuments, setRequiredDocuments] = useState<RequiredDocItem[]>(
     [],
   );
@@ -107,6 +109,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
   const { data: educationLevels = [] } = useGetEducationLevelsQuery();
   const { data: currencyTypes = [] } = useGetCurrencyTypesQuery();
   const { data: skills = [] } = useGetSkillsQuery();
+  const { data: educationMajors = [] } = useGetEducationMajorsQuery();
   const { data: hiringTemplates = [] } = useGetHiringTemplatesQuery();
   const { data: documentTypes = [] } = useGetDocumentTypesQuery();
 
@@ -163,6 +166,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
         })),
       );
       setRequiredSkillIds(editing.requiredSkills.map((s) => s.id));
+      setPreferredMajorIds(editing.preferredMajors.map((m) => m.id));
       setRequiredDocuments(
         editing.requiredDocuments.map((d) => ({
           documentTypeId: d.documentTypeId,
@@ -254,6 +258,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
     })),
     requiredSkillIds,
     requiredDocuments,
+    preferredMajorIds,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -332,12 +337,12 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
           Classification
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select
+          <SearchableSelect
             id="jp-dept"
             label="Department"
             value={departmentId}
-            onChange={(e) => {
-              setDepartmentId(e.target.value);
+            onChange={(value) => {
+              setDepartmentId(value);
               clearError("departmentId");
             }}
             placeholder="Select department"
@@ -345,12 +350,12 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
             error={errors.departmentId}
             disabled={isLoading}
           />
-          <Select
+          <SearchableSelect
             id="jp-cat"
             label="Job Category"
             value={jobCategoryId}
-            onChange={(e) => {
-              setJobCategoryId(e.target.value);
+            onChange={(value) => {
+              setJobCategoryId(value);
               clearError("jobCategoryId");
             }}
             placeholder="Select category"
@@ -358,12 +363,12 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
             error={errors.jobCategoryId}
             disabled={isLoading}
           />
-          <Select
+          <SearchableSelect
             id="jp-level"
             label="Job Level"
             value={jobLevelId}
-            onChange={(e) => {
-              setJobLevelId(e.target.value);
+            onChange={(value) => {
+              setJobLevelId(value);
               clearError("jobLevelId");
             }}
             placeholder="Select level"
@@ -371,12 +376,12 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
             error={errors.jobLevelId}
             disabled={isLoading}
           />
-          <Select
+          <SearchableSelect
             id="jp-emptype"
             label="Employment Type"
             value={employmentTypeId}
-            onChange={(e) => {
-              setEmploymentTypeId(e.target.value);
+            onChange={(value) => {
+              setEmploymentTypeId(value);
               clearError("employmentTypeId");
             }}
             placeholder="Select type"
@@ -387,12 +392,12 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
             error={errors.employmentTypeId}
             disabled={isLoading}
           />
-          <Select
+          <SearchableSelect
             id="jp-workmode"
             label="Work Mode"
             value={workModeId}
-            onChange={(e) => {
-              setWorkModeId(e.target.value);
+            onChange={(value) => {
+              setWorkModeId(value);
               clearError("workModeId");
             }}
             placeholder="Select work mode"
@@ -407,11 +412,11 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
       <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-base font-semibold text-gray-900">Requirements</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select
+          <SearchableSelect
             id="jp-edu"
             label="Minimum Education Level"
             value={minEducationLevelId}
-            onChange={(e) => setMinEducationLevelId(e.target.value)}
+            onChange={(value) => setMinEducationLevelId(value)}
             placeholder="Any"
             options={educationLevels.map((e) => ({
               value: e.id,
@@ -434,6 +439,15 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
           options={skills}
           selectedIds={requiredSkillIds}
           onChange={setRequiredSkillIds}
+          disabled={isLoading}
+        />
+        <SkillPicker
+          label="Preferred Education Majors"
+          entityName="major"
+          placeholder="Search and add majors..."
+          options={educationMajors}
+          selectedIds={preferredMajorIds}
+          onChange={setPreferredMajorIds}
           disabled={isLoading}
         />
       </div>
@@ -531,11 +545,11 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
           Compensation &amp; Quota
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select
+          <SearchableSelect
             id="jp-currency"
             label="Currency"
             value={currencyTypeId}
-            onChange={(e) => setCurrencyTypeId(e.target.value)}
+            onChange={(value) => setCurrencyTypeId(value)}
             placeholder="Select currency (optional)"
             options={currencyTypes.map((c) => ({
               value: c.id,

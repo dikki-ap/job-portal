@@ -26,11 +26,13 @@ public class GetAllApplicationsQueryHandler(
 
     internal static ApplicationDto MapToDto(Domain.Entities.Applications.Application a) => new(
         a.Id,
+        a.Code,
         a.JobPostId,
         a.JobPost?.Title ?? string.Empty,
         a.UserId,
         a.User is { } u ? $"{u.FirstName} {u.LastName}".Trim() : string.Empty,
         a.User?.Email ?? string.Empty,
+        a.User?.Profile?.PhoneNumber,
         a.Status,
         a.AppliedAt,
         a.UpdatedAt,

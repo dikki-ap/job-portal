@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import { PublicNavbar } from '../public/PublicNavbar';
 import { Building2, Mail, Phone, MapPin } from 'lucide-react';
 import { company } from '../../content/companyProfile';
@@ -20,10 +20,8 @@ function PublicFooter() {
 
           <div className="flex flex-col gap-3">
             <h4 className="text-sm font-semibold text-white">Quick Links</h4>
-            <a href="#services" className="text-sm hover:text-white transition-colors">Services</a>
-            <a href="#projects" className="text-sm hover:text-white transition-colors">Projects</a>
-            <a href="#about" className="text-sm hover:text-white transition-colors">About Us</a>
-            <a href="#careers" className="text-sm hover:text-white transition-colors">Careers</a>
+            <Link to="/" className="text-sm hover:text-white transition-colors">Home</Link>
+            <Link to="/careers" className="text-sm hover:text-white transition-colors">Careers</Link>
           </div>
 
           <div className="flex flex-col gap-3">

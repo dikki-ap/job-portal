@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Download, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
@@ -9,16 +9,16 @@ import { downloadWithAuth } from '../../../lib/download';
 import { formatDate, formatDateTime } from '../../../lib/format';
 import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
 import {
-  useGetApplicationByIdQuery,
+  useGetApplicationByCodeQuery,
   usePassStepMutation,
   useFailStepMutation,
   useRejectApplicationMutation,
 } from '../api/applicationsApi';
+import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
 import type { ApplicationStepDto } from '../../../types/api';
 
 const APP_STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
-  InProgress: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
   InReview: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
   Accepted: 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200',
   Rejected: 'bg-red-50 text-red-600 ring-1 ring-inset ring-red-200',
@@ -31,7 +31,6 @@ const STEP_STATUS_BADGE: Record<string, string> = {
 };
 
 const APP_STATUS_LABEL: Record<string, string> = {
-  InProgress: 'In Review',
   InReview: 'In Review',
 };
 
@@ -47,12 +46,14 @@ function friendlyFileType(mime: string) {
 }
 
 export function ApplicationDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const appId = Number(id);
+  const { code } = useParams<{ code: string }>();
   const { token } = useAuth();
   const { toasts, addToast, dismissToast } = useToast();
 
-  const { data: application, isLoading, isError } = useGetApplicationByIdQuery(appId);
+  const { data: application, isLoading, isError } = useGetApplicationByCodeQuery(code!);
+  const appId = application?.id ?? 0;
+  const { data: jobPost } = useGetJobPostByIdQuery(application?.jobPostId ?? 0, { skip: !application });
+
   const [passStep, { isLoading: passingId }] = usePassStepMutation();
   const [failStep, { isLoading: failingId }] = useFailStepMutation();
   const [rejectApplication, { isLoading: rejecting }] = useRejectApplicationMutation();
@@ -120,36 +121,95 @@ export function ApplicationDetailPage() {
 
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">Application #{application.id}</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Application #{application.code}</h1>
           <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-medium ${APP_STATUS_BADGE[derivedStatus] ?? 'bg-gray-100 text-gray-600'}`}>
             {APP_STATUS_LABEL[derivedStatus] ?? derivedStatus}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Card 1: Candidate */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-gray-900">Candidate</h2>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-            <dt className="text-gray-500 font-medium">Name</dt>
-            <dd className="text-gray-900">{application.candidateName || '—'}</dd>
-            <dt className="text-gray-500 font-medium">Email</dt>
-            <dd className="text-gray-900">{application.candidateEmail}</dd>
-            <dt className="text-gray-500 font-medium">Applied</dt>
-            <dd className="text-gray-900">{formatDate(application.appliedAt)}</dd>
-          </dl>
+      {/* Card 1: Candidate */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+        <h2 className="text-base font-semibold text-gray-900">Candidate</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-3 text-sm">
+          <div><span className="text-gray-500 font-medium block">Name</span><span className="text-gray-900">{application.candidateName || '—'}</span></div>
+          <div><span className="text-gray-500 font-medium block">Email</span><span className="text-gray-900">{application.candidateEmail}</span></div>
+          <div>
+            <span className="text-gray-500 font-medium block">Phone</span>
+            <span className="flex items-center gap-1.5 text-gray-900">
+              {application.candidatePhone
+                ? <><Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />{application.candidatePhone}</>
+                : <span className="text-gray-400">—</span>}
+            </span>
+          </div>
+          <div><span className="text-gray-500 font-medium block">Applied</span><span className="text-gray-900">{formatDate(application.appliedAt)}</span></div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        {/* Card 2: Job Post */}
 
         {/* Card 2: Job Post */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-gray-900">Job Post</h2>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-            <dt className="text-gray-500 font-medium">Title</dt>
-            <dd className="text-gray-900">{application.jobPostTitle}</dd>
-            <dt className="text-gray-500 font-medium">Last Updated</dt>
-            <dd className="text-gray-900">{formatDateTime(application.updatedAt)}</dd>
-          </dl>
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">{application.jobPostTitle}</h2>
+              {jobPost && <p className="text-sm text-gray-500 mt-0.5">{jobPost.departmentName} · {jobPost.jobCategoryName}</p>}
+            </div>
+            {jobPost && (
+              <span className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-600 shrink-0">
+                {jobPost.status}
+              </span>
+            )}
+          </div>
+
+          {jobPost && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-sm text-gray-600">
+                <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.location}</span>
+                <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.employmentTypeName}</span>
+                <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.workModeName}</span>
+                <span className="flex items-center gap-1.5"><BarChart2 className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.jobLevelName}</span>
+                <span className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.departmentName}</span>
+                <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.quota} open position{jobPost.quota !== 1 ? 's' : ''}</span>
+                {jobPost.minEducationLevelName && (
+                  <span className="flex items-center gap-1.5"><GraduationCap className="h-3.5 w-3.5 text-gray-400 shrink-0" />Min. {jobPost.minEducationLevelName}</span>
+                )}
+                {jobPost.minExperienceYears > 0 && (
+                  <span className="flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.minExperienceYears}+ yrs experience</span>
+                )}
+              </div>
+
+              {jobPost.isSalaryVisible && (jobPost.minSalary || jobPost.maxSalary) && (
+                <p className="text-sm font-semibold text-[#004181]">
+                  {jobPost.currencyTypePrefix} {jobPost.minSalary?.toLocaleString()}
+                  {jobPost.maxSalary ? ` – ${jobPost.currencyTypePrefix} ${jobPost.maxSalary.toLocaleString()}` : '+'}
+                </p>
+              )}
+
+              {jobPost.preferredMajors.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400"><GraduationCap className="h-3 w-3" /> Preferred Majors</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {jobPost.preferredMajors.map((m) => (
+                      <span key={m.id} className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-100">{m.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {jobPost.requiredSkills.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400"><Tag className="h-3 w-3" /> Required Skills</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {jobPost.requiredSkills.map((s) => (
+                      <span key={s.id} className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-[#004181] ring-1 ring-inset ring-blue-100">{s.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 

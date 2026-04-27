@@ -42,11 +42,11 @@ export function AppRouter() {
       <Route element={<PublicLayout />}>
         <Route index element={<HomePage />} />
         <Route path="careers" element={<CareersPage />} />
-        <Route path="careers/:id" element={<CareerDetailPage />} />
+        <Route path="careers/:slug" element={<CareerDetailPage />} />
       </Route>
 
       {/* Apply page — standalone (has its own auth gate) */}
-      <Route path="careers/:id/apply" element={<ApplyPage />} />
+      <Route path="careers/:slug/apply" element={<ApplyPage />} />
 
       {/* Login */}
       <Route path="/login" element={<LoginPage />} />
@@ -71,7 +71,7 @@ export function AppRouter() {
           <Route path="jobs/create" element={<CreateJobPostPage />} />
           <Route path="jobs/:id/edit" element={<EditJobPostPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
-          <Route path="applications/:id" element={<ApplicationDetailPage />} />
+          <Route path="applications/:code" element={<ApplicationDetailPage />} />
         </Route>
 
         {/* Approvals — all authenticated users (content filtered by API) */}

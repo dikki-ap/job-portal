@@ -31,6 +31,7 @@ interface CreateJobPostInput {
   closeDate?: string | null;
   steps: JobStepInput[];
   requiredSkillIds: number[];
+  preferredMajorIds: number[];
 }
 
 export const jobPostsApi = createApi({

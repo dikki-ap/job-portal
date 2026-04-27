@@ -11,7 +11,7 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
     public async Task<IEnumerable<ApplicationEntity>> GetAllAsync(
         int? jobPostId = null, string? status = null, CancellationToken cancellationToken = default)
         => await context.Applications
-            .Include(a => a.User)
+            .Include(a => a.User).ThenInclude(u => u.Profile)
             .Include(a => a.JobPost)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
             .Include(a => a.Documents).ThenInclude(d => d.Document)
@@ -23,18 +23,27 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
 
     public async Task<ApplicationEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await context.Applications
-            .Include(a => a.User)
+            .Include(a => a.User).ThenInclude(u => u.Profile)
             .Include(a => a.JobPost)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
             .Include(a => a.Documents).ThenInclude(d => d.Document)
             .Where(a => !a.IsDeleted)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
+    public async Task<ApplicationEntity?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
+        => await context.Applications
+            .Include(a => a.User).ThenInclude(u => u.Profile)
+            .Include(a => a.JobPost)
+            .Include(a => a.Steps).ThenInclude(s => s.JobStep)
+            .Include(a => a.Documents).ThenInclude(d => d.Document)
+            .Where(a => !a.IsDeleted)
+            .FirstOrDefaultAsync(a => a.Code == code, cancellationToken);
+
     public async Task<List<ApplicationEntity>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
     {
         var idList = ids.ToList();
         return await context.Applications
-            .Include(a => a.User)
+            .Include(a => a.User).ThenInclude(u => u.Profile)
             .Include(a => a.JobPost)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
             .Where(a => !a.IsDeleted && idList.Contains(a.Id))

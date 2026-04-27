@@ -6,6 +6,7 @@ public interface IApplicationRepository
 {
     Task<IEnumerable<ApplicationEntity>> GetAllAsync(int? jobPostId = null, string? status = null, CancellationToken cancellationToken = default);
     Task<ApplicationEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<ApplicationEntity?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task<List<ApplicationEntity>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<IEnumerable<ApplicationEntity>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ApplicationEntity>> GetByJobPostIdAsync(int jobPostId, CancellationToken cancellationToken = default);

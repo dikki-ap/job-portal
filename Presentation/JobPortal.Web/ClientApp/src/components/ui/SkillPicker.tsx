@@ -14,6 +14,7 @@ interface SkillPickerProps {
   label?: string;
   disabled?: boolean;
   placeholder?: string;
+  entityName?: string;
 }
 
 export function SkillPicker({
@@ -22,8 +23,10 @@ export function SkillPicker({
   onChange,
   label,
   disabled,
-  placeholder = 'Search and add skills...',
+  placeholder,
+  entityName = 'skill',
 }: SkillPickerProps) {
+  const defaultPlaceholder = placeholder ?? `Search and add ${entityName}s...`;
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -95,7 +98,7 @@ export function SkillPicker({
                 setOpen(true);
               }}
               onFocus={() => setOpen(true)}
-              placeholder={selectedIds.length === 0 ? placeholder : 'Add more...'}
+              placeholder={selectedIds.length === 0 ? defaultPlaceholder : `Add more ${entityName}s...`}
               disabled={disabled}
               className="flex-1 min-w-[140px] text-sm text-gray-900 placeholder:text-gray-400 outline-none bg-transparent disabled:cursor-not-allowed py-0.5"
             />
@@ -106,7 +109,7 @@ export function SkillPicker({
           <div className="absolute z-20 top-full left-0 right-0 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
             {filtered.length === 0 ? (
               <p className="px-4 py-3 text-sm text-gray-400">
-                {search ? `No skills match "${search}".` : 'All available skills selected.'}
+                {search ? `No ${entityName}s match "${search}".` : `All available ${entityName}s selected.`}
               </p>
             ) : (
               filtered.map((opt) => (
@@ -125,7 +128,7 @@ export function SkillPicker({
       </div>
 
       {selectedIds.length > 0 && (
-        <p className="text-xs text-gray-400">{selectedIds.length} skill{selectedIds.length > 1 ? 's' : ''} selected</p>
+        <p className="text-xs text-gray-400">{selectedIds.length} {entityName}{selectedIds.length > 1 ? 's' : ''} selected</p>
       )}
     </div>
   );
