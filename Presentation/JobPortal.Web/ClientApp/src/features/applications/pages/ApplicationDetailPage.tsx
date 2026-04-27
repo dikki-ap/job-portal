@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone } from 'lucide-react';
+import { ArrowLeft, Download, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
@@ -8,14 +9,22 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { downloadWithAuth } from '../../../lib/download';
 import { formatDate, formatDateTime } from '../../../lib/format';
 import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
+import { cn } from '../../../lib/utils';
 import {
   useGetApplicationByCodeQuery,
   usePassStepMutation,
   useFailStepMutation,
   useRejectApplicationMutation,
+  useRateApplicationMutation,
 } from '../api/applicationsApi';
 import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
 import type { ApplicationStepDto } from '../../../types/api';
+
+function ratingColor(r: number) {
+  if (r <= 4) return 'bg-red-50 text-red-600 ring-red-200 border-red-200';
+  if (r <= 7) return 'bg-amber-50 text-amber-700 ring-amber-200 border-amber-200';
+  return 'bg-green-50 text-green-700 ring-green-200 border-green-200';
+}
 
 const APP_STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
@@ -57,6 +66,17 @@ export function ApplicationDetailPage() {
   const [passStep, { isLoading: passingId }] = usePassStepMutation();
   const [failStep, { isLoading: failingId }] = useFailStepMutation();
   const [rejectApplication, { isLoading: rejecting }] = useRejectApplicationMutation();
+  const [rateApplication, { isLoading: rating }] = useRateApplicationMutation();
+
+  const [localRating, setLocalRating] = useState<number | null>(null);
+  const [localNote, setLocalNote] = useState('');
+
+  useEffect(() => {
+    if (application) {
+      setLocalRating(application.rating);
+      setLocalNote(application.ratingNote ?? '');
+    }
+  }, [application]);
 
   const handlePassStep = async (step: ApplicationStepDto) => {
     try {
@@ -85,6 +105,17 @@ export function ApplicationDetailPage() {
     } catch (err: unknown) {
       const data = (err as { data?: { error?: string } })?.data;
       addToast(data?.error ?? 'Failed to reject candidate.', 'error');
+    }
+  };
+
+  const handleRate = async () => {
+    if (!localRating) return;
+    try {
+      await rateApplication({ applicationId: appId, rating: localRating, note: localNote || undefined }).unwrap();
+      addToast('Rating saved.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to save rating.', 'error');
     }
   };
 
@@ -146,10 +177,63 @@ export function ApplicationDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        {/* Card 2: Job Post */}
+      {/* Card 2: HR Rating */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <Star className="h-4 w-4 text-gray-400" />
+          <h2 className="text-base font-semibold text-gray-900">HR Rating</h2>
+          {application.ratedAt && (
+            <span className="text-xs text-gray-400 ml-auto">Last rated: {formatDate(application.ratedAt)}</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-1.5">
+            {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setLocalRating(n)}
+                className={cn(
+                  'h-9 w-9 rounded-lg border text-sm font-semibold transition-all',
+                  localRating === n
+                    ? cn('ring-2 ring-offset-1', ratingColor(n))
+                    : 'border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700'
+                )}
+              >
+                {n}
+              </button>
+            ))}
+            {localRating && (
+              <span className={cn('ml-2 inline-flex items-center self-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset', ratingColor(localRating))}>
+                {localRating}/10
+              </span>
+            )}
+          </div>
+          <textarea
+            value={localNote}
+            onChange={(e) => setLocalNote(e.target.value)}
+            maxLength={500}
+            rows={2}
+            placeholder="Optional note about this candidate..."
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 resize-none"
+          />
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={handleRate}
+              loading={rating}
+              disabled={!localRating}
+            >
+              {application.rating ? 'Update Rating' : 'Save Rating'}
+            </Button>
+          </div>
+        </div>
+      </div>
 
-        {/* Card 2: Job Post */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Card 3: Job Post */}
+
+        {/* Card 3: Job Post */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>

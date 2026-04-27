@@ -30,4 +30,7 @@ public record ApplicationDto(
     DateTime AppliedAt,
     DateTime UpdatedAt,
     IEnumerable<ApplicationStepItemDto> Steps,
-    IEnumerable<ApplicationDocumentDto> Documents);
+    IEnumerable<ApplicationDocumentDto> Documents,
+    int? Rating,
+    string? RatingNote,
+    DateTime? RatedAt);

@@ -44,5 +44,8 @@ public class GetAllApplicationsQueryHandler(
             d.Document?.OriginalFileName ?? string.Empty,
             d.Document?.FilePath ?? string.Empty,
             d.Document?.FileType ?? string.Empty,
-            d.CreatedAt)));
+            d.CreatedAt)),
+        a.Rating,
+        a.RatingNote,
+        a.RatedAt);
 }

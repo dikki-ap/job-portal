@@ -3,6 +3,7 @@ using JobPortal.Application.Features.Applications.Commands.AcceptApplication;
 using JobPortal.Application.Features.Applications.Commands.BulkAcceptApplication;
 using JobPortal.Application.Features.Applications.Commands.BulkRejectApplication;
 using JobPortal.Application.Features.Applications.Commands.BulkUpdateApplicationStep;
+using JobPortal.Application.Features.Applications.Commands.RateApplication;
 using JobPortal.Application.Features.Applications.Commands.RejectApplication;
 using JobPortal.Application.Features.Applications.Commands.UpdateApplicationStep;
 using JobPortal.Application.Features.Applications.Queries.GetAllApplications;
@@ -92,6 +93,20 @@ public class ApplicationsController(IMediator mediator, ILogger<ApplicationsCont
         try
         {
             var result = await mediator.Send(new RejectApplicationCommand(id), cancellationToken);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    public record RateRequest(int Rating, string? Note);
+
+    [HttpPost("{id:int}/rate")]
+    public async Task<IActionResult> Rate(int id, [FromBody] RateRequest req, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await mediator.Send(new RateApplicationCommand(id, req.Rating, req.Note), cancellationToken);
             return Ok(result);
         }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }

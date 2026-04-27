@@ -99,6 +99,17 @@ export const applicationsApi = createApi({
       query: (body) => ({ url: '/bulk-reject', method: 'POST', body }),
       invalidatesTags: ['Application'],
     }),
+    rateApplication: builder.mutation<ApplicationDto, { applicationId: number; rating: number; note?: string }>({
+      query: ({ applicationId, rating, note }) => ({
+        url: `/${applicationId}/rate`,
+        method: 'POST',
+        body: { rating, note },
+      }),
+      invalidatesTags: (_r, _e, { applicationId }) => [
+        { type: 'Application', id: applicationId },
+        'Application',
+      ],
+    }),
   }),
 });
 
@@ -113,4 +124,5 @@ export const {
   useBulkUpdateStepMutation,
   useBulkAcceptMutation,
   useBulkRejectMutation,
+  useRateApplicationMutation,
 } = applicationsApi;

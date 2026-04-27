@@ -31,6 +31,7 @@ import { CandidateProfilePage } from '../features/candidateProfile/pages/Candida
 import { ApprovalLevelsPage } from '../features/approvalLevels/pages/ApprovalLevelsPage';
 import { MyApprovalsPage } from '../features/approvals/pages/MyApprovalsPage';
 import { JobPostApprovalReviewPage } from '../features/approvals/pages/JobPostApprovalReviewPage';
+import { AnalyticsPage } from '../features/analytics/pages/AnalyticsPage';
 
 const HR_ADMIN_ROLES = ['Admin', 'HR'];
 const ADMIN_ROLES = ['Admin'];
@@ -72,6 +73,7 @@ export function AppRouter() {
           <Route path="jobs/:id/edit" element={<EditJobPostPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="applications/:code" element={<ApplicationDetailPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
         </Route>
 
         {/* Approvals — all authenticated users (content filtered by API) */}
