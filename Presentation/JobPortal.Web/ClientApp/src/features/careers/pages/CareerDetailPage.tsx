@@ -16,6 +16,10 @@ import { Spinner } from "../../../components/ui/Spinner";
 import { useGetCareerBySlugQuery } from "../api/careersApi";
 import { useGetMyApplicationsQuery } from "../../myApplications/api/myApplicationsApi";
 import { useAuth } from "../../../contexts/AuthContext";
+import {
+  useGetPrivacyConsentSettingQuery,
+  useGetMyConsentStatusQuery,
+} from "../../privacyConsent/api/privacyConsentApi";
 
 const MAX_VISIBLE_SKILLS = 5;
 const MAX_VISIBLE_MAJORS = 3;
@@ -53,6 +57,10 @@ export function CareerDetailPage() {
   const [showAllMajors, setShowAllMajors] = useState(false);
 
   const { data: myApplications = [] } = useGetMyApplicationsQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+  const { data: consentSetting } = useGetPrivacyConsentSettingQuery();
+  const { data: consentStatus } = useGetMyConsentStatusQuery(undefined, {
     skip: !isAuthenticated,
   });
   const appliedStatus = job
@@ -122,6 +130,8 @@ export function CareerDetailPage() {
   const handleApply = () => {
     if (!isAuthenticated) {
       navigate("/login", { state: { from: `/careers/${slug}/apply` } });
+    } else if (consentSetting?.requireConsent && !consentStatus?.hasConsented) {
+      navigate(`/privacy-policy?redirect=/careers/${slug}/apply`);
     } else {
       navigate(`/careers/${slug}/apply`);
     }

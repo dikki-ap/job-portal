@@ -111,6 +111,45 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         return true;
     }
 
+    public async Task<(bool HasConsented, DateTime? ConsentedAt)> GetConsentStatusAsync(
+        int userId, CancellationToken cancellationToken = default)
+    {
+        var profile = await context.UserProfiles
+            .Select(p => new { p.UserId, p.HasConsentedToPrivacyPolicy, p.ConsentedAt })
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        return (profile?.HasConsentedToPrivacyPolicy ?? false, profile?.ConsentedAt);
+    }
+
+    public async Task<DateTime> RecordConsentAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var consentedAt = DateTime.UtcNow;
+        var profile = await context.UserProfiles
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+
+        if (profile is null)
+        {
+            profile = new UserProfile
+            {
+                UserId = userId,
+                NIK = $"TMP{userId:D17}",
+                PhoneNumber = string.Empty,
+                HasConsentedToPrivacyPolicy = true,
+                ConsentedAt = consentedAt,
+                CreatedAt = consentedAt,
+                CreatedByUserId = userId,
+            };
+            await context.UserProfiles.AddAsync(profile, cancellationToken);
+        }
+        else
+        {
+            profile.HasConsentedToPrivacyPolicy = true;
+            profile.ConsentedAt = consentedAt;
+            context.UserProfiles.Update(profile);
+        }
+
+        return consentedAt;
+    }
+
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => await context.SaveChangesAsync(cancellationToken);
 }

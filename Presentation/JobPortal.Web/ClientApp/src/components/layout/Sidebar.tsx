@@ -152,6 +152,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   { label: 'Hiring Template', to: '/master/hiring-templates' },
                   { label: 'Job Category', to: '/master/job-categories' },
                   { label: 'Job Level', to: '/master/job-levels' },
+                  { label: 'Privacy Consent', to: '/master/privacy-consent' },
                   { label: 'Skill', to: '/master/skills' },
                   { label: 'Work Mode', to: '/master/work-modes' },
                 ],
