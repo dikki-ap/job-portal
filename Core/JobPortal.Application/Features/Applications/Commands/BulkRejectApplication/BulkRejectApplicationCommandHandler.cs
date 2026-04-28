@@ -12,6 +12,7 @@ namespace JobPortal.Application.Features.Applications.Commands.BulkRejectApplica
 public class BulkRejectApplicationCommandHandler(
     IApplicationRepository repository,
     IEmailService emailService,
+    IAppSettingRepository appSettingRepository,
     ILogger<BulkRejectApplicationCommandHandler> logger)
     : IRequestHandler<BulkRejectApplicationCommand, BulkOperationResultDto>
 {
@@ -61,7 +62,9 @@ public class BulkRejectApplicationCommandHandler(
 
         logger.LogInformation("BulkReject succeeded={S} skipped={Sk}", succeeded, skipped);
 
-        StepEmailHelper.FireAndForgetBulkEmails(emailService, logger, emailQueue);
+        var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
+        var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
+        StepEmailHelper.FireAndForgetBulkEmails(emailService, logger, emailQueue, primaryColor, companyName);
 
         return new BulkOperationResultDto(succeeded, skipped, []);
     }

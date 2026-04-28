@@ -11,6 +11,7 @@ namespace JobPortal.Application.Features.Applications.Commands.UpdateApplication
 public class UpdateApplicationStepCommandHandler(
     IApplicationRepository repository,
     IEmailService emailService,
+    IAppSettingRepository appSettingRepository,
     ILogger<UpdateApplicationStepCommandHandler> logger)
     : IRequestHandler<UpdateApplicationStepCommand, ApplicationDto>
 {
@@ -64,8 +65,11 @@ public class UpdateApplicationStepCommandHandler(
 
             logger.LogInformation("ApplicationStep updated id={StepId} status={Status}", step.Id, step.Status);
 
+            var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
+            var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
+
             var passed = request.StepStatus == ApplicationStepStatus.Passed;
-            _ = StepEmailHelper.SendStepEmailAsync(emailService, logger, application, step, passed, CancellationToken.None);
+            _ = StepEmailHelper.SendStepEmailAsync(emailService, logger, application, step, passed, primaryColor, companyName, CancellationToken.None);
 
             return GetAllApplicationsQueryHandler.MapToDto(application);
         }

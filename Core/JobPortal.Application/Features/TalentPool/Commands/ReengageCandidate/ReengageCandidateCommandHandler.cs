@@ -15,6 +15,7 @@ public class ReengageCandidateCommandHandler(
     IApplicationRepository applicationRepository,
     IJobPostRepository jobPostRepository,
     IEmailService emailService,
+    IAppSettingRepository appSettingRepository,
     ILogger<ReengageCandidateCommandHandler> logger)
     : IRequestHandler<ReengageCandidateCommand, ApplicationDto>
 {
@@ -68,8 +69,11 @@ public class ReengageCandidateCommandHandler(
             "Re-engaged userId={UserId} for jobPostId={JobPostId} applicationCode={Code}",
             entry.UserId, request.JobPostId, code);
 
+        var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", ct) ?? "#004181";
+        var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", ct)  ?? "JobPortal";
+
         var full = await applicationRepository.GetByIdAsync(application.Id, ct);
-        _ = ApplicationEmailHelper.SendReengageAsync(emailService, logger, full!, CancellationToken.None);
+        _ = ApplicationEmailHelper.SendReengageAsync(emailService, logger, full!, primaryColor, companyName, CancellationToken.None);
         return GetAllApplicationsQueryHandler.MapToDto(full!);
     }
 }

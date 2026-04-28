@@ -13,6 +13,7 @@ public class SubmitJobPostForApprovalCommandHandler(
     IJobApprovalRepository approvalRepository,
     ICurrentUserService currentUserService,
     IEmailService emailService,
+    IAppSettingRepository appSettingRepository,
     ILogger<SubmitJobPostForApprovalCommandHandler> logger)
     : IRequestHandler<SubmitJobPostForApprovalCommand, Unit>
 {
@@ -61,12 +62,15 @@ public class SubmitJobPostForApprovalCommandHandler(
 
             logger.LogInformation("JobPost id={JobPostId} submitted for approval instanceId={InstanceId}", job.Id, instance.Id);
 
+            var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
+            var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
+
             // Reload instance with job nav props for email
             var reloaded = await approvalRepository.GetActiveInstanceByJobPostIdAsync(job.Id, cancellationToken);
             if (reloaded is not null)
             {
                 var firstStep = reloaded.Steps.OrderBy(s => s.StepOrder).First();
-                ApprovalEmailHelper.FireAndForgetApprovalEmail(emailService, baseUrl, logger, reloaded, firstStep);
+                ApprovalEmailHelper.FireAndForgetApprovalEmail(emailService, baseUrl, logger, reloaded, firstStep, primaryColor, companyName);
             }
 
             return Unit.Value;

@@ -2,6 +2,7 @@ using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Features.Applications.Queries.GetAllApplications;
 using JobPortal.Application.Interfaces.Repositories;
+using JobPortal.Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -9,6 +10,8 @@ namespace JobPortal.Application.Features.Applications.Commands.RejectApplication
 
 public class RejectApplicationCommandHandler(
     IApplicationRepository repository,
+    IEmailService emailService,
+    IAppSettingRepository appSettingRepository,
     ILogger<RejectApplicationCommandHandler> logger)
     : IRequestHandler<RejectApplicationCommand, ApplicationDto>
 {
@@ -37,6 +40,11 @@ public class RejectApplicationCommandHandler(
             await repository.SaveChangesAsync(cancellationToken);
 
             logger.LogInformation("Application rejected id={Id}", request.Id);
+
+            var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
+            var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
+            _ = ApplicationEmailHelper.SendRejectedAsync(emailService, logger, application, primaryColor, companyName, CancellationToken.None);
+
             return GetAllApplicationsQueryHandler.MapToDto(application);
         }
         catch (Exception ex) when (ex is not KeyNotFoundException and not InvalidOperationException)
