@@ -62,7 +62,7 @@ export function Pagination({
               const val = e.target.value;
               onPageSizeChange(val === 'all' ? 'all' : (Number(val) as PageSize));
             }}
-            className="h-8 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20"
+            className="h-8 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
           >
             {PAGE_SIZE_OPTIONS.map((opt) => (
               <option key={opt} value={opt}>
@@ -96,7 +96,7 @@ export function Pagination({
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition-colors',
                   page === currentPage
-                    ? 'bg-[#004181] text-white'
+                    ? 'bg-[var(--primary)] text-white'
                     : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
                 )}
               >

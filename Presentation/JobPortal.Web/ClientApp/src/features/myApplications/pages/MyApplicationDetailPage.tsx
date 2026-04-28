@@ -42,7 +42,7 @@ export function MyApplicationDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-24">
-        <Spinner size="lg" className="text-[#004181]" />
+        <Spinner size="lg" className="text-[var(--primary)]" />
       </div>
     );
   }
@@ -93,7 +93,7 @@ export function MyApplicationDetailPage() {
           {application.jobPostSlug && (
             <Link
               to={`/careers/${application.jobPostSlug}`}
-              className="inline-flex items-center gap-1 text-xs text-[#004181] hover:underline font-medium"
+              className="inline-flex items-center gap-1 text-xs text-[var(--primary)] hover:underline font-medium"
             >
               View listing <ExternalLink className="h-3 w-3" />
             </Link>
@@ -144,7 +144,7 @@ export function MyApplicationDetailPage() {
           {/* Progress bar */}
           <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden">
             <div
-              className="h-full rounded-full bg-[#004181] transition-all duration-500"
+              className="h-full rounded-full bg-[var(--primary)] transition-all duration-500"
               style={{ width: totalSteps > 0 ? `${(passedCount / totalSteps) * 100}%` : '0%' }}
             />
           </div>

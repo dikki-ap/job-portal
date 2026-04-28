@@ -61,7 +61,7 @@ export function ApplicationsTable({ applications, selectedIds, onSelectionChange
                 checked={allSelected}
                 ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
                 onChange={toggleAll}
-                className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181]/20 cursor-pointer"
+                className="h-4 w-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]/20 cursor-pointer"
               />
             </th>
             <th className="px-4 py-3 w-10">No</th>
@@ -87,7 +87,7 @@ export function ApplicationsTable({ applications, selectedIds, onSelectionChange
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggleOne(app.id)}
-                    className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181]/20 cursor-pointer"
+                    className="h-4 w-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]/20 cursor-pointer"
                   />
                 </td>
                 <td className="px-4 py-4 text-gray-400 font-mono text-xs">{idx + 1}</td>

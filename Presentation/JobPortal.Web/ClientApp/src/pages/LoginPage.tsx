@@ -34,7 +34,7 @@ export function LoginPage() {
       {/* Left panel - branding */}
       <div
         className="hidden md:flex md:w-1/2 flex-col justify-center items-center p-12 text-white"
-        style={{ backgroundColor: '#004181' }}
+        style={{ backgroundColor: 'var(--primary)' }}
       >
         <div className="max-w-sm text-center">
           <div className="mb-8">
@@ -58,13 +58,13 @@ export function LoginPage() {
         <div className="md:hidden mb-8 text-center">
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3"
-            style={{ backgroundColor: '#004181' }}
+            style={{ backgroundColor: 'var(--primary)' }}
           >
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold" style={{ color: '#004181' }}>Job Portal</h1>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--primary)' }}>Job Portal</h1>
           <p className="text-sm text-gray-500">Internal Recruitment System</p>
         </div>
 
@@ -78,9 +78,9 @@ export function LoginPage() {
             <button
               onClick={handleLogin}
               className="w-full py-3 px-4 rounded-xl font-semibold text-white text-sm transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md"
-              style={{ backgroundColor: '#004181' }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#003166')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#004181')}
+              style={{ backgroundColor: 'var(--primary)' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--primary-hover)')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
             >
               Sign In
             </button>
@@ -97,7 +97,7 @@ export function LoginPage() {
             <button
               onClick={handleRegister}
               className="w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-[0.98] border-2"
-              style={{ borderColor: '#004181', color: '#004181' }}
+              style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f0f5ff' }}
               onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
             >
@@ -107,9 +107,9 @@ export function LoginPage() {
 
           <p className="mt-8 text-center text-xs text-gray-400">
             By signing in, you agree to our{' '}
-            <span className="underline cursor-pointer" style={{ color: '#004181' }}>Terms of Service</span>
+            <span className="underline cursor-pointer" style={{ color: 'var(--primary)' }}>Terms of Service</span>
             {' '}and{' '}
-            <span className="underline cursor-pointer" style={{ color: '#004181' }}>Privacy Policy</span>
+            <span className="underline cursor-pointer" style={{ color: 'var(--primary)' }}>Privacy Policy</span>
           </p>
         </div>
       </div>

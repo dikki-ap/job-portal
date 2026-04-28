@@ -62,7 +62,7 @@ function CandidateDashboard({ userName }: { userName: string | undefined }) {
           <h2 className="text-base font-semibold text-gray-900">Recent Applications</h2>
         </div>
         {isLoading ? (
-          <div className="flex justify-center py-10"><Spinner size="lg" className="text-[#004181]" /></div>
+          <div className="flex justify-center py-10"><Spinner size="lg" className="text-[var(--primary)]" /></div>
         ) : recentApplications.length === 0 ? (
           <p className="px-6 py-10 text-center text-sm text-gray-400">You haven't applied to any positions yet.</p>
         ) : (

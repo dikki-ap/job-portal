@@ -80,11 +80,11 @@ export function SearchableSelect({
           onClick={() => !disabled && setOpen((v) => !v)}
           className={cn(
             'flex h-10 w-full items-center justify-between gap-2 rounded-lg border px-3 text-sm text-left transition-colors',
-            'focus:outline-none focus:ring-2 focus:ring-[#004181]/20',
+            'focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20',
             error
               ? 'border-red-400 focus:border-red-400'
               : open
-                ? 'border-[#004181]'
+                ? 'border-[var(--primary)]'
                 : 'border-gray-300 hover:border-gray-400',
             disabled && 'cursor-not-allowed bg-gray-50 opacity-70',
             !disabled && 'bg-white cursor-pointer',
@@ -146,7 +146,7 @@ export function SearchableSelect({
                       className={cn(
                         'flex w-full items-center px-3 py-2.5 text-sm text-left transition-colors',
                         isSelected
-                          ? 'bg-[#004181]/5 text-[#004181] font-medium'
+                          ? 'bg-[var(--primary)]/5 text-[var(--primary)] font-medium'
                           : 'text-gray-700 hover:bg-gray-50'
                       )}
                     >

@@ -68,7 +68,7 @@ export function SkillPicker({
         <div
           className={cn(
             'min-h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2',
-            'focus-within:border-[#004181] focus-within:ring-2 focus-within:ring-[#004181]/20',
+            'focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--primary)]/20',
             'transition-shadow',
             disabled && 'cursor-not-allowed bg-gray-50 opacity-70'
           )}
@@ -77,7 +77,7 @@ export function SkillPicker({
             {selectedOptions.map((opt) => (
               <span
                 key={opt.id}
-                className="inline-flex items-center gap-1 rounded-md bg-[#004181] px-2 py-0.5 text-xs font-medium text-white"
+                className="inline-flex items-center gap-1 rounded-md bg-[var(--primary)] px-2 py-0.5 text-xs font-medium text-white"
               >
                 {opt.name}
                 <button

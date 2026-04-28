@@ -246,7 +246,7 @@ export function JobPostsTable({ jobPosts, hasActiveLevels, onSuccess, onError }:
       </div>
       <Modal open={rejectionInfoId !== null} onClose={() => setRejectionInfoId(null)} title="Rejection Details">
         <div className="flex flex-col gap-4">
-          {isLoadingRejection && <div className="flex justify-center py-6"><Spinner size="md" className="text-[#004181]" /></div>}
+          {isLoadingRejection && <div className="flex justify-center py-6"><Spinner size="md" className="text-[var(--primary)]" /></div>}
           {!isLoadingRejection && rejectionStatus && (
             <div className="flex flex-col gap-3">
               {rejectionStatus.steps.map((step) => (

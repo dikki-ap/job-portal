@@ -3,10 +3,9 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Shield, CheckCircle2, ArrowLeft, Building2, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useBranding } from '../../../contexts/BrandingContext';
 import { useRecordConsentMutation } from '../api/privacyConsentApi';
 import { cn } from '../../../lib/utils';
-
-const COMPANY_NAME = 'Hirnexa Tech';
 const LAST_UPDATED = 'April 27, 2026';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -31,6 +30,7 @@ export function PrivacyPolicyPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
+  const { companyName: COMPANY_NAME } = useBranding();
   const [recordConsent, { isLoading: consenting }] = useRecordConsentMutation();
   const [agreed, setAgreed] = useState(false);
 
@@ -52,7 +52,7 @@ export function PrivacyPolicyPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#004181]">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--primary)]">
             <Building2 className="h-4 w-4 text-white" />
           </div>
           <span className="text-sm font-bold text-gray-900 flex-1">{COMPANY_NAME}</span>
@@ -68,7 +68,7 @@ export function PrivacyPolicyPage() {
         {/* Title */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-[#004181]" />
+            <Shield className="h-6 w-6 text-[var(--primary)]" />
             <h1 className="text-2xl font-bold text-gray-900">Privacy Policy & Personal Data Protection</h1>
           </div>
           <p className="text-sm text-gray-500">
@@ -358,7 +358,7 @@ export function PrivacyPolicyPage() {
                 loading={consenting}
                 disabled={agreed}
                 className={cn(
-                  'bg-[#004181] hover:bg-[#003268] text-white min-w-40',
+                  'bg-[var(--primary)] hover:bg-[#003268] text-white min-w-40',
                   agreed && 'bg-green-600 hover:bg-green-600',
                 )}
               >

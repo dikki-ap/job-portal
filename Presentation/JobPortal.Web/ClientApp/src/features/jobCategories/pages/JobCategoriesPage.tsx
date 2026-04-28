@@ -52,7 +52,7 @@ export function JobCategoriesPage() {
             placeholder="Search job categories..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20"
+            className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
           />
         </div>
         <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="shrink-0">
@@ -63,7 +63,7 @@ export function JobCategoriesPage() {
 
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Spinner size="lg" className="text-[#004181]" />
+          <Spinner size="lg" className="text-[var(--primary)]" />
         </div>
       )}
 

@@ -162,7 +162,7 @@ export function DocumentTypeForm({
             checked={isDefaultRequired}
             onChange={(e) => setIsDefaultRequired(e.target.checked)}
             disabled={isLoading}
-            className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181]"
+            className="h-4 w-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
           />
           <span className="text-sm text-gray-700">Required by default for all job posts</span>
         </label>
@@ -181,8 +181,8 @@ export function DocumentTypeForm({
                   onClick={() => toggleMimeType(opt.value)}
                   className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
                     checked
-                      ? "border-[#004181] bg-[#004181] text-white"
-                      : "border-gray-300 bg-white text-gray-700 hover:border-[#004181] hover:text-[#004181]"
+                      ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-[var(--primary)] hover:text-[var(--primary)]"
                   }`}
                 >
                   {opt.label}

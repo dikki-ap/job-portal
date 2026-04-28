@@ -38,8 +38,8 @@ body {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .phone-input-wrapper .PhoneInputInput:focus {
-  border-color: #004181;
-  box-shadow: 0 0 0 3px rgba(0, 65, 129, 0.12);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 .phone-input-wrapper .PhoneInputCountrySelect {
   height: 2.5rem;
@@ -54,8 +54,8 @@ body {
   outline: none;
 }
 .phone-input-wrapper .PhoneInputCountrySelect:focus {
-  border-color: #004181;
-  box-shadow: 0 0 0 3px rgba(0, 65, 129, 0.12);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 .phone-input-error .PhoneInputInput,
 .phone-input-error .PhoneInputCountrySelect {

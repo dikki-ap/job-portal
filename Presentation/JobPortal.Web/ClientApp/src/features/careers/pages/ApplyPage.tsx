@@ -37,7 +37,7 @@ function ApplyLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#004181]">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--primary)]">
             <Building2 className="h-4 w-4 text-white" />
           </div>
           <span className="text-sm font-bold text-gray-900">Job Application</span>
@@ -53,7 +53,7 @@ function LoginWall({ jobTitle }: { jobTitle?: string }) {
     <ApplyLayout>
       <div className="flex flex-col items-center justify-center gap-6 py-16 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
-          <LogIn className="h-8 w-8 text-[#004181]" />
+          <LogIn className="h-8 w-8 text-[var(--primary)]" />
         </div>
         <div className="flex flex-col gap-2 max-w-sm">
           <h2 className="text-xl font-bold text-gray-900">Sign in to Apply</h2>
@@ -66,7 +66,7 @@ function LoginWall({ jobTitle }: { jobTitle?: string }) {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => keycloak.login({ redirectUri: window.location.href })}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#004181] px-6 py-3 text-sm font-semibold text-white hover:bg-[#003166] transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--primary-hover)] transition-colors"
           >
             <LogIn className="h-4 w-4" /> Sign In to Continue
           </button>
@@ -95,7 +95,7 @@ function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile, onSwitchToUpl
       <div className="flex items-center gap-3">
         {locked ? (
           <span className="h-4 w-4 flex items-center justify-center">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#004181]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--primary)]" />
           </span>
         ) : (
           <button type="button" onClick={onToggleOff} className="text-gray-400 hover:text-red-500 shrink-0">
@@ -133,7 +133,7 @@ function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile, onSwitchToUpl
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-600 hover:border-[#004181] hover:text-[#004181] transition-colors">
+            <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-600 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">
               <Upload className="h-4 w-4" />
               {entry.file ? entry.file.name : 'Choose file'}
               <input
@@ -148,7 +148,7 @@ function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile, onSwitchToUpl
                 <X className="h-4 w-4" />
               </button>
             )}
-            {entry.uploading && <Loader2 className="h-4 w-4 animate-spin text-[#004181]" />}
+            {entry.uploading && <Loader2 className="h-4 w-4 animate-spin text-[var(--primary)]" />}
           </div>
         )}
         {entry.error && <p className="text-xs text-red-600 mt-1">{entry.error}</p>}
@@ -292,7 +292,7 @@ export function ApplyPage() {
     return (
       <ApplyLayout>
         <div className="flex justify-center py-24">
-          <Spinner size="lg" className="text-[#004181]" />
+          <Spinner size="lg" className="text-[var(--primary)]" />
         </div>
       </ApplyLayout>
     );
@@ -310,7 +310,7 @@ export function ApplyPage() {
     return (
       <ApplyLayout>
         <div className="flex justify-center py-24">
-          <Spinner size="lg" className="text-[#004181]" />
+          <Spinner size="lg" className="text-[var(--primary)]" />
         </div>
       </ApplyLayout>
     );
@@ -426,7 +426,7 @@ export function ApplyPage() {
                     key={dt.id}
                     type="button"
                     onClick={() => addAdditionalDoc(dt)}
-                    className="rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-[#004181] hover:text-[#004181] transition-colors"
+                    className="rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
                   >
                     + {dt.name}
                   </button>

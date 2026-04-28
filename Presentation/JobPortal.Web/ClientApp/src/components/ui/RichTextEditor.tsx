@@ -33,7 +33,7 @@ function ToolbarButton({ onClick, active, disabled, title, children }: ToolbarBu
       title={title}
       className={`flex h-7 w-7 items-center justify-center rounded text-sm transition-colors disabled:opacity-40 ${
         active
-          ? 'bg-[#004181] text-white'
+          ? 'bg-[var(--primary)] text-white'
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
       }`}
     >
@@ -106,7 +106,7 @@ export function RichTextEditor({
         className={`rounded-lg border bg-white text-sm transition-colors ${
           disabled ? 'cursor-not-allowed bg-gray-50 opacity-70' : 'hover:border-gray-400'
         } ${error ? 'border-red-500' : 'border-gray-300'} ${
-          !disabled ? 'focus-within:border-[#004181] focus-within:ring-2 focus-within:ring-[#004181]/20' : ''
+          !disabled ? 'focus-within:border-[var(--primary)] focus-within:ring-2 focus-within:ring-[var(--primary)]/20' : ''
         }`}
       >
         {/* Toolbar */}

@@ -14,7 +14,7 @@ export function RoleRoute({ roles, redirectTo = '/my-applications' }: RoleRouteP
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
-          <Spinner size="lg" className="text-[#004181]" />
+          <Spinner size="lg" className="text-[var(--primary)]" />
           <p className="text-sm text-gray-500">Loading...</p>
         </div>
       </div>

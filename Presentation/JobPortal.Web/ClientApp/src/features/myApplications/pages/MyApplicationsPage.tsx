@@ -20,7 +20,7 @@ export function MyApplicationsPage() {
         <p className="text-sm text-gray-500">Track the status of your submitted applications.</p>
       </div>
 
-      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[#004181]" /></div>}
+      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[var(--primary)]" /></div>}
       {isError && <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">Failed to load applications.</div>}
 
       {!isLoading && !isError && (

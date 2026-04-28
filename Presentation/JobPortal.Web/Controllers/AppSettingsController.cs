@@ -1,4 +1,5 @@
 using JobPortal.Application.Features.AppSettings.Commands.UpdatePrivacyConsentSetting;
+using JobPortal.Application.Features.AppSettings.Queries.GetBrandingSetting;
 using JobPortal.Application.Features.AppSettings.Queries.GetPrivacyConsentSetting;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,11 @@ namespace JobPortal.Web.Controllers;
 [Route("api/app-settings")]
 public class AppSettingsController(IMediator mediator) : ControllerBase
 {
+    [HttpGet("branding")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetBranding(CancellationToken ct)
+        => Ok(await mediator.Send(new GetBrandingSettingQuery(), ct));
+
     [HttpGet("require-privacy-consent")]
     [AllowAnonymous]
     public async Task<IActionResult> GetRequirePrivacyConsent(CancellationToken ct)

@@ -31,11 +31,11 @@ export function EducationLevelsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search education levels..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20" />
+          <input type="text" placeholder="Search education levels..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20" />
         </div>
         <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="shrink-0"><Plus className="h-4 w-4" />Add Education Level</Button>
       </div>
-      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[#004181]" /></div>}
+      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[var(--primary)]" /></div>}
       {isError && <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">Failed to load education levels. Please try again.</div>}
       {!isLoading && !isError && (
         <>

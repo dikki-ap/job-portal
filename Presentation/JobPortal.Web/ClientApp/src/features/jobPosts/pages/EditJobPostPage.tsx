@@ -24,7 +24,7 @@ export function EditJobPostPage() {
           <p className="text-sm text-gray-500">Update the details for this job posting.</p>
         </div>
       </div>
-      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[#004181]" /></div>}
+      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[var(--primary)]" /></div>}
       {isError && <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">Failed to load job post. Please try again.</div>}
       {!isLoading && !isError && jobPost && (
         <JobPostForm editing={jobPost} onSuccess={(msg) => addToast(msg, 'success')} onError={(msg) => addToast(msg, 'error')} />

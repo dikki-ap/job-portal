@@ -134,7 +134,7 @@ export function ApprovalLevelForm({ open, onClose, editing, onSuccess, onError }
             checked={isActive}
             onChange={(e) => setIsActive(e.target.checked)}
             disabled={isLoading}
-            className="h-4 w-4 rounded border-gray-300 text-[#004181]"
+            className="h-4 w-4 rounded border-gray-300 text-[var(--primary)]"
           />
           Active
         </label>

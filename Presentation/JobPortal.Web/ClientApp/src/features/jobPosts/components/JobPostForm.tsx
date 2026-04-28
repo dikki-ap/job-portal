@@ -510,7 +510,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
                         );
                       }
                     }}
-                    className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181] disabled:opacity-60"
+                    className="h-4 w-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)] disabled:opacity-60"
                   />
                   <label
                     htmlFor={`doc-${dt.id}`}
@@ -545,7 +545,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
                             ),
                           );
                         }}
-                        className="h-3.5 w-3.5 rounded border-gray-300 text-[#004181]"
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-[var(--primary)]"
                       />
                       Required
                     </label>
@@ -620,7 +620,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
             checked={isSalaryVisible}
             onChange={(e) => setIsSalaryVisible(e.target.checked)}
             disabled={isLoading}
-            className="h-4 w-4 rounded border-gray-300 text-[#004181] focus:ring-[#004181]"
+            className="h-4 w-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
           />
           <span className="text-sm text-gray-700">
             Show salary range to applicants
@@ -684,7 +684,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
                   e.target.value = "";
                 }}
                 disabled={isLoading}
-                className="h-8 rounded-lg border border-gray-300 bg-white px-2 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 disabled:opacity-70"
+                className="h-8 rounded-lg border border-gray-300 bg-white px-2 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 disabled:opacity-70"
               >
                 <option value="">Select a template...</option>
                 {hiringTemplates.map((t) => (
@@ -704,7 +704,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
               className="rounded-lg border border-gray-200 bg-gray-50"
             >
               <div className="flex items-center gap-2 p-2.5">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#004181] text-xs font-semibold text-white">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-semibold text-white">
                   {idx + 1}
                 </span>
                 <input
@@ -715,7 +715,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
                     updateStep(step.tempId, "name", e.target.value)
                   }
                   disabled={isLoading}
-                  className="h-9 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 disabled:opacity-70"
+                  className="h-9 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 disabled:opacity-70"
                 />
                 <label className="flex items-center gap-1.5 text-xs text-gray-600 shrink-0">
                   <input
@@ -725,7 +725,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
                       updateStep(step.tempId, "isRequired", e.target.checked)
                     }
                     disabled={isLoading}
-                    className="h-3.5 w-3.5 rounded border-gray-300 text-[#004181]"
+                    className="h-3.5 w-3.5 rounded border-gray-300 text-[var(--primary)]"
                   />
                   Required
                 </label>
@@ -734,7 +734,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
                   onClick={() => toggleStepEmail(step.tempId)}
                   disabled={isLoading}
                   title="Email templates"
-                  className={`flex items-center gap-1 rounded px-1.5 py-1 text-xs transition-colors disabled:opacity-30 ${step.emailOpen ? "text-[#004181] bg-blue-50" : "text-gray-400 hover:text-gray-600"}`}
+                  className={`flex items-center gap-1 rounded px-1.5 py-1 text-xs transition-colors disabled:opacity-30 ${step.emailOpen ? "text-[var(--primary)] bg-blue-50" : "text-gray-400 hover:text-gray-600"}`}
                 >
                   <Mail className="h-3.5 w-3.5" />
                   <ChevronRight
@@ -801,7 +801,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
                           )
                         }
                         disabled={isLoading}
-                        className="h-8 rounded-lg border border-gray-300 bg-white px-3 text-xs focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 disabled:opacity-70"
+                        className="h-8 rounded-lg border border-gray-300 bg-white px-3 text-xs focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 disabled:opacity-70"
                       />
                       <RichTextEditor
                         value={step.passEmailBody}
@@ -830,7 +830,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
                           )
                         }
                         disabled={isLoading}
-                        className="h-8 rounded-lg border border-gray-300 bg-white px-3 text-xs focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 disabled:opacity-70"
+                        className="h-8 rounded-lg border border-gray-300 bg-white px-3 text-xs focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 disabled:opacity-70"
                       />
                       <RichTextEditor
                         value={step.failEmailBody}
@@ -853,7 +853,7 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
           type="button"
           onClick={addStep}
           disabled={isLoading}
-          className="flex items-center gap-2 text-sm font-medium text-[#004181] hover:text-[#003070] disabled:opacity-50"
+          className="flex items-center gap-2 text-sm font-medium text-[var(--primary)] hover:text-[#003070] disabled:opacity-50"
         >
           <Plus className="h-4 w-4" /> Add Step
         </button>
