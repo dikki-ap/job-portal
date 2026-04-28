@@ -15,6 +15,7 @@ public class CreateApplicationCommandHandler(
     IJobPostRepository jobPostRepository,
     ICurrentUserService currentUserService,
     IEmailService emailService,
+    IAppSettingRepository appSettingRepository,
     ILogger<CreateApplicationCommandHandler> logger)
     : IRequestHandler<CreateApplicationCommand, ApplicationDto>
 {
@@ -76,8 +77,11 @@ public class CreateApplicationCommandHandler(
         logger.LogInformation("Application created id={Id} userId={UserId} jobPostId={JobPostId}",
             application.Id, userId, request.JobPostId);
 
+        var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
+        var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
+
         var full = await applicationRepository.GetByIdAsync(application.Id, cancellationToken);
-        _ = ApplicationEmailHelper.SendReceivedAsync(emailService, logger, full!, CancellationToken.None);
+        _ = ApplicationEmailHelper.SendReceivedAsync(emailService, logger, full!, primaryColor, companyName, CancellationToken.None);
         return GetAllApplicationsQueryHandler.MapToDto(full!);
     }
 }

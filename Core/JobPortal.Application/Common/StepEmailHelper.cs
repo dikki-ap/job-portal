@@ -31,15 +31,14 @@ internal static class StepEmailHelper
             .Replace("{{NextStep}}", nextStepName);
     }
 
-    /// <summary>
-    /// Sends a step pass or fail notification email. Never throws — logs errors and returns.
-    /// </summary>
     internal static async Task SendStepEmailAsync(
         IEmailService emailService,
         ILogger logger,
         ApplicationEntity app,
         ApplicationStep step,
         bool passed,
+        string primaryColor,
+        string companyName,
         CancellationToken cancellationToken = default)
     {
         var to = app.User?.Email;
@@ -62,11 +61,12 @@ internal static class StepEmailHelper
             app.Id, step.Id, stepName, passed);
 
         subject = Fill(subject, candidateName, jobTitle, stepName, nextStepName);
-        body    = Fill(body, candidateName, jobTitle, stepName, nextStepName);
+        body    = Fill(body,    candidateName, jobTitle, stepName, nextStepName);
+        var html = EmailLayout.Wrap(body, primaryColor, companyName);
 
         try
         {
-            await emailService.SendAsync(to, subject, body, cancellationToken);
+            await emailService.SendAsync(to, subject, html, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -74,13 +74,12 @@ internal static class StepEmailHelper
         }
     }
 
-    /// <summary>
-    /// Fires email notifications for a batch of (app, step, passed) tuples, fire-and-forget.
-    /// </summary>
     internal static void FireAndForgetBulkEmails(
         IEmailService emailService,
         ILogger logger,
-        IEnumerable<(ApplicationEntity App, ApplicationStep Step, bool Passed)> items)
+        IEnumerable<(ApplicationEntity App, ApplicationStep Step, bool Passed)> items,
+        string primaryColor,
+        string companyName)
     {
         var list = items.ToList();
         if (list.Count == 0) return;
@@ -88,7 +87,7 @@ internal static class StepEmailHelper
         _ = Task.Run(async () =>
         {
             foreach (var (app, step, passed) in list)
-                await SendStepEmailAsync(emailService, logger, app, step, passed);
+                await SendStepEmailAsync(emailService, logger, app, step, passed, primaryColor, companyName);
         });
     }
 }

@@ -11,6 +11,7 @@ public class ApproveJobPostStepCommandHandler(
     IJobApprovalRepository approvalRepository,
     ICurrentUserService currentUserService,
     IEmailService emailService,
+    IAppSettingRepository appSettingRepository,
     ILogger<ApproveJobPostStepCommandHandler> logger)
     : IRequestHandler<ApproveJobPostStepCommand, Unit>
 {
@@ -45,7 +46,10 @@ public class ApproveJobPostStepCommandHandler(
             if (nextStep is not null)
             {
                 instance.CurrentStepOrder = nextStep.StepOrder;
-                ApprovalEmailHelper.FireAndForgetApprovalEmail(emailService, baseUrl, logger, instance, nextStep);
+
+                var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
+                var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
+                ApprovalEmailHelper.FireAndForgetApprovalEmail(emailService, baseUrl, logger, instance, nextStep, primaryColor, companyName);
             }
             else
             {
