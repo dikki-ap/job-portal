@@ -1,6 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Briefcase, MapPin, Clock, Users, ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
+import {
+  Search, Briefcase, MapPin, Clock, Users, ChevronLeft, ChevronRight, ChevronDown, Check,
+  TrendingUp, BookOpen, Heart, Wallet, Sun, Coffee, Laptop, Award, Smile, Star,
+  ArrowDown,
+} from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { cn } from '../../../lib/utils';
 import { useGetPublishedJobsQuery, useGetPublishedCountriesQuery } from '../api/careersApi';
@@ -9,6 +13,8 @@ import { useGetEmploymentTypesQuery } from '../../employmentTypes/api/employment
 import { useGetWorkModesQuery } from '../../workModes/api/workModesApi';
 import { useGetMyApplicationsQuery } from '../../myApplications/api/myApplicationsApi';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useBranding } from '../../../contexts/BrandingContext';
+import { stats } from '../../../content/companyProfile';
 import type { JobPostDto } from '../../../types/api';
 
 const PAGE_SIZE = 9;
@@ -24,6 +30,214 @@ const APP_STATUS_BADGE: Record<string, string> = {
 const APP_STATUS_LABEL: Record<string, string> = {
   InReview: 'In Review',
 };
+
+const BENEFITS = [
+  {
+    icon: TrendingUp,
+    title: 'Career Growth',
+    desc: 'Clear advancement paths with mentorship programs and leadership development opportunities.',
+  },
+  {
+    icon: BookOpen,
+    title: 'Learning & Development',
+    desc: 'Continuous learning with sponsored courses, certifications, and industry conferences.',
+  },
+  {
+    icon: Heart,
+    title: 'Health & Wellness',
+    desc: 'Comprehensive health coverage for you and your family, plus wellness allowances.',
+  },
+  {
+    icon: Users,
+    title: 'Great Culture',
+    desc: 'Collaborative, inclusive environment where every voice matters and diversity is celebrated.',
+  },
+  {
+    icon: Wallet,
+    title: 'Competitive Package',
+    desc: 'Above-market salaries, performance bonuses, and transparent compensation reviews.',
+  },
+  {
+    icon: Sun,
+    title: 'Work-Life Balance',
+    desc: 'Flexible hours, hybrid work options, and generous paid time off policy.',
+  },
+];
+
+const CULTURE_TILES = [
+  { icon: Coffee,  label: 'Team Hangouts',      bg: 'bg-[var(--primary)]/8'  },
+  { icon: Laptop,  label: 'Flexible Work',       bg: 'bg-gray-50'              },
+  { icon: Award,   label: 'Recognition Programs', bg: 'bg-[var(--primary)]/5'  },
+  { icon: Smile,   label: 'Fun Team Events',      bg: 'bg-gray-50'              },
+  { icon: Star,    label: 'Growth Awards',        bg: 'bg-[var(--primary)]/8'  },
+  { icon: Briefcase, label: 'Impactful Projects', bg: 'bg-gray-50'             },
+];
+
+// ─── Hero ────────────────────────────────────────────────────────────────────
+
+function HeroBanner({ totalPositions }: { totalPositions: number }) {
+  const { companyName, description } = useBranding();
+
+  const scrollToJobs = () => {
+    document.getElementById('open-positions')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <section
+      className="relative flex flex-col items-center justify-center overflow-hidden pt-32 pb-20 text-center"
+      style={{
+        background:
+          'linear-gradient(135deg, var(--primary) 0%, var(--gradient-mid) 55%, var(--gradient-end) 100%)',
+      }}
+    >
+      {/* Decorative blobs */}
+      <div className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/2 left-1/3 h-56 w-56 rounded-full bg-white/5 blur-2xl" />
+
+      <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-6">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium text-white/80">
+          <Briefcase className="h-3.5 w-3.5" />
+          {totalPositions > 0
+            ? `${totalPositions} open position${totalPositions !== 1 ? 's' : ''} available`
+            : 'Careers at ' + companyName}
+        </span>
+
+        <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight tracking-tight">
+          Build Your Career at{' '}
+          <span className="text-white/90">{companyName}</span>
+        </h1>
+
+        <p className="text-lg text-white/75 leading-relaxed max-w-xl">
+          {description}
+        </p>
+
+        <button
+          onClick={scrollToJobs}
+          className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-[var(--primary)] shadow-lg hover:bg-gray-50 transition-colors"
+        >
+          Explore Open Positions
+        </button>
+      </div>
+
+      {/* Scroll indicator */}
+      <button
+        onClick={scrollToJobs}
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/40 hover:text-white/70 transition-colors animate-bounce"
+        aria-label="Scroll to positions"
+      >
+        <ArrowDown className="h-5 w-5" />
+      </button>
+    </section>
+  );
+}
+
+// ─── Why Join Us ─────────────────────────────────────────────────────────────
+
+function WhyJoinSection() {
+  return (
+    <section className="py-20 bg-white">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <span className="text-sm font-semibold text-[var(--primary)] uppercase tracking-wider">
+            Why Join Us
+          </span>
+          <h2 className="mt-2 text-3xl font-bold text-gray-900">
+            More Than Just a Job
+          </h2>
+          <p className="mt-3 text-gray-500 max-w-lg mx-auto">
+            We invest in our people — because great work starts with a great environment.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {BENEFITS.map((b) => (
+            <div
+              key={b.title}
+              className="group flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:border-[var(--primary)]/20 hover:shadow-md transition-all"
+            >
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--primary)]/8 text-[var(--primary)] group-hover:bg-[var(--primary)] group-hover:text-white transition-colors">
+                <b.icon className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">{b.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{b.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Stats Bar ───────────────────────────────────────────────────────────────
+
+function StatsBar() {
+  return (
+    <section
+      className="py-14"
+      style={{ background: 'var(--primary)' }}
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+          {stats.map((stat) => (
+            <div key={stat.label} className="flex flex-col items-center gap-1 text-center">
+              <span className="text-4xl font-bold text-white">{stat.value}</span>
+              <span className="text-xs font-medium text-white/60 uppercase tracking-wide">
+                {stat.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Life at Company ─────────────────────────────────────────────────────────
+
+function LifeSection() {
+  const { companyName } = useBranding();
+
+  return (
+    <section className="py-20 bg-gray-50">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <span className="text-sm font-semibold text-[var(--primary)] uppercase tracking-wider">
+            Our Culture
+          </span>
+          <h2 className="mt-2 text-3xl font-bold text-gray-900">
+            Life at {companyName}
+          </h2>
+          <p className="mt-3 text-gray-500 max-w-lg mx-auto">
+            A place where talented people do their best work — together.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {CULTURE_TILES.map((tile, idx) => (
+            <div
+              key={tile.label}
+              className={cn(
+                'flex flex-col items-center justify-center gap-3 rounded-2xl p-8 aspect-[4/3] transition-shadow hover:shadow-md',
+                tile.bg,
+                idx % 3 === 1 ? 'border border-gray-100' : '',
+              )}
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm text-[var(--primary)]">
+                <tile.icon className="h-7 w-7" />
+              </div>
+              <span className="text-sm font-semibold text-gray-700 text-center">{tile.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Filter components (unchanged) ───────────────────────────────────────────
 
 function CategoryFilter({
   categories,
@@ -87,7 +301,6 @@ function CategoryFilter({
 
       {open && (
         <div className="absolute left-0 top-full z-20 mt-1 w-64 rounded-xl border border-gray-200 bg-white shadow-lg">
-          {/* Search */}
           <div className="p-2 border-b border-gray-100">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
@@ -102,7 +315,6 @@ function CategoryFilter({
             </div>
           </div>
 
-          {/* Clear all */}
           {selected.length > 0 && (
             <button
               type="button"
@@ -113,7 +325,6 @@ function CategoryFilter({
             </button>
           )}
 
-          {/* Items */}
           <div className="py-1">
             {visible.length === 0 ? (
               <p className="px-3 py-3 text-xs text-gray-400 text-center">No categories found.</p>
@@ -143,7 +354,6 @@ function CategoryFilter({
             )}
           </div>
 
-          {/* Show more/less */}
           {filtered.length > MAX_VISIBLE_CATEGORIES && (
             <div className="border-t border-gray-100">
               <button
@@ -349,6 +559,8 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
   );
 }
 
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
 export function CareersPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -359,6 +571,10 @@ export function CareersPage() {
   const [workModeFilter, setWorkModeFilter] = useState<number[]>([]);
   const [countryFilter, setCountryFilter] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+
+  // Unfiltered count for the hero badge
+  const { data: totalData } = useGetPublishedJobsQuery({ page: 1, pageSize: 1 });
+  const totalOpenPositions = totalData?.totalCount ?? 0;
 
   const { data, isLoading, isError } = useGetPublishedJobsQuery({
     search: debouncedSearch || undefined,
@@ -400,101 +616,106 @@ export function CareersPage() {
     debounceRef(val);
   };
 
-  const handleCategoryChange = (ids: number[]) => {
-    setCategoryFilter(ids);
-    setPage(1);
-  };
-
-  const handleEmploymentTypeChange = (ids: number[]) => {
-    setEmploymentTypeFilter(ids);
-    setPage(1);
-  };
-
-  const handleWorkModeChange = (ids: number[]) => {
-    setWorkModeFilter(ids);
-    setPage(1);
-  };
-
-  const handleCountryChange = (values: string[]) => {
-    setCountryFilter(values);
-    setPage(1);
-  };
-
   const jobs = data?.items ?? [];
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 pb-12 flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-gray-900">Open Positions</h1>
-        <p className="text-sm text-gray-500">Explore available opportunities and apply today.</p>
-      </div>
+    <div className="flex flex-col">
+      {/* ── Employer branding sections ── */}
+      <HeroBanner totalPositions={totalOpenPositions} />
+      <WhyJoinSection />
+      <StatsBar />
+      <LifeSection />
 
-      {/* Filters row */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search positions..."
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
-          />
-        </div>
-        <StringFilter
-          options={availableCountries}
-          selected={countryFilter}
-          onChange={handleCountryChange}
-          placeholder="Country"
-        />
-        <CategoryFilter
-          categories={categories}
-          selected={categoryFilter}
-          onChange={handleCategoryChange}
-        />
-        <CategoryFilter
-          categories={employmentTypes}
-          selected={employmentTypeFilter}
-          onChange={handleEmploymentTypeChange}
-          placeholder="Employment Type"
-        />
-        <CategoryFilter
-          categories={workModes}
-          selected={workModeFilter}
-          onChange={handleWorkModeChange}
-          placeholder="Work Mode"
-        />
-        {!isLoading && !isError && (
-          <p className="text-xs text-gray-400 sm:ml-auto">
-            {totalCount} position{totalCount !== 1 ? 's' : ''} available
-          </p>
-        )}
-      </div>
+      {/* ── Job listings ── */}
+      <section id="open-positions" className="bg-white py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col gap-6">
+          {/* Section header */}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-2xl font-bold text-gray-900">Open Positions</h2>
+            <p className="text-sm text-gray-500">Explore available opportunities and apply today.</p>
+          </div>
 
-      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[var(--primary)]" /></div>}
-      {isError && <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">Failed to load positions. Please try again.</div>}
-
-      {!isLoading && !isError && (
-        jobs.length === 0
-          ? <div className="flex flex-col items-center justify-center py-16 text-gray-400"><p className="text-sm">No positions found.</p></div>
-          : (
-            <div className="flex flex-col gap-6">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {jobs.map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    appliedStatus={appliedMap.get(job.id)}
-                    onClick={() => navigate(`/careers/${job.slug}`)}
-                  />
-                ))}
-              </div>
-              <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          {/* Filters row */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center flex-wrap">
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search positions..."
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+              />
             </div>
-          )
-      )}
+            <StringFilter
+              options={availableCountries}
+              selected={countryFilter}
+              onChange={(v) => { setCountryFilter(v); setPage(1); }}
+              placeholder="Country"
+            />
+            <CategoryFilter
+              categories={categories}
+              selected={categoryFilter}
+              onChange={(ids) => { setCategoryFilter(ids); setPage(1); }}
+            />
+            <CategoryFilter
+              categories={employmentTypes}
+              selected={employmentTypeFilter}
+              onChange={(ids) => { setEmploymentTypeFilter(ids); setPage(1); }}
+              placeholder="Employment Type"
+            />
+            <CategoryFilter
+              categories={workModes}
+              selected={workModeFilter}
+              onChange={(ids) => { setWorkModeFilter(ids); setPage(1); }}
+              placeholder="Work Mode"
+            />
+            {!isLoading && !isError && (
+              <p className="text-xs text-gray-400 sm:ml-auto">
+                {totalCount} position{totalCount !== 1 ? 's' : ''} available
+              </p>
+            )}
+          </div>
+
+          {/* Results */}
+          {isLoading && (
+            <div className="flex justify-center py-16">
+              <Spinner size="lg" className="text-[var(--primary)]" />
+            </div>
+          )}
+          {isError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">
+              Failed to load positions. Please try again.
+            </div>
+          )}
+
+          {!isLoading && !isError && (
+            jobs.length === 0
+              ? (
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <p className="text-sm">No positions match your filters.</p>
+                </div>
+              )
+              : (
+                <div className="flex flex-col gap-6">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {jobs.map((job) => (
+                      <JobCard
+                        key={job.id}
+                        job={job}
+                        appliedStatus={appliedMap.get(job.id)}
+                        onClick={() => navigate(`/careers/${job.slug}`)}
+                      />
+                    ))}
+                  </div>
+                  <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+                </div>
+              )
+          )}
+        </div>
+      </section>
     </div>
   );
 }
