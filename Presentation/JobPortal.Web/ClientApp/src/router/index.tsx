@@ -34,6 +34,7 @@ import { JobPostApprovalReviewPage } from '../features/approvals/pages/JobPostAp
 import { AnalyticsPage } from '../features/analytics/pages/AnalyticsPage';
 import { PrivacyPolicyPage } from '../features/privacyConsent/pages/PrivacyPolicyPage';
 import { PrivacyConsentSettingPage } from '../features/privacyConsent/pages/PrivacyConsentSettingPage';
+import { SmtpSettingsPage } from '../features/smtpSettings/pages/SmtpSettingsPage';
 
 const HR_ADMIN_ROLES = ['Admin', 'HR'];
 const ADMIN_ROLES = ['Admin'];
@@ -100,6 +101,7 @@ export function AppRouter() {
           <Route path="master/hiring-templates" element={<HiringTemplatesPage />} />
           <Route path="master/approval-levels" element={<ApprovalLevelsPage />} />
           <Route path="master/privacy-consent" element={<PrivacyConsentSettingPage />} />
+          <Route path="master/smtp-settings" element={<SmtpSettingsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/my-applications" replace />} />

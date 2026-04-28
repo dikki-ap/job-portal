@@ -156,6 +156,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   { label: 'Job Level', to: '/master/job-levels' },
                   { label: 'Privacy Consent', to: '/master/privacy-consent' },
                   { label: 'Skill', to: '/master/skills' },
+                  { label: 'SMTP Settings', to: '/master/smtp-settings' },
                   { label: 'Work Mode', to: '/master/work-modes' },
                 ],
               },
