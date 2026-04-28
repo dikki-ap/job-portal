@@ -32,12 +32,12 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-medium text-gray-900">{userName || 'User'}</span>
             {role && (
-              <span className="rounded-md bg-[#004181] px-1.5 py-0.5 text-xs font-semibold text-white">{role}</span>
+              <span className="rounded-md bg-[var(--primary)] px-1.5 py-0.5 text-xs font-semibold text-white">{role}</span>
             )}
           </div>
           <span className="text-xs text-gray-500">{userEmail}</span>
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#004181] text-white shrink-0">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary)] text-white shrink-0">
           <User className="h-5 w-5" />
         </div>
         <button

@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Building2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { company, navLinks } from '../../content/companyProfile';
+import { navLinks } from '../../content/companyProfile';
 import { useAuth } from '../../contexts/AuthContext';
+import { useBranding } from '../../contexts/BrandingContext';
 
 export function PublicNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const { companyName, logoUrl } = useBranding();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,11 +51,14 @@ export function PublicNavbar() {
             <Link to="/" className="flex items-center gap-2.5 shrink-0">
               <div
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
-                  solid ? 'bg-[#004181]' : 'bg-white/20 backdrop-blur-sm'
+                  'flex h-8 w-8 items-center justify-center rounded-lg transition-colors overflow-hidden',
+                  solid ? 'bg-[var(--primary)]' : 'bg-white/20 backdrop-blur-sm'
                 )}
               >
-                <Building2 className="h-4 w-4 text-white" />
+                {logoUrl
+                  ? <img src={logoUrl} alt={companyName} className="h-8 w-8 object-cover" />
+                  : <Building2 className="h-4 w-4 text-white" />
+                }
               </div>
               <span
                 className={cn(
@@ -61,7 +66,7 @@ export function PublicNavbar() {
                   solid ? 'text-gray-900' : 'text-white'
                 )}
               >
-                {company.name}
+                {companyName}
               </span>
             </Link>
 
@@ -74,7 +79,7 @@ export function PublicNavbar() {
                   className={cn(
                     'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                     solid
-                      ? 'text-gray-600 hover:text-[#004181] hover:bg-blue-50'
+                      ? 'text-gray-600 hover:text-[var(--primary)] hover:bg-blue-50'
                       : 'text-white/80 hover:text-white hover:bg-white/10'
                   )}
                 >
@@ -91,8 +96,8 @@ export function PublicNavbar() {
                   className={cn(
                     'px-4 py-2 rounded-lg text-sm font-semibold transition-all',
                     solid
-                      ? 'bg-[#004181] text-white hover:bg-[#003166]'
-                      : 'bg-white text-[#004181] hover:bg-white/90'
+                      ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
+                      : 'bg-white text-[var(--primary)] hover:bg-white/90'
                   )}
                 >
                   Dashboard
@@ -104,7 +109,7 @@ export function PublicNavbar() {
                     className={cn(
                       'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                       solid
-                        ? 'text-gray-600 hover:text-[#004181]'
+                        ? 'text-gray-600 hover:text-[var(--primary)]'
                         : 'text-white/80 hover:text-white'
                     )}
                   >
@@ -115,8 +120,8 @@ export function PublicNavbar() {
                     className={cn(
                       'px-4 py-2 rounded-lg text-sm font-semibold transition-all',
                       solid
-                        ? 'bg-[#004181] text-white hover:bg-[#003166]'
-                        : 'bg-white text-[#004181] hover:bg-white/90'
+                        ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]'
+                        : 'bg-white text-[var(--primary)] hover:bg-white/90'
                     )}
                   >
                     View Positions
@@ -151,7 +156,7 @@ export function PublicNavbar() {
             <button
               key={link.label}
               onClick={() => handleNavClick(link.href)}
-              className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[#004181] transition-colors"
+              className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-[var(--primary)] transition-colors"
             >
               {link.label}
             </button>
@@ -160,7 +165,7 @@ export function PublicNavbar() {
             {isAuthenticated ? (
               <button
                 onClick={() => { setMobileOpen(false); navigate('/dashboard'); }}
-                className="flex-1 py-2.5 rounded-lg bg-[#004181] text-white text-sm font-semibold"
+                className="flex-1 py-2.5 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold"
               >
                 Dashboard
               </button>
@@ -174,7 +179,7 @@ export function PublicNavbar() {
                 </button>
                 <button
                   onClick={() => { setMobileOpen(false); navigate('/careers'); }}
-                  className="flex-1 py-2.5 rounded-lg bg-[#004181] text-white text-sm font-semibold"
+                  className="flex-1 py-2.5 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold"
                 >
                   View Positions
                 </button>

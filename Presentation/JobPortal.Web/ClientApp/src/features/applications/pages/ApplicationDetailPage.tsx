@@ -122,7 +122,7 @@ export function ApplicationDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-24">
-        <Spinner size="lg" className="text-[#004181]" />
+        <Spinner size="lg" className="text-[var(--primary)]" />
       </div>
     );
   }
@@ -215,7 +215,7 @@ export function ApplicationDetailPage() {
             maxLength={500}
             rows={2}
             placeholder="Optional note about this candidate..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 resize-none"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 resize-none"
           />
           <div className="flex justify-end">
             <Button
@@ -265,7 +265,7 @@ export function ApplicationDetailPage() {
               </div>
 
               {jobPost.isSalaryVisible && (jobPost.minSalary || jobPost.maxSalary) && (
-                <p className="text-sm font-semibold text-[#004181]">
+                <p className="text-sm font-semibold text-[var(--primary)]">
                   {jobPost.currencyTypePrefix} {jobPost.minSalary?.toLocaleString()}
                   {jobPost.maxSalary ? ` – ${jobPost.currencyTypePrefix} ${jobPost.maxSalary.toLocaleString()}` : '+'}
                 </p>
@@ -287,7 +287,7 @@ export function ApplicationDetailPage() {
                   <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400"><Tag className="h-3 w-3" /> Required Skills</span>
                   <div className="flex flex-wrap gap-1.5">
                     {jobPost.requiredSkills.map((s) => (
-                      <span key={s.id} className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-[#004181] ring-1 ring-inset ring-blue-100">{s.name}</span>
+                      <span key={s.id} className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-[var(--primary)] ring-1 ring-inset ring-blue-100">{s.name}</span>
                     ))}
                   </div>
                 </div>

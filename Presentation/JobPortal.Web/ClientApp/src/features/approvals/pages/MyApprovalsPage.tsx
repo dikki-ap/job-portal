@@ -60,7 +60,7 @@ export function MyApprovalsPage() {
 
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Spinner size="lg" className="text-[#004181]" />
+          <Spinner size="lg" className="text-[var(--primary)]" />
         </div>
       )}
 
@@ -151,7 +151,7 @@ export function MyApprovalsPage() {
             value={approveComment}
             onChange={(e) => setApproveComment(e.target.value)}
             disabled={isApproving}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 resize-none"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 resize-none"
           />
         </div>
       </Modal>
@@ -180,7 +180,7 @@ export function MyApprovalsPage() {
             value={rejectComment}
             onChange={(e) => { setRejectComment(e.target.value); setRejectError(''); }}
             disabled={isRejecting}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 resize-none"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 resize-none"
           />
           {rejectError && <p className="text-xs text-red-600">{rejectError}</p>}
         </div>

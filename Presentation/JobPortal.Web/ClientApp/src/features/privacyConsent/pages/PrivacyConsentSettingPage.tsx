@@ -39,7 +39,7 @@ export function PrivacyConsentSettingPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-24">
-        <Spinner size="lg" className="text-[#004181]" />
+        <Spinner size="lg" className="text-[var(--primary)]" />
       </div>
     );
   }
@@ -65,7 +65,7 @@ export function PrivacyConsentSettingPage() {
         {/* Toggle */}
         <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
           <div className="flex items-start gap-3">
-            <Shield className={cn('h-5 w-5 mt-0.5 shrink-0', requireConsent ? 'text-[#004181]' : 'text-gray-400')} />
+            <Shield className={cn('h-5 w-5 mt-0.5 shrink-0', requireConsent ? 'text-[var(--primary)]' : 'text-gray-400')} />
             <div className="flex flex-col gap-0.5">
               <p className="text-sm font-medium text-gray-900">
                 {requireConsent ? 'Enabled — Consent Required' : 'Disabled — Consent Not Required'}
@@ -83,8 +83,8 @@ export function PrivacyConsentSettingPage() {
             aria-checked={requireConsent}
             onClick={handleToggle}
             className={cn(
-              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#004181] focus:ring-offset-2',
-              requireConsent ? 'bg-[#004181]' : 'bg-gray-200',
+              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2',
+              requireConsent ? 'bg-[var(--primary)]' : 'bg-gray-200',
             )}
           >
             <span
@@ -113,7 +113,7 @@ export function PrivacyConsentSettingPage() {
             href="/privacy-policy"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[#004181] hover:underline font-medium"
+            className="inline-flex items-center gap-1 text-[var(--primary)] hover:underline font-medium"
           >
             /privacy-policy <ExternalLink className="h-3.5 w-3.5" />
           </a>
@@ -125,7 +125,7 @@ export function PrivacyConsentSettingPage() {
             onClick={handleSave}
             loading={saving}
             disabled={!dirty}
-            className="bg-[#004181] hover:bg-[#003268] text-white min-w-28"
+            className="bg-[var(--primary)] hover:bg-[#003268] text-white min-w-28"
           >
             Save
           </Button>

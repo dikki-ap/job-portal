@@ -101,7 +101,7 @@ export function JobPostApprovalReviewPage() {
         </button>
       </div>
 
-      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[#004181]" /></div>}
+      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[var(--primary)]" /></div>}
       {isError && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">
           Failed to load job post details.
@@ -141,7 +141,7 @@ export function JobPostApprovalReviewPage() {
             </div>
 
             {salary && (
-              <p className="text-base font-semibold text-[#004181]">{salary}</p>
+              <p className="text-base font-semibold text-[var(--primary)]">{salary}</p>
             )}
           </div>
 
@@ -156,7 +156,7 @@ export function JobPostApprovalReviewPage() {
                 {job.requiredSkills.map((skill) => (
                   <span
                     key={skill.id}
-                    className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[#004181] ring-1 ring-inset ring-blue-100"
+                    className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[var(--primary)] ring-1 ring-inset ring-blue-100"
                   >
                     {skill.name}
                   </span>
@@ -178,7 +178,7 @@ export function JobPostApprovalReviewPage() {
               <div className="flex flex-col gap-3">
                 {job.steps.map((step, idx) => (
                   <div key={step.id} className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-full bg-[#004181]/10 text-[#004181] text-xs font-semibold flex items-center justify-center shrink-0">
+                    <span className="w-7 h-7 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-semibold flex items-center justify-center shrink-0">
                       {idx + 1}
                     </span>
                     <span className="text-sm text-gray-800 font-medium">{step.name}</span>
@@ -262,7 +262,7 @@ export function JobPostApprovalReviewPage() {
             value={approveComment}
             onChange={(e) => setApproveComment(e.target.value)}
             disabled={isApproving}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 resize-none"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 resize-none"
           />
         </div>
       </Modal>
@@ -289,7 +289,7 @@ export function JobPostApprovalReviewPage() {
             value={rejectComment}
             onChange={(e) => { setRejectComment(e.target.value); setRejectError(''); }}
             disabled={isRejecting}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20 resize-none"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 resize-none"
           />
           {rejectError && <p className="text-xs text-red-600">{rejectError}</p>}
         </div>

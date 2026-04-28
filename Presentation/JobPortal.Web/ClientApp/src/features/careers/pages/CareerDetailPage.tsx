@@ -16,6 +16,7 @@ import { Spinner } from "../../../components/ui/Spinner";
 import { useGetCareerBySlugQuery } from "../api/careersApi";
 import { useGetMyApplicationsQuery } from "../../myApplications/api/myApplicationsApi";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useBranding } from "../../../contexts/BrandingContext";
 import {
   useGetPrivacyConsentSettingQuery,
   useGetMyConsentStatusQuery,
@@ -23,7 +24,6 @@ import {
 
 const MAX_VISIBLE_SKILLS = 5;
 const MAX_VISIBLE_MAJORS = 3;
-const COMPANY_NAME = "Hirnexa Tech"; // customize per client deployment
 
 function stripHtml(html: string) {
   return html
@@ -52,6 +52,7 @@ export function CareerDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { companyName } = useBranding();
   const { data: job, isLoading, isError } = useGetCareerBySlugQuery(slug!);
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [showAllMajors, setShowAllMajors] = useState(false);
@@ -70,7 +71,7 @@ export function CareerDetailPage() {
   useEffect(() => {
     if (!job) return;
     const prevTitle = document.title;
-    document.title = `${job.title} – ${job.departmentName} | ${COMPANY_NAME}`;
+    document.title = `${job.title} – ${job.departmentName} | ${companyName}`;
 
     let metaEl = document.querySelector<HTMLMetaElement>(
       'meta[name="description"]',
@@ -91,7 +92,7 @@ export function CareerDetailPage() {
       description: stripHtml(job.description),
       datePosted: (job.publishDate ?? job.createdAt).split("T")[0],
       employmentType: mapEmploymentType(job.employmentTypeName),
-      hiringOrganization: { "@type": "Organization", name: COMPANY_NAME },
+      hiringOrganization: { "@type": "Organization", name: companyName },
       jobLocation: {
         "@type": "Place",
         address: {
@@ -147,7 +148,7 @@ export function CareerDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center pt-32">
-        <Spinner size="lg" className="text-[#004181]" />
+        <Spinner size="lg" className="text-[var(--primary)]" />
       </div>
     );
   }
@@ -225,7 +226,7 @@ export function CareerDetailPage() {
         </div>
 
         {job.isSalaryVisible && (job.minSalary || job.maxSalary) && (
-          <p className="text-base font-semibold text-[#004181]">
+          <p className="text-base font-semibold text-[var(--primary)]">
             {job.currencyTypePrefix} {job.minSalary?.toLocaleString()}
             {job.maxSalary ? ` – ${job.maxSalary.toLocaleString()}` : "+"}
           </p>
@@ -281,7 +282,7 @@ export function CareerDetailPage() {
             {visibleSkills.map((skill) => (
               <span
                 key={skill.id}
-                className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[#004181] ring-1 ring-inset ring-blue-100"
+                className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[var(--primary)] ring-1 ring-inset ring-blue-100"
               >
                 {skill.name}
               </span>
@@ -290,7 +291,7 @@ export function CareerDetailPage() {
           {skills.length > MAX_VISIBLE_SKILLS && (
             <button
               onClick={() => setShowAllSkills((v) => !v)}
-              className="self-start text-xs font-medium text-[#004181] hover:underline"
+              className="self-start text-xs font-medium text-[var(--primary)] hover:underline"
             >
               {showAllSkills ? "Show less" : `Show all ${skills.length} skills`}
             </button>
@@ -318,7 +319,7 @@ export function CareerDetailPage() {
           <div className="flex flex-col gap-3">
             {job.steps.map((step, idx) => (
               <div key={step.id} className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-full bg-[#004181]/10 text-[#004181] text-xs font-semibold flex items-center justify-center shrink-0">
+                <span className="w-7 h-7 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-semibold flex items-center justify-center shrink-0">
                   {idx + 1}
                 </span>
                 <span className="text-sm text-gray-800 font-medium">

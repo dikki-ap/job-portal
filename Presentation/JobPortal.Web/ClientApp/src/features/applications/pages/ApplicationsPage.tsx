@@ -167,7 +167,7 @@ export function ApplicationsPage() {
             placeholder="Search candidate…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-56 rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20"
+            className="h-10 w-56 rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
           />
         </div>
 
@@ -245,7 +245,7 @@ export function ApplicationsPage() {
               onClick={handleBulkAccept}
               disabled={!allSelectedAtLastStep || isBulkLoading}
               title={!allSelectedAtLastStep ? 'All selected must be at their last step' : 'Accept — final decision'}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#004181] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#003166] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--primary-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <UserCheck className="h-3.5 w-3.5" /> Accept
             </button>
@@ -271,7 +271,7 @@ export function ApplicationsPage() {
 
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Spinner size="lg" className="text-[#004181]" />
+          <Spinner size="lg" className="text-[var(--primary)]" />
         </div>
       )}
       {isError && (

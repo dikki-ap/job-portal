@@ -47,7 +47,7 @@ export function ApprovalLevelsPage() {
 
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Spinner size="lg" className="text-[#004181]" />
+          <Spinner size="lg" className="text-[var(--primary)]" />
         </div>
       )}
 
@@ -78,7 +78,7 @@ export function ApprovalLevelsPage() {
                 {levels.map((level) => (
                   <tr key={level.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-center">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#004181] text-xs font-bold text-white mx-auto">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white mx-auto">
                         {level.levelOrder}
                       </span>
                     </td>

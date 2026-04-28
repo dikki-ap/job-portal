@@ -78,7 +78,7 @@ function MajorPicker({
           onClick={() => setOpen((v) => !v)}
           className={cn(
             'h-10 w-full flex items-center justify-between gap-2 rounded-lg border bg-white px-3 text-sm text-left transition-colors',
-            open ? 'border-[#004181] ring-2 ring-[#004181]/20' : 'border-gray-300 hover:bg-gray-50',
+            open ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]/20' : 'border-gray-300 hover:bg-gray-50',
             hasValue ? 'text-gray-900' : 'text-gray-400',
           )}
         >
@@ -111,7 +111,7 @@ function MajorPicker({
                   placeholder="Search major..."
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setShowAll(false); }}
-                  className="h-8 w-full rounded-md border border-gray-200 pl-8 pr-3 text-xs focus:border-[#004181] focus:outline-none focus:ring-1 focus:ring-[#004181]/20"
+                  className="h-8 w-full rounded-md border border-gray-200 pl-8 pr-3 text-xs focus:border-[var(--primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/20"
                 />
               </div>
             </div>
@@ -130,7 +130,7 @@ function MajorPicker({
                     onClick={() => selectItem(m.id, false)}
                     className={cn(
                       'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
-                      selected ? 'bg-blue-50 text-[#004181] font-medium' : 'text-gray-700 hover:bg-gray-50',
+                      selected ? 'bg-blue-50 text-[var(--primary)] font-medium' : 'text-gray-700 hover:bg-gray-50',
                     )}
                   >
                     <span className="flex h-4 w-4 shrink-0 items-center justify-center">
@@ -148,7 +148,7 @@ function MajorPicker({
                 <button
                   type="button"
                   onClick={() => setShowAll((v) => !v)}
-                  className="w-full px-3 py-1.5 text-left text-xs font-medium text-[#004181] hover:bg-gray-50"
+                  className="w-full px-3 py-1.5 text-left text-xs font-medium text-[var(--primary)] hover:bg-gray-50"
                 >
                   {showAll ? 'Show less' : `Show ${filtered.length - MAX_VISIBLE_MAJORS} more`}
                 </button>
@@ -162,7 +162,7 @@ function MajorPicker({
                 onClick={() => selectItem(null, true)}
                 className={cn(
                   'flex w-full items-center gap-2 px-3 py-2 text-left text-sm italic transition-colors',
-                  isOther ? 'bg-blue-50 text-[#004181] font-medium' : 'text-gray-500 hover:bg-gray-50',
+                  isOther ? 'bg-blue-50 text-[var(--primary)] font-medium' : 'text-gray-500 hover:bg-gray-50',
                 )}
               >
                 <span className="flex h-4 w-4 shrink-0 items-center justify-center">
@@ -184,7 +184,7 @@ function MajorPicker({
           onChange={(e) => onCustomChange(e.target.value)}
           maxLength={255}
           autoFocus
-          className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20"
+          className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
         />
       )}
     </div>
@@ -283,7 +283,7 @@ export function CandidateProfilePage() {
   if (profileLoading) {
     return (
       <div className="flex justify-center py-24">
-        <Spinner size="lg" className="text-[#004181]" />
+        <Spinner size="lg" className="text-[var(--primary)]" />
       </div>
     );
   }
@@ -364,7 +364,7 @@ export function CandidateProfilePage() {
             <button
               type="button"
               onClick={() => downloadWithAuth('/api/candidate-profile/cv/download', token, profile.cvOriginalFileName ?? 'cv')}
-              className="shrink-0 text-gray-400 hover:text-[#004181] transition-colors"
+              className="shrink-0 text-gray-400 hover:text-[var(--primary)] transition-colors"
               title="Download CV"
             >
               <Download className="h-4 w-4" />
@@ -381,7 +381,7 @@ export function CandidateProfilePage() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-600 hover:border-[#004181] hover:text-[#004181] transition-colors">
+            <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-600 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">
               <Upload className="h-4 w-4" />
               {cvFile ? cvFile.name : 'Choose file'}
               <input
@@ -402,7 +402,7 @@ export function CandidateProfilePage() {
               </button>
             )}
             {cvFile && (
-              <span className="text-xs text-[#004181] font-medium ml-1">Will be uploaded on save</span>
+              <span className="text-xs text-[var(--primary)] font-medium ml-1">Will be uploaded on save</span>
             )}
           </div>
         )}
@@ -411,7 +411,7 @@ export function CandidateProfilePage() {
       {/* Save */}
       <div className="flex justify-end">
         <Button
-          className="bg-[#004181] hover:bg-[#003268] text-white min-w-32"
+          className="bg-[var(--primary)] hover:bg-[#003268] text-white min-w-32"
           onClick={handleSave}
           loading={saving}
         >

@@ -64,14 +64,14 @@ export function MultiSelectFilter<T extends string | number>({
         className={cn(
           'inline-flex h-10 items-center gap-2 rounded-lg border px-3 text-sm transition-colors',
           hasSelected
-            ? 'border-[#004181] bg-[#004181]/5 text-[#004181] font-medium'
+            ? 'border-[var(--primary)] bg-[var(--primary)]/5 text-[var(--primary)] font-medium'
             : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
         )}
       >
         <span>{label}</span>
         {hasSelected && (
           <>
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#004181] px-1.5 text-[10px] font-semibold text-white leading-none">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-white leading-none">
               {selected.length}
             </span>
             <span
@@ -79,7 +79,7 @@ export function MultiSelectFilter<T extends string | number>({
               tabIndex={0}
               onClick={clearAll}
               onKeyDown={(e) => e.key === 'Enter' && clearAll(e as unknown as React.MouseEvent)}
-              className="rounded hover:bg-[#004181]/20 p-0.5 -mr-1"
+              className="rounded hover:bg-[var(--primary)]/20 p-0.5 -mr-1"
             >
               <X className="h-3.5 w-3.5" />
             </span>
@@ -124,12 +124,12 @@ export function MultiSelectFilter<T extends string | number>({
                     onClick={() => toggle(opt.id as T)}
                     className={cn(
                       'flex w-full items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors',
-                      isSelected ? 'bg-[#004181]/5 text-[#004181]' : 'text-gray-700 hover:bg-gray-50'
+                      isSelected ? 'bg-[var(--primary)]/5 text-[var(--primary)]' : 'text-gray-700 hover:bg-gray-50'
                     )}
                   >
                     <span className={cn(
                       'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                      isSelected ? 'border-[#004181] bg-[#004181]' : 'border-gray-300'
+                      isSelected ? 'border-[var(--primary)] bg-[var(--primary)]' : 'border-gray-300'
                     )}>
                       {isSelected && <Check className="h-3 w-3 text-white" />}
                     </span>

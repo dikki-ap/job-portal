@@ -72,13 +72,13 @@ function CategoryFilter({
         onClick={() => setOpen((v) => !v)}
         className={cn(
           'h-10 flex items-center gap-2 rounded-lg border bg-white px-3 text-sm transition-colors',
-          open ? 'border-[#004181] ring-2 ring-[#004181]/20' : 'border-gray-300 hover:bg-gray-50',
-          selected.length > 0 ? 'text-[#004181] font-medium' : 'text-gray-700',
+          open ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]/20' : 'border-gray-300 hover:bg-gray-50',
+          selected.length > 0 ? 'text-[var(--primary)] font-medium' : 'text-gray-700',
         )}
       >
         <span className="max-w-[160px] truncate">{label}</span>
         {selected.length > 0 && (
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#004181] text-[10px] font-bold text-white shrink-0">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-bold text-white shrink-0">
             {selected.length}
           </span>
         )}
@@ -97,7 +97,7 @@ function CategoryFilter({
                 placeholder="Search categories..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setShowAll(false); }}
-                className="h-8 w-full rounded-md border border-gray-200 pl-8 pr-3 text-xs focus:border-[#004181] focus:outline-none focus:ring-1 focus:ring-[#004181]/20"
+                className="h-8 w-full rounded-md border border-gray-200 pl-8 pr-3 text-xs focus:border-[var(--primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]/20"
               />
             </div>
           </div>
@@ -107,7 +107,7 @@ function CategoryFilter({
             <button
               type="button"
               onClick={() => onChange([])}
-              className="w-full px-3 py-1.5 text-left text-xs font-medium text-[#004181] hover:bg-blue-50 border-b border-gray-100"
+              className="w-full px-3 py-1.5 text-left text-xs font-medium text-[var(--primary)] hover:bg-blue-50 border-b border-gray-100"
             >
               Clear all ({selected.length})
             </button>
@@ -127,12 +127,12 @@ function CategoryFilter({
                     onClick={() => toggle(c.id)}
                     className={cn(
                       'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
-                      checked ? 'bg-blue-50 text-[#004181]' : 'text-gray-700 hover:bg-gray-50',
+                      checked ? 'bg-blue-50 text-[var(--primary)]' : 'text-gray-700 hover:bg-gray-50',
                     )}
                   >
                     <span className={cn(
                       'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                      checked ? 'bg-[#004181] border-[#004181]' : 'border-gray-300',
+                      checked ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-gray-300',
                     )}>
                       {checked && <Check className="h-2.5 w-2.5 text-white" />}
                     </span>
@@ -149,7 +149,7 @@ function CategoryFilter({
               <button
                 type="button"
                 onClick={() => setShowAll((v) => !v)}
-                className="w-full px-3 py-2 text-left text-xs font-medium text-[#004181] hover:bg-gray-50"
+                className="w-full px-3 py-2 text-left text-xs font-medium text-[var(--primary)] hover:bg-gray-50"
               >
                 {showAll ? 'Show less' : `Show ${filtered.length - MAX_VISIBLE_CATEGORIES} more`}
               </button>
@@ -203,13 +203,13 @@ function StringFilter({
         onClick={() => setOpen((v) => !v)}
         className={cn(
           'h-10 flex items-center gap-2 rounded-lg border bg-white px-3 text-sm transition-colors',
-          open ? 'border-[#004181] ring-2 ring-[#004181]/20' : 'border-gray-300 hover:bg-gray-50',
-          selected.length > 0 ? 'text-[#004181] font-medium' : 'text-gray-700',
+          open ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]/20' : 'border-gray-300 hover:bg-gray-50',
+          selected.length > 0 ? 'text-[var(--primary)] font-medium' : 'text-gray-700',
         )}
       >
         <span className="max-w-[160px] truncate">{label}</span>
         {selected.length > 0 && (
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#004181] text-[10px] font-bold text-white shrink-0">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-bold text-white shrink-0">
             {selected.length}
           </span>
         )}
@@ -222,7 +222,7 @@ function StringFilter({
             <button
               type="button"
               onClick={() => onChange([])}
-              className="w-full px-3 py-1.5 text-left text-xs font-medium text-[#004181] hover:bg-blue-50 border-b border-gray-100"
+              className="w-full px-3 py-1.5 text-left text-xs font-medium text-[var(--primary)] hover:bg-blue-50 border-b border-gray-100"
             >
               Clear all ({selected.length})
             </button>
@@ -237,12 +237,12 @@ function StringFilter({
                   onClick={() => toggle(val)}
                   className={cn(
                     'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
-                    checked ? 'bg-blue-50 text-[#004181]' : 'text-gray-700 hover:bg-gray-50',
+                    checked ? 'bg-blue-50 text-[var(--primary)]' : 'text-gray-700 hover:bg-gray-50',
                   )}
                 >
                   <span className={cn(
                     'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                    checked ? 'bg-[#004181] border-[#004181]' : 'border-gray-300',
+                    checked ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-gray-300',
                   )}>
                     {checked && <Check className="h-2.5 w-2.5 text-white" />}
                   </span>
@@ -264,7 +264,7 @@ function JobCard({ job, appliedStatus, onClick }: { job: JobPostDto; appliedStat
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
-      className="relative flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 hover:border-[#004181]/30 hover:shadow-sm transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004181]/30"
+      className="relative flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-6 hover:border-[var(--primary)]/30 hover:shadow-sm transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
     >
       {appliedStatus && (
         <span className={`absolute top-4 right-4 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${APP_STATUS_BADGE[appliedStatus] ?? 'bg-gray-100 text-gray-600'}`}>
@@ -285,14 +285,14 @@ function JobCard({ job, appliedStatus, onClick }: { job: JobPostDto; appliedStat
       </div>
 
       {job.isSalaryVisible && (job.minSalary || job.maxSalary) && (
-        <p className="text-sm font-medium text-[#004181]">
+        <p className="text-sm font-medium text-[var(--primary)]">
           {job.currencyTypePrefix} {job.minSalary?.toLocaleString()}{job.maxSalary ? ` – ${job.maxSalary.toLocaleString()}` : '+'}
         </p>
       )}
 
       <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
         <span className="text-xs text-gray-400">{job.steps.length} hiring step{job.steps.length !== 1 ? 's' : ''}</span>
-        <span className="text-xs font-medium text-[#004181]">View Details →</span>
+        <span className="text-xs font-medium text-[var(--primary)]">View Details →</span>
       </div>
     </div>
   );
@@ -330,7 +330,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
             onClick={() => onChange(p as number)}
             className={`h-9 min-w-[36px] px-3 rounded-lg text-sm font-medium transition-colors ${
               p === page
-                ? 'bg-[#004181] text-white'
+                ? 'bg-[var(--primary)] text-white'
                 : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -440,7 +440,7 @@ export function CareersPage() {
             placeholder="Search positions..."
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[#004181] focus:outline-none focus:ring-2 focus:ring-[#004181]/20"
+            className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
           />
         </div>
         <StringFilter
@@ -473,7 +473,7 @@ export function CareersPage() {
         )}
       </div>
 
-      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[#004181]" /></div>}
+      {isLoading && <div className="flex justify-center py-16"><Spinner size="lg" className="text-[var(--primary)]" /></div>}
       {isError && <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">Failed to load positions. Please try again.</div>}
 
       {!isLoading && !isError && (

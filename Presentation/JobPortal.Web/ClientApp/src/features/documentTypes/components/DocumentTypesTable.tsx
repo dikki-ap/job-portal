@@ -70,7 +70,7 @@ export function DocumentTypesTable({ documentTypes, onEdit, onSuccess, onError }
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1">
                     {dt.allowedMimeTypes.map((mime) => (
-                      <span key={mime} className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-[#004181] ring-1 ring-inset ring-blue-200">
+                      <span key={mime} className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-[var(--primary)] ring-1 ring-inset ring-blue-200">
                         {MIME_LABELS[mime] ?? mime}
                       </span>
                     ))}

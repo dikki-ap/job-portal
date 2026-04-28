@@ -57,7 +57,7 @@ export function EducationLevelsTable({ educationLevels, onEdit, onSuccess, onErr
               <tr key={el.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 text-gray-400 font-mono text-xs">{idx + 1}</td>
                 <td className="px-4 py-4">
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-[#004181] text-xs font-bold">
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-[var(--primary)] text-xs font-bold">
                     {el.level}
                   </span>
                 </td>

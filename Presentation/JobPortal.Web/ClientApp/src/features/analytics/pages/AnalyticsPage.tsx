@@ -192,7 +192,7 @@ export function AnalyticsPage() {
                 className={cn(
                   'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                   dateRange === opt.id
-                    ? 'bg-[#004181] text-white'
+                    ? 'bg-[var(--primary)] text-white'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',
                 )}
               >
@@ -223,7 +223,7 @@ export function AnalyticsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16"><Spinner size="lg" className="text-[#004181]" /></div>
+        <div className="flex justify-center py-16"><Spinner size="lg" className="text-[var(--primary)]" /></div>
       ) : (
         <>
           {/* Charts row */}
@@ -240,7 +240,7 @@ export function AnalyticsPage() {
                     <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
                     <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(v) => [v, 'Applications']} />
-                    <Bar dataKey="count" fill="#004181" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -276,15 +276,15 @@ export function AnalyticsPage() {
               <AreaChart data={byMonth} margin={{ left: 0, right: 16 }}>
                 <defs>
                   <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#004181" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#004181" stopOpacity={0} />
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                 <Tooltip formatter={(v) => [v, 'Applications']} />
-                <Area type="monotone" dataKey="count" stroke="#004181" strokeWidth={2} fill="url(#areaGrad)" dot={{ r: 4, fill: '#004181' }} />
+                <Area type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={2} fill="url(#areaGrad)" dot={{ r: 4, fill: 'var(--primary)' }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
