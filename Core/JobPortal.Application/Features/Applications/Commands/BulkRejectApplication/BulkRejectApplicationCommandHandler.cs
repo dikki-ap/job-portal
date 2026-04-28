@@ -25,7 +25,8 @@ public class BulkRejectApplicationCommandHandler(
 
         var stepIdsToFail  = new List<int>();
         var appIdsToReject = new List<int>();
-        var emailQueue = new List<(ApplicationEntity App, ApplicationStep Step, bool Passed)>();
+        var stepEmailQueue    = new List<(ApplicationEntity App, ApplicationStep Step, bool Passed)>();
+        var genericRejectQueue = new List<ApplicationEntity>();
         var skipped = 0;
 
         foreach (var app in applications)
@@ -38,12 +39,22 @@ public class BulkRejectApplicationCommandHandler(
 
             appIdsToReject.Add(app.Id);
 
-            // Fail the current active step if one exists
             var currentStep = ApplicationStepHelper.FindCurrentActiveStep(app);
             if (currentStep is not null)
             {
                 stepIdsToFail.Add(currentStep.Id);
-                emailQueue.Add((app, currentStep, false));
+
+                // Use step fail template if configured, otherwise fall back to generic rejection email
+                var hasTemplate = !string.IsNullOrWhiteSpace(currentStep.JobStep?.FailEmailSubject)
+                               && !string.IsNullOrWhiteSpace(currentStep.JobStep?.FailEmailBody);
+                if (hasTemplate)
+                    stepEmailQueue.Add((app, currentStep, false));
+                else
+                    genericRejectQueue.Add(app);
+            }
+            else
+            {
+                genericRejectQueue.Add(app);
             }
         }
 
@@ -64,7 +75,17 @@ public class BulkRejectApplicationCommandHandler(
 
         var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
         var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
-        StepEmailHelper.FireAndForgetBulkEmails(emailService, logger, emailQueue, primaryColor, companyName);
+
+        StepEmailHelper.FireAndForgetBulkEmails(emailService, logger, stepEmailQueue, primaryColor, companyName);
+
+        if (genericRejectQueue.Count > 0)
+        {
+            _ = Task.Run(async () =>
+            {
+                foreach (var app in genericRejectQueue)
+                    await ApplicationEmailHelper.SendRejectedAsync(emailService, logger, app, primaryColor, companyName);
+            });
+        }
 
         return new BulkOperationResultDto(succeeded, skipped, []);
     }
