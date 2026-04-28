@@ -12,6 +12,7 @@ import {
   UserCircle,
   ClipboardCheck,
   BarChart2,
+  Users,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
@@ -128,6 +129,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       label: 'Recruitment',
       items: [
         { label: 'Analytics', to: '/analytics', icon: <BarChart2 className="h-5 w-5" /> },
+        { label: 'Talent Pool', to: '/talent-pool', icon: <Users className="h-5 w-5" /> },
         { label: 'Job Management', to: '/jobs', icon: <Briefcase className="h-5 w-5" /> },
         { label: 'Applications', to: '/applications', icon: <FileText className="h-5 w-5" /> },
         ...(isAdmin || isApprover

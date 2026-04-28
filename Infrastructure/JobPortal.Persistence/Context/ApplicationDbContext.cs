@@ -4,6 +4,7 @@ using JobPortal.Domain.Entities.Audit;
 using JobPortal.Domain.Entities.Documents;
 using JobPortal.Domain.Entities.Jobs;
 using JobPortal.Domain.Entities.Masters;
+using JobPortal.Domain.Entities.TalentPool;
 using JobPortal.Domain.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,6 +55,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Domain.Entities.Applications.Application> Applications => Set<Domain.Entities.Applications.Application>();
     public DbSet<ApplicationDocument> ApplicationDocuments => Set<ApplicationDocument>();
     public DbSet<ApplicationStep> ApplicationSteps => Set<ApplicationStep>();
+
+    // Talent Pool
+    public DbSet<TalentPoolEntry> TalentPoolEntries => Set<TalentPoolEntry>();
 
     // Audit
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star } from 'lucide-react';
+import { ArrowLeft, Download, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, BookmarkPlus } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
@@ -18,6 +18,7 @@ import {
   useRateApplicationMutation,
 } from '../api/applicationsApi';
 import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
+import { useAddToTalentPoolMutation } from '../../talentPool/api/talentPoolApi';
 import type { ApplicationStepDto } from '../../../types/api';
 
 function ratingColor(r: number) {
@@ -67,9 +68,12 @@ export function ApplicationDetailPage() {
   const [failStep, { isLoading: failingId }] = useFailStepMutation();
   const [rejectApplication, { isLoading: rejecting }] = useRejectApplicationMutation();
   const [rateApplication, { isLoading: rating }] = useRateApplicationMutation();
+  const [addToTalentPool, { isLoading: addingToPool }] = useAddToTalentPoolMutation();
 
   const [localRating, setLocalRating] = useState<number | null>(null);
   const [localNote, setLocalNote] = useState('');
+  const [poolNotes, setPoolNotes] = useState('');
+  const [addedToPool, setAddedToPool] = useState(false);
 
   useEffect(() => {
     if (application) {
@@ -116,6 +120,17 @@ export function ApplicationDetailPage() {
     } catch (err: unknown) {
       const data = (err as { data?: { error?: string } })?.data;
       addToast(data?.error ?? 'Failed to save rating.', 'error');
+    }
+  };
+
+  const handleAddToPool = async () => {
+    try {
+      await addToTalentPool({ applicationId: appId, notes: poolNotes || undefined }).unwrap();
+      setAddedToPool(true);
+      addToast('Candidate saved to Talent Pool.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to add to Talent Pool.', 'error');
     }
   };
 
@@ -409,6 +424,46 @@ export function ApplicationDetailPage() {
           <Button variant="danger" onClick={handleReject} loading={rejecting}>
             Reject Candidate
           </Button>
+        </div>
+      )}
+
+      {/* Talent Pool — shown when rejected */}
+      {derivedStatus === 'Rejected' && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <BookmarkPlus className="h-5 w-5 text-[var(--primary)]" />
+            <h2 className="text-base font-semibold text-gray-900">Save to Talent Pool</h2>
+          </div>
+          {addedToPool ? (
+            <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 font-medium">
+              Candidate has been saved to the Talent Pool.
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-gray-500">
+                This candidate shows potential. Save them to the Talent Pool so HR can re-engage them for a future opening.
+              </p>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">Notes <span className="font-normal text-gray-400">(optional)</span></label>
+                <textarea
+                  rows={2}
+                  value={poolNotes}
+                  onChange={(e) => setPoolNotes(e.target.value)}
+                  placeholder="e.g. Strong technical skills, consider for mid-level role next quarter"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/10 resize-none"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleAddToPool}
+                  loading={addingToPool}
+                  className="gap-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white"
+                >
+                  <BookmarkPlus className="h-4 w-4" /> Save to Talent Pool
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

@@ -4,6 +4,7 @@ using JobPortal.Application.Features.Departments.Queries.GetAllDepartments;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Persistence.Context;
 using JobPortal.Persistence.Interceptors;
+using JobPortal.Domain.Entities.TalentPool;
 using JobPortal.Persistence.Repositories;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IApprovalLevelRepository, ApprovalLevelRepository>();
         services.AddScoped<IJobApprovalRepository, JobApprovalRepository>();
         services.AddScoped<IAppSettingRepository, AppSettingRepository>();
+        services.AddScoped<ITalentPoolRepository, TalentPoolRepository>();
 
         return services;
     }
