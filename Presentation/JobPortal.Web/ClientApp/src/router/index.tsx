@@ -35,6 +35,7 @@ import { AnalyticsPage } from '../features/analytics/pages/AnalyticsPage';
 import { PrivacyPolicyPage } from '../features/privacyConsent/pages/PrivacyPolicyPage';
 import { PrivacyConsentSettingPage } from '../features/privacyConsent/pages/PrivacyConsentSettingPage';
 import { SmtpSettingsPage } from '../features/smtpSettings/pages/SmtpSettingsPage';
+import { TalentPoolPage } from '../features/talentPool/pages/TalentPoolPage';
 
 const HR_ADMIN_ROLES = ['Admin', 'HR'];
 const ADMIN_ROLES = ['Admin'];
@@ -80,6 +81,7 @@ export function AppRouter() {
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="applications/:code" element={<ApplicationDetailPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="talent-pool" element={<TalentPoolPage />} />
         </Route>
 
         {/* Approvals — all authenticated users (content filtered by API) */}

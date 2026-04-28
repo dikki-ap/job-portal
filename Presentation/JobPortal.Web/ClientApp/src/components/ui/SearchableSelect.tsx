@@ -17,6 +17,7 @@ interface SearchableSelectProps {
   error?: string;
   disabled?: boolean;
   searchPlaceholder?: string;
+  maxResults?: number;
 }
 
 export function SearchableSelect({
@@ -29,6 +30,7 @@ export function SearchableSelect({
   error,
   disabled,
   searchPlaceholder,
+  maxResults,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -47,9 +49,11 @@ export function SearchableSelect({
 
   const selected = options.find((o) => String(o.value) === value);
 
-  const filtered = options.filter((o) =>
+  const allFiltered = options.filter((o) =>
     o.label.toLowerCase().includes(search.toLowerCase())
   );
+  const filtered = maxResults ? allFiltered.slice(0, maxResults) : allFiltered;
+  const hasMore = maxResults ? allFiltered.length > maxResults : false;
 
   const handleSelect = (optValue: string | number) => {
     onChange(String(optValue));
@@ -136,7 +140,8 @@ export function SearchableSelect({
                   {search ? `No matches for "${search}"` : 'No options available'}
                 </p>
               ) : (
-                filtered.map((opt) => {
+                <>
+                {filtered.map((opt) => {
                   const isSelected = String(opt.value) === value;
                   return (
                     <button
@@ -153,7 +158,13 @@ export function SearchableSelect({
                       {opt.label}
                     </button>
                   );
-                })
+                })}
+                {hasMore && (
+                  <p className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100">
+                    Showing top {maxResults} — type to filter more
+                  </p>
+                )}
+                </>
               )}
             </div>
           </div>

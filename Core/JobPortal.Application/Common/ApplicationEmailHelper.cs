@@ -52,4 +52,16 @@ internal static class ApplicationEmailHelper
                 """,
             ct);
 
+    internal static Task SendReengageAsync(IEmailService emailService, ILogger logger, ApplicationEntity app, CancellationToken ct = default)
+        => SendAsync(emailService, logger, app,
+            subject: "We'd Like to Reconnect — {{JobTitle}}",
+            body: """
+                <p>Hi {{CandidateName}},</p>
+                <p>We've been impressed by your profile and would love to consider you for the position of <strong>{{JobTitle}}</strong>.</p>
+                <p>We've opened a new application on your behalf. Your application code is: <strong>{{ApplicationCode}}</strong>.</p>
+                <p>Our team will be in touch soon with the next steps.</p>
+                <p>Best regards,<br/>HR Team</p>
+                """,
+            ct);
+
 }
