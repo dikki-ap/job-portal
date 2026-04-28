@@ -74,15 +74,15 @@ builder.Services.AddAuthorization(options =>
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "JobPortal API v1");
-        c.RoutePrefix = "swagger";
-    });
-}
+
+app.UseMiddleware<SwaggerBasicAuthMiddleware>();
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "JobPortal API v1");
+    c.RoutePrefix = "swagger";
+});
 
 app.UseExceptionHandler(errorApp =>
 {
