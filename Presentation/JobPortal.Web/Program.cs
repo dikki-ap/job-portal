@@ -125,9 +125,11 @@ app.UseExceptionHandler(errorApp =>
 
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseMiddleware<UserSyncMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();

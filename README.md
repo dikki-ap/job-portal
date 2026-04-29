@@ -91,13 +91,14 @@ JWT Bearer (Keycloak) → Policy: HrOrAdmin | AdminOnly | Authorize | AllowAnony
 - **Job detail page** — Full job description, requirements, hiring steps preview
 - **Apply flow** — Document upload per required document type, privacy consent gate
 - **My Applications** — Candidate tracks their own applications (status, step history)
-- **Candidate Profile** — Personal info, education, work history, skills, CV upload/download
+- **Candidate Profile** — Personal info, highest education (level, major, institution name with autocomplete, start/end year), CV upload/download
 - **Privacy consent** — UU PDP No. 27/2022 gate; configurable on/off per deployment
 
 ### HR / Admin
 - **Job Management** — Draft → Submit for Approval → Published → Closed lifecycle
 - **Multi-level Approval Workflow** — Configurable approver chain; email notification per step
 - **Application Management** — Table view with filters; step pass/fail; bulk accept/reject
+- **Application Detail** — Candidate info including education (level, major, institution, years) visible to HR
 - **Step-based Hiring Pipeline** — Each job has ordered steps; sequential pass required; email sent on each outcome
 - **Application Rating** — HR can rate (1–10) and add notes per application
 - **Talent Pool** — Save rejected candidates; re-engage them for new positions (creates new application, removes from pool, sends email)
@@ -173,14 +174,14 @@ Documents                        AuditLogs
 | | `EducationLevels` | `Id`, `Name` |
 | | `EducationMajors` | `Id`, `Name` |
 | **Users** | `Users` | `Id`, `ExternalId` (Keycloak), `Email`, `FirstName`, `LastName`, `IsDeleted` |
-| | `UserProfiles` | `Id`, `UserId`, `PhoneNumber`, `Headline`, `Summary`, `DateOfBirth`, `CvDocumentId`, `PrivacyConsentedAt` |
+| | `UserProfiles` | `Id`, `UserId`, `PhoneNumber`, `EducationLevelId`, `EducationMajorId`, `EducationMajorCustom`, `InstitutionName`, `EducationStartYear`, `EducationEndYear`, `CvDocumentId`, `HasConsentedToPrivacyPolicy` |
 | | `UserAddresses` | `Id`, `UserId`, `Street`, `City`, `Province`, `Country`, `PostalCode` |
-| | `UserEducationHistories` | `Id`, `UserId`, `Institution`, `Degree`, `Major`, `StartYear`, `EndYear` |
+| | `UserEducationHistories` | `Id`, `UserId`, `EducationLevelId`, `EducationMajorId`, `InstitutionName`, `StartDate`, `EndDate`, `Grade` |
 | | `UserWorkHistories` | `Id`, `UserId`, `Company`, `Title`, `StartDate`, `EndDate`, `IsCurrent` |
 | | `UserOrganizationHistories` | `Id`, `UserId`, `Organization`, `Role`, `StartYear`, `EndYear` |
-| | `UserSkills` | `Id`, `UserId`, `SkillId` |
+| | `UserSkills` | `Id`, `UserId`, `SkillId`, `SkillLevel` |
 | | `UserDocuments` | `Id`, `UserId`, `DocumentId`, `DocumentTypeId` |
-| **Documents** | `Documents` | `Id`, `OriginalFileName`, `StorageKey`, `ContentType`, `SizeBytes`, `UploadedByUserId`, `UploadedAt` |
+| **Documents** | `Documents` | `Id`, `OriginalFileName`, `FilePath`, `FileType`, `CreatedByUserId`, `CreatedAt` |
 | **Jobs** | `JobPosts` | `Id`, `Slug`, `Title`, `Description`, `Status`, `City`, `Country`, `DepartmentId`, `WorkModeId`, `EmploymentTypeId`, `JobCategoryId`, `JobLevelId`, `CurrencyTypeId`, `MinSalary`, `MaxSalary`, `Quota`, `PublishDate`, `CloseDate`, `IsDeleted` |
 | | `JobSteps` | `Id`, `JobPostId`, `Name`, `StepOrder`, `IsRequired`, `PassEmailSubject`, `PassEmailBody`, `FailEmailSubject`, `FailEmailBody` |
 | | `JobPostSkills` | `Id`, `JobPostId`, `SkillId` |
@@ -304,7 +305,8 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/candidate-profile` | ✓ | Get own profile |
-| PUT | `/candidate-profile` | ✓ | Upsert profile |
+| PUT | `/candidate-profile` | ✓ | Upsert profile (personal info + highest education + CV) |
+| GET | `/candidate-profile/institutions` | ✓ | Institution name autocomplete (`?q=keyword`) |
 | POST | `/candidate-profile/cv` | ✓ | Upload CV (PDF/DOC/DOCX, max 3 MB) |
 | DELETE | `/candidate-profile/cv` | ✓ | Remove CV |
 | GET | `/candidate-profile/cv/download` | ✓ | Download CV (presigned URL) |
@@ -489,23 +491,22 @@ dotnet run --project Presentation/JobPortal.Web
 - **Mailpit inbox:** `http://localhost:8025`
 - **MinIO console:** `http://localhost:9001`
 
+> In development, the SpaProxy (`Microsoft.AspNetCore.SpaProxy`) automatically forwards non-API requests to the Vite dev server on port 5167.
+
 ---
 
 ## Build
 
-### Build all .NET projects
+### Publish (single command — includes React build)
+
+`dotnet publish` automatically runs `npm install && npm run build` inside the MSBuild target, copies the React output (`dist/`) into `wwwroot/`, and produces a self-contained publish folder.
 
 ```bash
-# Builds the web project and all its dependencies (Application, Persistence, Infrastructure, Domain)
-dotnet build Presentation/JobPortal.Web/JobPortal.Web.csproj
+dotnet publish Presentation/JobPortal.Web/JobPortal.Web.csproj \
+  -c Release -o ./publish
 ```
 
-### Build frontend
-
-```bash
-cd Presentation/JobPortal.Web/ClientApp
-npm run build        # outputs to dist/
-```
+> Node.js 22+ must be available on the build machine (or in the Docker image). No separate frontend build step needed.
 
 ### Add a migration
 
@@ -527,83 +528,69 @@ dotnet ef database update <PreviousMigrationName> \
 
 ## Dockerfile & Docker Compose
 
-The recommended production setup uses **two containers**: the ASP.NET Core API and an Nginx container serving the React build and proxying API calls.
+The production setup uses a **single container**: `dotnet publish` triggers `npm install && npm run build` internally, and the resulting `wwwroot/` is served directly by ASP.NET Core — no Nginx or separate frontend container needed.
 
-### `Dockerfile` (API)
+### `Dockerfile`
+
+Multi-stage build — the `build` stage compiles everything (C# + React); only the compiled output is copied to the lean `runtime` stage. The server only needs Docker — no .NET SDK or Node.js required.
 
 ```dockerfile
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-WORKDIR /app
-EXPOSE 8080
-
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+
+# Install Node.js 22 LTS
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Restore NuGet — invalidated only when a .csproj changes
+COPY JobPortal.slnx .
+COPY Core/JobPortal.Domain/JobPortal.Domain.csproj              Core/JobPortal.Domain/
+COPY Core/JobPortal.Application/JobPortal.Application.csproj    Core/JobPortal.Application/
+COPY Infrastructure/JobPortal.Infrastructure/JobPortal.Infrastructure.csproj   Infrastructure/JobPortal.Infrastructure/
+COPY Infrastructure/JobPortal.Persistence/JobPortal.Persistence.csproj         Infrastructure/JobPortal.Persistence/
+COPY Presentation/JobPortal.Web/JobPortal.Web.csproj             Presentation/JobPortal.Web/
+RUN dotnet restore Presentation/JobPortal.Web/JobPortal.Web.csproj
+
+# Install npm packages — invalidated only when package-lock.json changes
+COPY Presentation/JobPortal.Web/ClientApp/package.json      Presentation/JobPortal.Web/ClientApp/
+COPY Presentation/JobPortal.Web/ClientApp/package-lock.json Presentation/JobPortal.Web/ClientApp/
+RUN cd Presentation/JobPortal.Web/ClientApp && npm ci
+
+# Copy source and publish; MSBuild PublishRunWebpack runs npm install + build
 COPY . .
-RUN dotnet restore "Presentation/JobPortal.Web/JobPortal.Web.csproj"
-RUN dotnet publish "Presentation/JobPortal.Web/JobPortal.Web.csproj" \
-    -c Release -o /app/publish --no-restore \
-    -p:UseVite=false
+RUN dotnet publish Presentation/JobPortal.Web/JobPortal.Web.csproj \
+    -c Release -o /app/publish --no-restore
 
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
+
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --ingroup appgroup --no-create-home appuser
+
 COPY --from=build /app/publish .
+
+USER appuser
+
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
 ENTRYPOINT ["dotnet", "JobPortal.Web.dll"]
-```
-
-### `Dockerfile.frontend` (Nginx + React)
-
-```dockerfile
-FROM node:22-alpine AS build
-WORKDIR /app
-COPY Presentation/JobPortal.Web/ClientApp/package*.json ./
-RUN npm ci
-COPY Presentation/JobPortal.Web/ClientApp ./
-RUN npm run build
-
-FROM nginx:alpine AS final
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-```
-
-### `nginx.conf`
-
-```nginx
-server {
-    listen 80;
-    root /usr/share/nginx/html;
-    index index.html;
-
-    # Proxy API and auth calls to the backend
-    location /api/ {
-        proxy_pass http://api:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /swagger {
-        proxy_pass http://api:8080;
-        proxy_set_header Host $host;
-    }
-
-    # SPA fallback — all unmatched routes serve index.html
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
 ```
 
 ### `docker-compose.yml`
 
 ```yaml
 services:
-  api:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    ports:
+      - "80:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -626,17 +613,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - api
 
   db:
     image: mariadb:11
@@ -736,3 +712,5 @@ Migrations live in `Infrastructure/JobPortal.Persistence/Migrations/`.
 | 17 | `AddPrivacyConsent` | UU PDP consent tracking on UserProfile |
 | 18 | `SplitLocationToCityCountry` | Split `Location` string into `City` + `Country` |
 | 19 | `AddTalentPool` | TalentPoolEntries table (unique per user) |
+| 20 | `AddEducationYearsToUserProfile` | `EducationStartYear`, `EducationEndYear` on UserProfile |
+| 21 | `AddInstitutionNameToUserProfile` | `InstitutionName` (max 255, ToTitleCase on save) on UserProfile |

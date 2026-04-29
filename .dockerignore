@@ -1,0 +1,40 @@
+# .NET build artifacts
+**/bin/
+**/obj/
+
+# Node.js
+**/node_modules/
+
+# Frontend build output (Docker rebuilds fresh)
+**/dist/
+
+# Git
+.git/
+.gitignore
+
+# IDE and editor
+.vs/
+.vscode/
+.idea/
+**/*.user
+**/*.suo
+**/*.swp
+
+# Logs
+**/logs/
+**/*.log
+
+# Secrets and local config
+**/.env
+**/.env.*
+**/appsettings.Development.json
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Docs and planning
+plans/
+README.md
+.claude/
