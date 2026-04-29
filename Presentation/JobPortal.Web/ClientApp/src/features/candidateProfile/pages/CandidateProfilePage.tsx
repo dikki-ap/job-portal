@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Upload, CheckCircle2, Trash2, Loader2, X, Download, Search, ChevronDown, Check } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Upload, CheckCircle2, Trash2, Loader2, X, Download, Search, ChevronDown, Check, GraduationCap } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
@@ -15,6 +15,7 @@ import { useGetEducationMajorsQuery } from '../../educationMajors/api/educationM
 import {
   useGetProfileQuery,
   useUpsertProfileMutation,
+  useLazyGetInstitutionSuggestionsQuery,
   useUploadCvMutation,
   useRemoveCvMutation,
 } from '../api/candidateProfileApi';
@@ -22,6 +23,7 @@ import type { EducationMajorDto } from '../../../types/api';
 
 const CV_ACCEPT = '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const MAX_VISIBLE_MAJORS = 5;
+const CURRENT_YEAR = new Date().getFullYear();
 
 function MajorPicker({
   majors,
@@ -191,6 +193,76 @@ function MajorPicker({
   );
 }
 
+function InstitutionInput({
+  value,
+  onChange,
+  fetchSuggestions,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  fetchSuggestions: (q: string) => Promise<string[]>;
+}) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleChange = (v: string) => {
+    onChange(v);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (v.trim().length < 2) { setSuggestions([]); setOpen(false); return; }
+    debounceRef.current = setTimeout(async () => {
+      const results = await fetchSuggestions(v.trim());
+      setSuggestions(results);
+      setOpen(results.length > 0);
+    }, 300);
+  };
+
+  const select = (name: string) => {
+    onChange(name);
+    setSuggestions([]);
+    setOpen(false);
+  };
+
+  return (
+    <div ref={ref} className="relative flex flex-col gap-2">
+      <label className="text-sm font-medium text-gray-700">Institution Name</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => handleChange(e.target.value)}
+        onFocus={() => { if (suggestions.length > 0) setOpen(true); }}
+        placeholder="e.g. Universitas Indonesia"
+        maxLength={255}
+        className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+      />
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg py-1">
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => select(s)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <GraduationCap className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CandidateProfilePage() {
   const { token } = useAuth();
   const { toasts, addToast, dismissToast } = useToast();
@@ -198,6 +270,7 @@ export function CandidateProfilePage() {
   const { data: educationLevels = [] } = useGetEducationLevelsQuery();
   const { data: educationMajors = [] } = useGetEducationMajorsQuery();
   const [upsertProfile] = useUpsertProfileMutation();
+  const [fetchInstitutionSuggestions] = useLazyGetInstitutionSuggestionsQuery();
   const [uploadCv] = useUploadCvMutation();
   const [removeCv, { isLoading: removingCv }] = useRemoveCvMutation();
 
@@ -208,11 +281,19 @@ export function CandidateProfilePage() {
   const [majorId, setMajorId] = useState<number | null>(null);
   const [majorIsOther, setMajorIsOther] = useState(false);
   const [majorCustom, setMajorCustom] = useState('');
+  const [institutionName, setInstitutionName] = useState('');
+  const [educationStartYear, setEducationStartYear] = useState<number | ''>('');
+  const [educationEndYear, setEducationEndYear] = useState<number | ''>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   const [cvFile, setCvFile] = useState<File | null>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
+
+  const getSuggestions = useCallback(
+    (q: string) => fetchInstitutionSuggestions(q).unwrap().catch(() => [] as string[]),
+    [fetchInstitutionSuggestions],
+  );
 
   useEffect(() => {
     if (!profile) return;
@@ -220,6 +301,9 @@ export function CandidateProfilePage() {
     setLastName(profile.lastName);
     setPhoneNumber(profile.phoneNumber || '');
     setEducationLevelId(profile.educationLevelId ?? '');
+    setInstitutionName(profile.institutionName ?? '');
+    setEducationStartYear(profile.educationStartYear ?? '');
+    setEducationEndYear(profile.educationEndYear ?? '');
     if (profile.educationMajorCustom) {
       setMajorId(null);
       setMajorIsOther(true);
@@ -236,6 +320,10 @@ export function CandidateProfilePage() {
     if (!firstName.trim()) e.firstName = 'First name is required.';
     if (!lastName.trim()) e.lastName = 'Last name is required.';
     if (!phoneNumber || phoneNumber.length < 6) e.phoneNumber = 'Valid phone number is required.';
+    if (educationStartYear !== '' && (Number(educationStartYear) < 1950 || Number(educationStartYear) > CURRENT_YEAR))
+      e.educationStartYear = `Year must be between 1950 and ${CURRENT_YEAR}.`;
+    if (educationEndYear !== '' && educationStartYear !== '' && Number(educationEndYear) < Number(educationStartYear))
+      e.educationEndYear = 'End year cannot be before start year.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -257,6 +345,9 @@ export function CandidateProfilePage() {
         educationLevelId: educationLevelId !== '' ? Number(educationLevelId) : null,
         educationMajorId: majorIsOther ? null : majorId,
         educationMajorCustom: majorIsOther ? (majorCustom.trim() || null) : null,
+        institutionName: institutionName.trim() || null,
+        educationStartYear: educationStartYear !== '' ? Number(educationStartYear) : null,
+        educationEndYear: educationEndYear !== '' ? Number(educationEndYear) : null,
       }).unwrap();
 
       addToast('Profile saved successfully.', 'success');
@@ -344,6 +435,57 @@ export function CandidateProfilePage() {
           onSelect={(id, other) => { setMajorId(id); setMajorIsOther(other); if (!other) setMajorCustom(''); }}
           onCustomChange={setMajorCustom}
         />
+        <InstitutionInput
+          value={institutionName}
+          onChange={setInstitutionName}
+          fetchSuggestions={getSuggestions}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="startYear" className="text-sm font-medium text-gray-700">Start Year</label>
+            <input
+              id="startYear"
+              type="number"
+              value={educationStartYear}
+              onChange={(e) => {
+                setEducationStartYear(e.target.value !== '' ? Number(e.target.value) : '');
+                setErrors((p) => ({ ...p, educationStartYear: '' }));
+              }}
+              min={1950}
+              max={CURRENT_YEAR}
+              placeholder={`e.g. ${CURRENT_YEAR - 4}`}
+              className={cn(
+                'h-10 w-full rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20',
+                errors.educationStartYear ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[var(--primary)]',
+              )}
+            />
+            {errors.educationStartYear && (
+              <p className="text-xs text-red-500">{errors.educationStartYear}</p>
+            )}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="endYear" className="text-sm font-medium text-gray-700">End Year</label>
+            <input
+              id="endYear"
+              type="number"
+              value={educationEndYear}
+              onChange={(e) => {
+                setEducationEndYear(e.target.value !== '' ? Number(e.target.value) : '');
+                setErrors((p) => ({ ...p, educationEndYear: '' }));
+              }}
+              min={1950}
+              max={CURRENT_YEAR + 10}
+              placeholder="Leave blank if ongoing"
+              className={cn(
+                'h-10 w-full rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20',
+                errors.educationEndYear ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[var(--primary)]',
+              )}
+            />
+            {errors.educationEndYear && (
+              <p className="text-xs text-red-500">{errors.educationEndYear}</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* CV Upload */}

@@ -161,6 +161,9 @@ export interface CandidateProfileDto {
   educationMajorId: number | null;
   educationMajorName: string | null;
   educationMajorCustom: string | null;
+  institutionName: string | null;
+  educationStartYear: number | null;
+  educationEndYear: number | null;
 }
 
 export interface JobPostDto {
@@ -262,6 +265,11 @@ export interface ApplicationDto {
   candidateName: string;
   candidateEmail: string;
   candidatePhone: string | null;
+  candidateEducationLevelName: string | null;
+  candidateEducationMajorName: string | null;
+  candidateInstitutionName: string | null;
+  candidateEducationStartYear: number | null;
+  candidateEducationEndYear: number | null;
   status: string;
   appliedAt: string;
   updatedAt: string;

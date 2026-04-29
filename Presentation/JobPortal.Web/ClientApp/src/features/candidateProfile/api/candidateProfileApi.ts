@@ -9,6 +9,9 @@ interface UpsertProfileRequest {
   educationLevelId: number | null;
   educationMajorId: number | null;
   educationMajorCustom: string | null;
+  institutionName: string | null;
+  educationStartYear: number | null;
+  educationEndYear: number | null;
 }
 
 interface UploadCvResult {
@@ -38,6 +41,9 @@ export const candidateProfileApi = createApi({
       query: (body) => ({ url: '', method: 'PUT', body }),
       invalidatesTags: ['CandidateProfile'],
     }),
+    getInstitutionSuggestions: builder.query<string[], string>({
+      query: (q) => `/institutions?q=${encodeURIComponent(q)}`,
+    }),
     uploadCv: builder.mutation<UploadCvResult, { file: File }>({
       query: ({ file }) => {
         const formData = new FormData();
@@ -56,6 +62,7 @@ export const candidateProfileApi = createApi({
 export const {
   useGetProfileQuery,
   useUpsertProfileMutation,
+  useLazyGetInstitutionSuggestionsQuery,
   useUploadCvMutation,
   useRemoveCvMutation,
 } = candidateProfileApi;

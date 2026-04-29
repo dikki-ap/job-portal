@@ -1,3 +1,4 @@
+using System.Globalization;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
@@ -13,6 +14,8 @@ public class UpsertCandidateProfileCommandHandler(
     ILogger<UpsertCandidateProfileCommandHandler> logger)
     : IRequestHandler<UpsertCandidateProfileCommand, CandidateProfileDto>
 {
+    private static readonly TextInfo TitleCase = CultureInfo.InvariantCulture.TextInfo;
+
     public async Task<CandidateProfileDto> Handle(UpsertCandidateProfileCommand request, CancellationToken cancellationToken)
     {
         try
@@ -26,6 +29,10 @@ public class UpsertCandidateProfileCommandHandler(
             user.FirstName = request.FirstName.Trim();
             user.LastName = request.LastName.Trim();
 
+            var institutionName = string.IsNullOrWhiteSpace(request.InstitutionName)
+                ? null
+                : TitleCase.ToTitleCase(request.InstitutionName.Trim().ToLower());
+
             var profile = new UserProfile
             {
                 UserId = userId,
@@ -33,6 +40,9 @@ public class UpsertCandidateProfileCommandHandler(
                 EducationLevelId = request.EducationLevelId,
                 EducationMajorId = request.EducationMajorId,
                 EducationMajorCustom = string.IsNullOrWhiteSpace(request.EducationMajorCustom) ? null : request.EducationMajorCustom.Trim(),
+                InstitutionName = institutionName,
+                EducationStartYear = request.EducationStartYear,
+                EducationEndYear = request.EducationEndYear,
                 UpdatedAt = now,
                 UpdatedByUserId = userId,
                 NIK = string.Empty,
@@ -57,7 +67,9 @@ public class UpsertCandidateProfileCommandHandler(
                 request.PhoneNumber,
                 request.EducationLevelId, null,
                 null, null,
-                request.EducationMajorId, null, request.EducationMajorCustom);
+                request.EducationMajorId, null, request.EducationMajorCustom,
+                institutionName,
+                request.EducationStartYear, request.EducationEndYear);
         }
         catch (Exception ex) when (ex is not UnauthorizedAccessException and not KeyNotFoundException)
         {

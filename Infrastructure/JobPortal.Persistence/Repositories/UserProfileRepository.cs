@@ -51,6 +51,9 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
             existing.EducationLevelId = profile.EducationLevelId;
             existing.EducationMajorId = profile.EducationMajorId;
             existing.EducationMajorCustom = profile.EducationMajorCustom;
+            existing.InstitutionName = profile.InstitutionName;
+            existing.EducationStartYear = profile.EducationStartYear;
+            existing.EducationEndYear = profile.EducationEndYear;
             existing.UpdatedAt = profile.UpdatedAt;
             existing.UpdatedByUserId = profile.UpdatedByUserId;
             context.UserProfiles.Update(existing);
@@ -148,6 +151,22 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         }
 
         return consentedAt;
+    }
+
+    public async Task<List<string>> GetInstitutionSuggestionsAsync(
+        string query, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return [];
+
+        var q = query.Trim();
+        return await context.UserProfiles
+            .Where(p => p.InstitutionName != null && p.InstitutionName.Contains(q))
+            .Select(p => p.InstitutionName!)
+            .Distinct()
+            .OrderBy(n => n)
+            .Take(10)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

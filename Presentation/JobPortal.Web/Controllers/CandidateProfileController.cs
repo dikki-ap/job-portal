@@ -1,5 +1,6 @@
 using JobPortal.Application.Features.CandidateProfile.Commands.UpsertCandidateProfile;
 using JobPortal.Application.Features.CandidateProfile.Queries.GetCandidateProfile;
+using JobPortal.Application.Features.CandidateProfile.Queries.GetInstitutionSuggestions;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Documents;
@@ -40,6 +41,14 @@ public class CandidateProfileController(
         }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
         catch (UnauthorizedAccessException ex) { return Unauthorized(new { error = ex.Message }); }
+    }
+
+    [HttpGet("institutions")]
+    public async Task<IActionResult> GetInstitutionSuggestions(
+        [FromQuery] string q, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetInstitutionSuggestionsQuery(q), cancellationToken);
+        return Ok(result);
     }
 
     private static readonly HashSet<string> CvAllowedMimes =

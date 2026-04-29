@@ -10,4 +10,7 @@ public record CandidateProfileDto(
     string? CvOriginalFileName,
     int? EducationMajorId,
     string? EducationMajorName,
-    string? EducationMajorCustom);
+    string? EducationMajorCustom,
+    string? InstitutionName,
+    int? EducationStartYear,
+    int? EducationEndYear);
