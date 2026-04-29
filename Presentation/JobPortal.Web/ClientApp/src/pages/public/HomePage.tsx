@@ -233,7 +233,7 @@ function JobCard({ job, onView }: { job: JobPostDto; onView: () => void }) {
       <div className="flex-1 flex flex-col gap-1.5 min-w-0">
         <p className="text-sm font-semibold text-gray-900 truncate">{job.title}</p>
         <div className="flex flex-wrap gap-3 text-xs text-gray-400">
-          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{job.location}</span>
+          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{job.city}, {job.country}</span>
           <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{job.employmentTypeName}</span>
           <span className="flex items-center gap-1"><Briefcase className="h-3 w-3" />{job.workModeName}</span>
         </div>

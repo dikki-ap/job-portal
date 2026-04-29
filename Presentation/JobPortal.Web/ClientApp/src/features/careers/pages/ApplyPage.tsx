@@ -128,7 +128,7 @@ function DocUploadRow({ entry, dt, locked, onToggleOff, onSetFile, onSwitchToUpl
                 </button>
               </>
             ) : (
-              <span>{entry.file?.name} — uploaded</span>
+              <span>Uploaded</span>
             )}
           </div>
         ) : (

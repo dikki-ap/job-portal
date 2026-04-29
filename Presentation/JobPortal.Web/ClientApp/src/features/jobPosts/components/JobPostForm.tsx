@@ -12,7 +12,6 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "../../../components/ui/Input";
 import { SearchableSelect } from "../../../components/ui/SearchableSelect";
 import { Button } from "../../../components/ui/Button";
-import { Spinner } from "../../../components/ui/Spinner";
 import { SkillPicker } from "../../../components/ui/SkillPicker";
 import {
   useCreateJobPostMutation,

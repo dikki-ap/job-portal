@@ -118,7 +118,7 @@ export function JobPostApprovalReviewPage() {
             </div>
 
             <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-              <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-gray-400" />{job.location}</span>
+              <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-gray-400" />{job.city}, {job.country}</span>
               <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-gray-400" />{job.employmentTypeName}</span>
               <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4 text-gray-400" />{job.workModeName}</span>
               <span className="flex items-center gap-1.5"><BarChart2 className="h-4 w-4 text-gray-400" />{job.jobLevelName}</span>
