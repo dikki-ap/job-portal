@@ -58,10 +58,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.Authority = builder.Configuration["Keycloak:Authority"];
         options.RequireHttpsMetadata = false;
         options.MapInboundClaims = false;
+        // MetadataAddress lets the container fetch JWKS from a different URL than Authority.
+        // Useful when Authority uses a public hostname (for issuer validation) but the
+        // container must reach Keycloak via host.docker.internal.
+        var metadataAddress = builder.Configuration["Keycloak:MetadataAddress"];
+        if (!string.IsNullOrEmpty(metadataAddress))
+            options.MetadataAddress = metadataAddress;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateAudience = false,
             ValidateIssuer = true,
+            // Explicitly use Authority as valid issuer so the issuer from the
+            // discovery document (which may use a different hostname) is ignored.
+            ValidIssuer = builder.Configuration["Keycloak:Authority"],
         };
     });
 

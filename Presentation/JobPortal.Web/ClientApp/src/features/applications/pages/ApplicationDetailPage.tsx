@@ -291,7 +291,7 @@ export function ApplicationDetailPage() {
           {jobPost && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-sm text-gray-600">
-                <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.location}</span>
+                <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.city}, {jobPost.country}</span>
                 <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.employmentTypeName}</span>
                 <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.workModeName}</span>
                 <span className="flex items-center gap-1.5"><BarChart2 className="h-3.5 w-3.5 text-gray-400 shrink-0" />{jobPost.jobLevelName}</span>

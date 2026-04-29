@@ -8,6 +8,7 @@ plans/
 # =========================
 bin/
 obj/
+publish/
 *.user
 *.suo
 *.userosscache

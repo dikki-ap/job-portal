@@ -30,8 +30,8 @@ RUN dotnet publish Presentation/JobPortal.Web/JobPortal.Web.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-RUN addgroup --system --gid 1001 appgroup && \
-    adduser --system --uid 1001 --ingroup appgroup --no-create-home appuser
+RUN groupadd --system --gid 1001 appgroup && \
+    useradd --system --uid 1001 --gid 1001 --no-create-home appuser
 
 COPY --from=build /app/publish .
 
