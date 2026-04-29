@@ -12,4 +12,7 @@ public record UpsertCandidateProfileCommand(
     int? EducationLevelId,
     int? EducationMajorId = null,
     string? EducationMajorCustom = null,
+    string? InstitutionName = null,
+    int? EducationStartYear = null,
+    int? EducationEndYear = null,
     List<UpsertSkillItem>? Skills = null) : IRequest<CandidateProfileDto>;

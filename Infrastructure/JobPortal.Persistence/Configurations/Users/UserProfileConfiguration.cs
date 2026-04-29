@@ -14,6 +14,7 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.HasIndex(p => p.NIK).IsUnique();
 
         builder.Property(p => p.EducationMajorCustom).HasMaxLength(255);
+        builder.Property(p => p.InstitutionName).HasMaxLength(255);
 
         builder.HasOne(p => p.EducationLevel)
             .WithMany()

@@ -12,6 +12,9 @@ public class UserProfile : AuditableEntity
     public int? EducationLevelId { get; set; }
     public int? EducationMajorId { get; set; }
     public string? EducationMajorCustom { get; set; }
+    public string? InstitutionName { get; set; }
+    public int? EducationStartYear { get; set; }
+    public int? EducationEndYear { get; set; }
     public int? CvDocumentId { get; set; }
     public bool HasConsentedToPrivacyPolicy { get; set; }
     public DateTime? ConsentedAt { get; set; }

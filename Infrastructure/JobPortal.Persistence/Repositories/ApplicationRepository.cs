@@ -32,7 +32,8 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
 
     public async Task<ApplicationEntity?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
         => await context.Applications
-            .Include(a => a.User).ThenInclude(u => u.Profile)
+            .Include(a => a.User).ThenInclude(u => u.Profile).ThenInclude(p => p!.EducationLevel)
+            .Include(a => a.User).ThenInclude(u => u.Profile).ThenInclude(p => p!.EducationMajor)
             .Include(a => a.JobPost).ThenInclude(j => j.Department)
             .Include(a => a.JobPost).ThenInclude(j => j.WorkMode)
             .Include(a => a.JobPost).ThenInclude(j => j.EmploymentType)

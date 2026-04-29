@@ -190,6 +190,32 @@ export function ApplicationDetailPage() {
           </div>
           <div><span className="text-gray-500 font-medium block">Applied</span><span className="text-gray-900">{formatDate(application.appliedAt)}</span></div>
         </div>
+        {(application.candidateEducationLevelName || application.candidateEducationMajorName || application.candidateInstitutionName) && (
+          <div className="pt-2 border-t border-gray-100">
+            <div className="flex items-start gap-2 text-sm">
+              <GraduationCap className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+              <div className="flex flex-wrap gap-x-1 gap-y-1 text-gray-700">
+                {application.candidateEducationLevelName && (
+                  <span>{application.candidateEducationLevelName}</span>
+                )}
+                {application.candidateEducationMajorName && (
+                  <span className="text-gray-500">· {application.candidateEducationMajorName}</span>
+                )}
+                {application.candidateInstitutionName && (
+                  <span className="text-gray-500">· {application.candidateInstitutionName}</span>
+                )}
+                {application.candidateEducationStartYear && (
+                  <span className="text-gray-500">
+                    · {application.candidateEducationStartYear}
+                    {application.candidateEducationEndYear
+                      ? ` – ${application.candidateEducationEndYear}`
+                      : ' – present'}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Card 2: HR Rating */}

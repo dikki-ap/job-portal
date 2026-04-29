@@ -10,5 +10,6 @@ public interface IUserProfileRepository
     Task<bool> UnlinkCvAsync(int userId, CancellationToken cancellationToken = default);
     Task<(bool HasConsented, DateTime? ConsentedAt)> GetConsentStatusAsync(int userId, CancellationToken cancellationToken = default);
     Task<DateTime> RecordConsentAsync(int userId, CancellationToken cancellationToken = default);
+    Task<List<string>> GetInstitutionSuggestionsAsync(string query, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
