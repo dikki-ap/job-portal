@@ -1,12 +1,15 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace JobPortal.Application.Features.AppSettings.Commands.UpdateBrandingSetting;
 
 public class UpdateBrandingSettingCommandHandler(
     IAppSettingRepository repo,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService,
+    IMemoryCache cache)
     : IRequestHandler<UpdateBrandingSettingCommand, Unit>
 {
     public async Task<Unit> Handle(UpdateBrandingSettingCommand request, CancellationToken ct)
@@ -23,6 +26,7 @@ public class UpdateBrandingSettingCommandHandler(
         await repo.SetValueAsync("BrandAddress",          request.Address,          userId, ct);
         await repo.SetValueAsync("BrandDescription",      request.Description,      userId, ct);
         await repo.SaveChangesAsync(ct);
+        cache.Remove(CacheKeys.Branding);
         return Unit.Value;
     }
 }

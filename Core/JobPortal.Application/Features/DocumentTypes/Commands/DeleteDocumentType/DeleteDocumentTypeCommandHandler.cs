@@ -1,10 +1,15 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.Interfaces.Repositories;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.DocumentTypes.Commands.DeleteDocumentType;
 
-public class DeleteDocumentTypeCommandHandler(IDocumentTypeRepository repository, ILogger<DeleteDocumentTypeCommandHandler> logger)
+public class DeleteDocumentTypeCommandHandler(
+    IDocumentTypeRepository repository,
+    IMemoryCache cache,
+    ILogger<DeleteDocumentTypeCommandHandler> logger)
     : IRequestHandler<DeleteDocumentTypeCommand, Unit>
 {
     public async Task<Unit> Handle(DeleteDocumentTypeCommand request, CancellationToken cancellationToken)
@@ -15,6 +20,7 @@ public class DeleteDocumentTypeCommandHandler(IDocumentTypeRepository repository
                 ?? throw new KeyNotFoundException($"Document type with ID {request.Id} not found.");
             await repository.DeleteAsync(documentType, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.DocumentTypes);
             return Unit.Value;
         }
         catch (Exception ex)

@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Jobs;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.JobPosts.Commands.UpdateJobPost;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.JobPosts.Commands.UpdateJobPost;
 public class UpdateJobPostCommandHandler(
     IJobPostRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateJobPostCommandHandler> logger)
     : IRequestHandler<UpdateJobPostCommand, JobPostDto>
 {
@@ -101,6 +104,7 @@ public class UpdateJobPostCommandHandler(
 
             await repository.UpdateAsync(jobPost, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            InvalidateJobsCache();
 
             return new JobPostDto(
                 jobPost.Id, jobPost.Title, jobPost.Slug, jobPost.Status,
@@ -128,5 +132,13 @@ public class UpdateJobPostCommandHandler(
             logger.LogError(ex, "Error updating job post id={Id}", request.Id);
             throw;
         }
+    }
+
+    private void InvalidateJobsCache()
+    {
+        var version = cache.Get<long>(CacheKeys.PublishedJobsVersion);
+        cache.Set(CacheKeys.PublishedJobsVersion, version + 1,
+            new MemoryCacheEntryOptions { Priority = CacheItemPriority.NeverRemove });
+        cache.Remove(CacheKeys.PublishedCountries);
     }
 }

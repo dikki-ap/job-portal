@@ -52,11 +52,11 @@ export function PublicNavbar() {
               <div
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-lg transition-colors overflow-hidden',
-                  solid ? 'bg-[var(--primary)]' : 'bg-white/20 backdrop-blur-sm'
+                  !logoUrl && (solid ? 'bg-[var(--primary)]' : 'bg-white/20 backdrop-blur-sm')
                 )}
               >
                 {logoUrl
-                  ? <img src={logoUrl} alt={companyName} className="h-8 w-8 object-cover" />
+                  ? <img src={logoUrl} alt={companyName} className="h-8 w-8 object-contain" />
                   : <Building2 className="h-4 w-4 text-white" />
                 }
               </div>

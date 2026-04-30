@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.DocumentTypes.Commands.UpdateDocumentType;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.DocumentTypes.Commands.UpdateDocumentTy
 public class UpdateDocumentTypeCommandHandler(
     IDocumentTypeRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateDocumentTypeCommandHandler> logger)
     : IRequestHandler<UpdateDocumentTypeCommand, DocumentTypeDto>
 {
@@ -30,6 +33,7 @@ public class UpdateDocumentTypeCommandHandler(
                 documentType.MimeTypes.Add(new DocumentTypeMimeType { MimeType = mimeType });
             await repository.UpdateAsync(documentType, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.DocumentTypes);
 
             return new DocumentTypeDto(
                 documentType.Id, documentType.Name, documentType.MaxFileSizeMb,

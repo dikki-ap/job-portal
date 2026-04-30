@@ -2,6 +2,7 @@ using JobPortal.Application.Common;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.JobPosts.Commands.ApproveJobPostStep;
@@ -12,6 +13,7 @@ public class ApproveJobPostStepCommandHandler(
     ICurrentUserService currentUserService,
     IEmailService emailService,
     IAppSettingRepository appSettingRepository,
+    IMemoryCache cache,
     ILogger<ApproveJobPostStepCommandHandler> logger)
     : IRequestHandler<ApproveJobPostStepCommand, Unit>
 {
@@ -64,6 +66,7 @@ public class ApproveJobPostStepCommandHandler(
                 job.UpdatedAt = now;
                 job.UpdatedByUserId = currentUserService.GetCurrentUserId();
                 await jobPostRepository.UpdateAsync(job, cancellationToken);
+                InvalidateJobsCache();
             }
 
             await approvalRepository.SaveChangesAsync(cancellationToken);
@@ -78,5 +81,13 @@ public class ApproveJobPostStepCommandHandler(
             logger.LogError(ex, "Error approving step for job post id={JobPostId}", request.JobPostId);
             throw;
         }
+    }
+
+    private void InvalidateJobsCache()
+    {
+        var version = cache.Get<long>(CacheKeys.PublishedJobsVersion);
+        cache.Set(CacheKeys.PublishedJobsVersion, version + 1,
+            new MemoryCacheEntryOptions { Priority = CacheItemPriority.NeverRemove });
+        cache.Remove(CacheKeys.PublishedCountries);
     }
 }

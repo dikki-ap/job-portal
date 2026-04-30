@@ -203,9 +203,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         )}
       >
         <div className="flex h-16 items-center gap-3 border-b border-white/20 px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white overflow-hidden">
+          <div className={`flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden${!logoUrl ? ' bg-white' : ''}`}>
             {logoUrl
-              ? <img src={logoUrl} alt={companyName} className="h-8 w-8 object-cover" />
+              ? <img src={logoUrl} alt={companyName} className="h-8 w-8 object-contain" />
               : <Building2 className="h-5 w-5 text-[var(--primary)]" />
             }
           </div>
