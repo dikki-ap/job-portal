@@ -36,6 +36,7 @@ import { PrivacyPolicyPage } from '../features/privacyConsent/pages/PrivacyPolic
 import { PrivacyConsentSettingPage } from '../features/privacyConsent/pages/PrivacyConsentSettingPage';
 import { SmtpSettingsPage } from '../features/smtpSettings/pages/SmtpSettingsPage';
 import { TalentPoolPage } from '../features/talentPool/pages/TalentPoolPage';
+import { BrandingSettingsPage } from '../features/brandingSettings/pages/BrandingSettingsPage';
 
 const HR_ADMIN_ROLES = ['Admin', 'HR'];
 const ADMIN_ROLES = ['Admin'];
@@ -104,6 +105,7 @@ export function AppRouter() {
           <Route path="master/approval-levels" element={<ApprovalLevelsPage />} />
           <Route path="master/privacy-consent" element={<PrivacyConsentSettingPage />} />
           <Route path="master/smtp-settings" element={<SmtpSettingsPage />} />
+          <Route path="master/branding" element={<BrandingSettingsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/my-applications" replace />} />
