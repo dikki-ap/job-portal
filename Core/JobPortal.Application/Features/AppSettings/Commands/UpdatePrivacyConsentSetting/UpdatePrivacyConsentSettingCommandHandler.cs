@@ -1,12 +1,15 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace JobPortal.Application.Features.AppSettings.Commands.UpdatePrivacyConsentSetting;
 
 public class UpdatePrivacyConsentSettingCommandHandler(
     IAppSettingRepository appSettingRepository,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService,
+    IMemoryCache cache)
     : IRequestHandler<UpdatePrivacyConsentSettingCommand, Unit>
 {
     public async Task<Unit> Handle(UpdatePrivacyConsentSettingCommand request, CancellationToken cancellationToken)
@@ -18,6 +21,7 @@ public class UpdatePrivacyConsentSettingCommandHandler(
             userId,
             cancellationToken);
         await appSettingRepository.SaveChangesAsync(cancellationToken);
+        cache.Remove(CacheKeys.PrivacyConsentSetting);
         return Unit.Value;
     }
 }

@@ -1,3 +1,4 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.Features.AppSettings.Commands.UpdateBrandingSetting;
 using JobPortal.Application.Features.AppSettings.Commands.UpdatePrivacyConsentSetting;
 using JobPortal.Application.Features.AppSettings.Commands.UpdateSmtpSetting;
@@ -9,6 +10,7 @@ using JobPortal.Application.Interfaces.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace JobPortal.Web.Controllers;
 
@@ -18,7 +20,8 @@ public class AppSettingsController(
     IMediator mediator,
     IStorageService storageService,
     IAppSettingRepository appSettingRepository,
-    ICurrentUserService currentUserService) : ControllerBase
+    ICurrentUserService currentUserService,
+    IMemoryCache cache) : ControllerBase
 {
     private static readonly string[] AllowedLogoMimes = ["image/svg+xml", "image/png"];
     private const int MaxLogoSizeMb = 2;
@@ -47,6 +50,7 @@ public class AppSettingsController(
         await appSettingRepository.SetValueAsync("BrandLogoStorageKey", storageKey, userId, ct);
         await appSettingRepository.SetValueAsync("BrandLogoUrl", "/api/app-settings/branding/logo", userId, ct);
         await appSettingRepository.SaveChangesAsync(ct);
+        cache.Remove(CacheKeys.Branding);
 
         return Ok(new { url = "/api/app-settings/branding/logo" });
     }

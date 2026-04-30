@@ -14,6 +14,7 @@ export interface BrandingConfig {
 }
 
 interface BrandingContextValue extends BrandingConfig {
+  isLoading: boolean;
   updateBranding: (config: BrandingConfig) => void;
 }
 
@@ -32,6 +33,7 @@ export const defaults: BrandingConfig = {
 
 const BrandingContext = createContext<BrandingContextValue>({
   ...defaults,
+  isLoading: true,
   updateBranding: () => {},
 });
 
@@ -55,8 +57,10 @@ function applyBranding(b: BrandingConfig) {
 
 export function BrandingProvider({ children }: { children: ReactNode }) {
   const [branding, setBranding] = useState<BrandingConfig>(defaults);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    applyBranding(defaults);
     fetch('/api/app-settings/branding')
       .then((r) => r.json())
       .then((data: BrandingConfig) => {
@@ -65,7 +69,8 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         applyBranding(defaults);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   function updateBranding(config: BrandingConfig) {
@@ -74,7 +79,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <BrandingContext.Provider value={{ ...branding, updateBranding }}>
+    <BrandingContext.Provider value={{ ...branding, isLoading, updateBranding }}>
       {children}
     </BrandingContext.Provider>
   );

@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.DocumentTypes.Commands.CreateDocumentType;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.DocumentTypes.Commands.CreateDocumentTy
 public class CreateDocumentTypeCommandHandler(
     IDocumentTypeRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<CreateDocumentTypeCommandHandler> logger)
     : IRequestHandler<CreateDocumentTypeCommand, DocumentTypeDto>
 {
@@ -28,6 +31,7 @@ public class CreateDocumentTypeCommandHandler(
             };
             await repository.AddAsync(documentType, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.DocumentTypes);
 
             return new DocumentTypeDto(
                 documentType.Id, documentType.Name, documentType.MaxFileSizeMb,

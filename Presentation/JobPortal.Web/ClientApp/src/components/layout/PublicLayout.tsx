@@ -12,9 +12,9 @@ function PublicFooter() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)] overflow-hidden">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden${!logoUrl ? ' bg-[var(--primary)]' : ''}`}>
                 {logoUrl
-                  ? <img src={logoUrl} alt={companyName} className="h-8 w-8 object-cover" />
+                  ? <img src={logoUrl} alt={companyName} className="h-8 w-8 object-contain" />
                   : <Building2 className="h-4 w-4 text-white" />
                 }
               </div>
