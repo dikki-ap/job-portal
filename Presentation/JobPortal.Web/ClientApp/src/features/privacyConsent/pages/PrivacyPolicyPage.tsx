@@ -30,7 +30,7 @@ export function PrivacyPolicyPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
-  const { companyName: COMPANY_NAME } = useBranding();
+  const { companyName: COMPANY_NAME, logoUrl, address, contactEmail, contactPhone } = useBranding();
   const [recordConsent, { isLoading: consenting }] = useRecordConsentMutation();
   const [agreed, setAgreed] = useState(false);
 
@@ -52,8 +52,11 @@ export function PrivacyPolicyPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--primary)]">
-            <Building2 className="h-4 w-4 text-white" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--primary)] overflow-hidden">
+            {logoUrl
+              ? <img src={logoUrl} alt={COMPANY_NAME} className="h-7 w-7 object-contain" />
+              : <Building2 className="h-4 w-4 text-white" />
+            }
           </div>
           <span className="text-sm font-bold text-gray-900 flex-1">{COMPANY_NAME}</span>
           {!isConsentFlow && (
@@ -313,10 +316,12 @@ export function PrivacyPolicyPage() {
           {/* Kontak */}
           <Section title="Bab XI – Kontak Pelindungan Data Pribadi">
             <p>Untuk mengexerciskan hak-hak Anda atau jika Anda memiliki pertanyaan atau keberatan terkait pemrosesan data pribadi, silakan hubungi:</p>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm flex flex-col gap-1">
               <p className="font-semibold text-gray-900">{COMPANY_NAME} — Personal Data Protection Team</p>
-              <p className="text-gray-600 mt-1">Email: privacy@{COMPANY_NAME.toLowerCase().replace(/\s+/g, '')}.com</p>
-              <p className="text-gray-600">Response will be provided within 14 (empat belas) working days as required by UU PDP.</p>
+              {address && <p className="text-gray-600">Address: {address}</p>}
+              <p className="text-gray-600">Email: <a href={`mailto:${contactEmail}`} className="text-[var(--primary)] hover:underline">{contactEmail}</a></p>
+              {contactPhone && <p className="text-gray-600">Phone: {contactPhone}</p>}
+              <p className="text-gray-500 mt-1">Response will be provided within 14 (empat belas) working days as required by UU PDP.</p>
             </div>
             <p>
               Apabila Anda merasa hak Anda tidak dipenuhi, Anda berhak mengajukan pengaduan kepada lembaga pengawas

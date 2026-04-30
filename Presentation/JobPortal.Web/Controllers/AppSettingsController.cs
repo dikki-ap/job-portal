@@ -4,6 +4,8 @@ using JobPortal.Application.Features.AppSettings.Commands.UpdateSmtpSetting;
 using JobPortal.Application.Features.AppSettings.Queries.GetBrandingSetting;
 using JobPortal.Application.Features.AppSettings.Queries.GetPrivacyConsentSetting;
 using JobPortal.Application.Features.AppSettings.Queries.GetSmtpSetting;
+using JobPortal.Application.Interfaces.Repositories;
+using JobPortal.Application.Interfaces.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +14,53 @@ namespace JobPortal.Web.Controllers;
 
 [ApiController]
 [Route("api/app-settings")]
-public class AppSettingsController(IMediator mediator) : ControllerBase
+public class AppSettingsController(
+    IMediator mediator,
+    IStorageService storageService,
+    IAppSettingRepository appSettingRepository,
+    ICurrentUserService currentUserService) : ControllerBase
 {
+    private static readonly string[] AllowedLogoMimes = ["image/svg+xml", "image/png"];
+    private const int MaxLogoSizeMb = 2;
+
     [HttpGet("branding")]
     [AllowAnonymous]
     public async Task<IActionResult> GetBranding(CancellationToken ct)
         => Ok(await mediator.Send(new GetBrandingSettingQuery(), ct));
+
+    [HttpPost("branding/logo")]
+    [Authorize]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> UploadBrandingLogo(IFormFile file, CancellationToken ct)
+    {
+        if (!AllowedLogoMimes.Contains(file.ContentType))
+            return BadRequest("Only SVG and PNG files are allowed.");
+
+        if (file.Length > MaxLogoSizeMb * 1024 * 1024)
+            return BadRequest($"File size must not exceed {MaxLogoSizeMb} MB.");
+
+        var ext = file.ContentType == "image/svg+xml" ? ".svg" : ".png";
+        using var stream = file.OpenReadStream();
+        var storageKey = await storageService.UploadAsync(stream, ext, file.ContentType, "branding", ct);
+
+        var userId = currentUserService.GetCurrentUserId();
+        await appSettingRepository.SetValueAsync("BrandLogoStorageKey", storageKey, userId, ct);
+        await appSettingRepository.SetValueAsync("BrandLogoUrl", "/api/app-settings/branding/logo", userId, ct);
+        await appSettingRepository.SaveChangesAsync(ct);
+
+        return Ok(new { url = "/api/app-settings/branding/logo" });
+    }
+
+    [HttpGet("branding/logo")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetBrandingLogo(CancellationToken ct)
+    {
+        var key = await appSettingRepository.GetValueAsync("BrandLogoStorageKey", ct);
+        if (string.IsNullOrEmpty(key)) return NotFound();
+
+        var (stream, contentType) = await storageService.DownloadAsync(key, ct);
+        return File(stream, contentType);
+    }
 
     [HttpPut("branding")]
     [Authorize]
