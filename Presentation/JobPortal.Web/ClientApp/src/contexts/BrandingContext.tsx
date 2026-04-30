@@ -49,6 +49,8 @@ function applyBranding(b: BrandingConfig) {
 
   setTimezone(b.timezone);
 
+  document.title = b.companyName || 'JobPortal';
+
   if (b.logoUrl) {
     let link = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
     if (!link) {
