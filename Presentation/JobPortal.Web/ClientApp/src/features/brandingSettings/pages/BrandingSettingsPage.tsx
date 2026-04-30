@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Palette, Building2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Palette, Building2, ImageIcon, UploadCloud, Info, CheckCircle2, X } from 'lucide-react';
 import { BrandingGate } from '../components/BrandingGate';
 import { Button } from '../../../components/ui/Button';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { Spinner } from '../../../components/ui/Spinner';
 import { useToast } from '../../../hooks/useToast';
-import { useGetBrandingSettingQuery, useUpdateBrandingSettingMutation } from '../api/brandingSettingsApi';
+import {
+  useGetBrandingSettingQuery,
+  useUpdateBrandingSettingMutation,
+  useUploadBrandingLogoMutation,
+} from '../api/brandingSettingsApi';
 import { useBranding, defaults, type BrandingConfig } from '../../../contexts/BrandingContext';
 import { cn } from '../../../lib/utils';
 
@@ -58,20 +62,26 @@ function ColorField({ label, value, fallback, onChange }: ColorFieldProps) {
   );
 }
 
-type FormState = BrandingConfig;
+type FormState = Omit<BrandingConfig, 'logoUrl'>;
 
 export function BrandingSettingsPage() {
   const { toasts, addToast, dismissToast } = useToast();
   const { data, isLoading } = useGetBrandingSettingQuery();
   const [updateBrandingSetting, { isLoading: saving }] = useUpdateBrandingSettingMutation();
-  const { updateBranding } = useBranding();
+  const [uploadBrandingLogo, { isLoading: uploading }] = useUploadBrandingLogoMutation();
+  const { updateBranding, logoUrl: currentLogoUrl } = useBranding();
 
   const [form, setForm] = useState<FormState>({ ...defaults });
   const [dirty, setDirty] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('');
+  const [logoUploaded, setLogoUploaded] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (data) {
-      setForm({ ...data });
+      const { logoUrl: _, ...rest } = data;
+      setForm({ ...rest });
       setDirty(false);
     }
   }, [data]);
@@ -81,10 +91,41 @@ export function BrandingSettingsPage() {
     setDirty(true);
   }
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+    setLogoUploaded(false);
+  }
+
+  function handleClearLogo() {
+    setLogoFile(null);
+    setLogoPreview('');
+    setLogoUploaded(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  const handleUploadLogo = async () => {
+    if (!logoFile) return;
+    try {
+      const { url } = await uploadBrandingLogo(logoFile).unwrap();
+      const urlWithBust = url + '?v=' + Date.now();
+      updateBranding({ ...form, logoUrl: urlWithBust });
+      setLogoUploaded(true);
+      setLogoFile(null);
+      setLogoPreview('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      addToast('Logo uploaded successfully.', 'success');
+    } catch {
+      addToast('Failed to upload logo.', 'error');
+    }
+  };
+
   const handleSave = async () => {
     try {
-      await updateBrandingSetting(form).unwrap();
-      updateBranding(form);
+      await updateBrandingSetting({ ...form, logoUrl: currentLogoUrl }).unwrap();
+      updateBranding({ ...form, logoUrl: currentLogoUrl });
       setDirty(false);
       addToast('Branding settings saved.', 'success');
     } catch {
@@ -110,6 +151,93 @@ export function BrandingSettingsPage() {
         <p className="text-sm text-gray-500">
           Customize colors, company identity, and contact information displayed across the portal.
         </p>
+      </div>
+
+      {/* Logo Upload */}
+      <div className="rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
+        <div className="flex items-center gap-3 px-6 py-4">
+          <ImageIcon className="h-4 w-4 text-gray-400" />
+          <h2 className="text-sm font-semibold text-gray-900">Logo</h2>
+        </div>
+
+        {/* Hints */}
+        <div className="px-6 py-4 bg-blue-50/60 flex items-start gap-3">
+          <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+          <ul className="text-xs text-blue-800 flex flex-col gap-1">
+            <li><span className="font-semibold">Accepted formats:</span> SVG or PNG only — both support transparent backgrounds</li>
+            <li><span className="font-semibold">Max file size:</span> 2 MB</li>
+            <li><span className="font-semibold">Recommended size:</span> minimum 128 × 128 px, square aspect ratio</li>
+            <li><span className="font-semibold">Tip:</span> SVG is preferred — scales perfectly at any size without pixelation</li>
+          </ul>
+        </div>
+
+        <div className="px-6 py-5 flex flex-col gap-4">
+          {/* Current logo */}
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden shrink-0">
+              {logoPreview ? (
+                <img src={logoPreview} alt="Preview" className="h-16 w-16 object-contain" />
+              ) : currentLogoUrl ? (
+                <img src={currentLogoUrl} alt="Current logo" className="h-16 w-16 object-contain" />
+              ) : (
+                <Building2 className="h-8 w-8 text-gray-300" />
+              )}
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-gray-700">
+                {currentLogoUrl ? 'Current logo' : 'No logo uploaded'}
+              </p>
+              <p className="text-xs text-gray-400">
+                {logoPreview
+                  ? `Selected: ${logoFile?.name}`
+                  : currentLogoUrl
+                  ? 'Replaces all logo instances across the portal and favicon'
+                  : 'Upload a logo to replace the default icon across the portal and favicon'}
+              </p>
+            </div>
+          </div>
+
+          {/* File picker + actions */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".svg,.png,image/svg+xml,image/png"
+              className="sr-only"
+              onChange={handleFileChange}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm text-gray-600 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              <UploadCloud className="h-4 w-4" />
+              {logoFile ? 'Change file' : 'Choose file'}
+            </button>
+
+            {logoFile && !logoUploaded && (
+              <>
+                <Button
+                  onClick={handleUploadLogo}
+                  loading={uploading}
+                  className="bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white"
+                >
+                  Upload Logo
+                </Button>
+                <button type="button" onClick={handleClearLogo} className="text-gray-400 hover:text-red-500">
+                  <X className="h-4 w-4" />
+                </button>
+              </>
+            )}
+
+            {logoUploaded && (
+              <span className="flex items-center gap-1.5 text-sm text-green-700">
+                <CheckCircle2 className="h-4 w-4" />
+                Uploaded and applied
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Colors */}
@@ -176,27 +304,15 @@ export function BrandingSettingsPage() {
           <h2 className="text-sm font-semibold text-gray-900">Company Info</h2>
         </div>
         <div className="px-6 py-5 flex flex-col gap-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Company Name</label>
-              <input
-                type="text"
-                value={form.companyName}
-                onChange={(e) => set('companyName', e.target.value)}
-                placeholder={defaults.companyName}
-                className={inputCls}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Logo URL</label>
-              <input
-                type="url"
-                value={form.logoUrl}
-                onChange={(e) => set('logoUrl', e.target.value)}
-                placeholder="https://example.com/logo.png"
-                className={inputCls}
-              />
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700">Company Name</label>
+            <input
+              type="text"
+              value={form.companyName}
+              onChange={(e) => set('companyName', e.target.value)}
+              placeholder={defaults.companyName}
+              className={inputCls}
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

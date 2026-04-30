@@ -35,12 +35,22 @@ const BrandingContext = createContext<BrandingContextValue>({
   updateBranding: () => {},
 });
 
-function applyColors(b: BrandingConfig) {
+function applyBranding(b: BrandingConfig) {
   const r = document.documentElement;
   r.style.setProperty('--primary', b.primaryColor);
   r.style.setProperty('--primary-hover', b.primaryHoverColor);
   r.style.setProperty('--gradient-mid', b.gradientMidColor);
   r.style.setProperty('--gradient-end', b.gradientEndColor);
+
+  if (b.logoUrl) {
+    let link = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = b.logoUrl + '?v=' + Date.now();
+  }
 }
 
 export function BrandingProvider({ children }: { children: ReactNode }) {
@@ -51,16 +61,16 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       .then((r) => r.json())
       .then((data: BrandingConfig) => {
         setBranding(data);
-        applyColors(data);
+        applyBranding(data);
       })
       .catch(() => {
-        applyColors(defaults);
+        applyBranding(defaults);
       });
   }, []);
 
   function updateBranding(config: BrandingConfig) {
     setBranding(config);
-    applyColors(config);
+    applyBranding(config);
   }
 
   return (

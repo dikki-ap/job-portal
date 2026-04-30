@@ -23,7 +23,18 @@ export const brandingSettingsApi = createApi({
         body,
       }),
     }),
+    uploadBrandingLogo: builder.mutation<{ url: string }, File>({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return { url: 'app-settings/branding/logo', method: 'POST', body: formData };
+      },
+    }),
   }),
 });
 
-export const { useGetBrandingSettingQuery, useUpdateBrandingSettingMutation } = brandingSettingsApi;
+export const {
+  useGetBrandingSettingQuery,
+  useUpdateBrandingSettingMutation,
+  useUploadBrandingLogoMutation,
+} = brandingSettingsApi;
