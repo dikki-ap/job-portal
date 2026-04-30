@@ -21,6 +21,7 @@ import { approvalsApi } from '../features/approvals/api/approvalsApi';
 import { privacyConsentApi } from '../features/privacyConsent/api/privacyConsentApi';
 import { smtpSettingsApi } from '../features/smtpSettings/api/smtpSettingsApi';
 import { talentPoolApi } from '../features/talentPool/api/talentPoolApi';
+import { brandingSettingsApi } from '../features/brandingSettings/api/brandingSettingsApi';
 
 export const store = configureStore({
   reducer: {
@@ -46,6 +47,7 @@ export const store = configureStore({
     [privacyConsentApi.reducerPath]: privacyConsentApi.reducer,
     [smtpSettingsApi.reducerPath]: smtpSettingsApi.reducer,
     [talentPoolApi.reducerPath]: talentPoolApi.reducer,
+    [brandingSettingsApi.reducerPath]: brandingSettingsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -70,7 +72,8 @@ export const store = configureStore({
       .concat(approvalsApi.middleware)
       .concat(privacyConsentApi.middleware)
       .concat(smtpSettingsApi.middleware)
-      .concat(talentPoolApi.middleware),
+      .concat(talentPoolApi.middleware)
+      .concat(brandingSettingsApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

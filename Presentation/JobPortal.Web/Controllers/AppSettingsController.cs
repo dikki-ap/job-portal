@@ -1,3 +1,4 @@
+using JobPortal.Application.Features.AppSettings.Commands.UpdateBrandingSetting;
 using JobPortal.Application.Features.AppSettings.Commands.UpdatePrivacyConsentSetting;
 using JobPortal.Application.Features.AppSettings.Commands.UpdateSmtpSetting;
 using JobPortal.Application.Features.AppSettings.Queries.GetBrandingSetting;
@@ -17,6 +18,24 @@ public class AppSettingsController(IMediator mediator) : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetBranding(CancellationToken ct)
         => Ok(await mediator.Send(new GetBrandingSettingQuery(), ct));
+
+    [HttpPut("branding")]
+    [Authorize]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> UpdateBranding(
+        [FromBody] UpdateBrandingSettingRequest req, CancellationToken ct)
+    {
+        await mediator.Send(new UpdateBrandingSettingCommand(
+            req.CompanyName, req.LogoUrl, req.PrimaryColor, req.PrimaryHoverColor,
+            req.GradientMidColor, req.GradientEndColor, req.ContactEmail,
+            req.ContactPhone, req.Address, req.Description), ct);
+        return NoContent();
+    }
+
+    public record UpdateBrandingSettingRequest(
+        string CompanyName, string LogoUrl, string PrimaryColor, string PrimaryHoverColor,
+        string GradientMidColor, string GradientEndColor, string ContactEmail,
+        string ContactPhone, string Address, string Description);
 
     [HttpGet("require-privacy-consent")]
     [AllowAnonymous]

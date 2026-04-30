@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-interface BrandingConfig {
+export interface BrandingConfig {
   companyName: string;
   logoUrl: string;
   primaryColor: string;
@@ -13,7 +13,11 @@ interface BrandingConfig {
   description: string;
 }
 
-const defaults: BrandingConfig = {
+interface BrandingContextValue extends BrandingConfig {
+  updateBranding: (config: BrandingConfig) => void;
+}
+
+export const defaults: BrandingConfig = {
   companyName: 'JobPortal',
   logoUrl: '',
   primaryColor: '#004181',
@@ -26,7 +30,10 @@ const defaults: BrandingConfig = {
   description: 'Empowering businesses through innovative technology solutions.',
 };
 
-const BrandingContext = createContext<BrandingConfig>(defaults);
+const BrandingContext = createContext<BrandingContextValue>({
+  ...defaults,
+  updateBranding: () => {},
+});
 
 function applyColors(b: BrandingConfig) {
   const r = document.documentElement;
@@ -51,7 +58,16 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  return <BrandingContext.Provider value={branding}>{children}</BrandingContext.Provider>;
+  function updateBranding(config: BrandingConfig) {
+    setBranding(config);
+    applyColors(config);
+  }
+
+  return (
+    <BrandingContext.Provider value={{ ...branding, updateBranding }}>
+      {children}
+    </BrandingContext.Provider>
+  );
 }
 
 export const useBranding = () => useContext(BrandingContext);
