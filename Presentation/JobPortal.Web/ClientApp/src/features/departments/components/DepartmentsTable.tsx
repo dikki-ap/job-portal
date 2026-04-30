@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteDepartmentMutation } from "../api/departmentsApi";
-import { formatDateTime } from "../../../lib/format";
+import { useFormatter } from "../../../lib/useFormatter";
 import type { DepartmentDto } from "../../../types/api";
 
 interface DepartmentsTableProps {
@@ -19,6 +19,7 @@ export function DepartmentsTable({
   onSuccess,
   onError,
 }: DepartmentsTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDept, setConfirmDept] = useState<DepartmentDto | null>(null);
   const [deleteDepartment] = useDeleteDepartmentMutation();
