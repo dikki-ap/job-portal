@@ -27,9 +27,10 @@ public class GetBrandingSettingQueryHandler(
         var contactPhone      = await appSettingRepository.GetValueAsync("BrandContactPhone",      cancellationToken) ?? "+62 21 0000 0000";
         var address           = await appSettingRepository.GetValueAsync("BrandAddress",           cancellationToken) ?? "South Jakarta, Indonesia";
         var description       = await appSettingRepository.GetValueAsync("BrandDescription",       cancellationToken) ?? "Empowering businesses through innovative technology solutions.";
+        var timezone          = await appSettingRepository.GetValueAsync("BrandTimezone",          cancellationToken) ?? "Asia/Jakarta";
 
         var result = new BrandingSettingDto(companyName, logoUrl, primaryColor, primaryHoverColor,
-            gradientMidColor, gradientEndColor, contactEmail, contactPhone, address, description);
+            gradientMidColor, gradientEndColor, contactEmail, contactPhone, address, description, timezone);
 
         cache.Set(CacheKeys.Branding, result, TimeSpan.FromDays(1));
         return result;

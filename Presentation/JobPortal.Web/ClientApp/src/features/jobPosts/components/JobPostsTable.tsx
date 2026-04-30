@@ -7,7 +7,7 @@ import { Spinner } from '../../../components/ui/Spinner';
 import { useDeleteJobPostMutation, usePublishJobPostMutation, useCloseJobPostMutation } from '../api/jobPostsApi';
 import { useSubmitForApprovalMutation, useCancelApprovalMutation, useGetApprovalStatusQuery } from '../../approvals/api/approvalsApi';
 import { useAuth } from '../../../contexts/AuthContext';
-import { formatDateTime } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 import type { JobPostDto } from '../../../types/api';
 
 interface JobPostsTableProps {
@@ -31,6 +31,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function JobPostsTable({ jobPosts, hasActiveLevels, onSuccess, onError }: JobPostsTableProps) {
   const navigate = useNavigate();
+  const { formatDateTime } = useFormatter();
   const { isAdmin } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState<JobPostDto | null>(null);
   const [confirmCancelApproval, setConfirmCancelApproval] = useState<JobPostDto | null>(null);

@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
 import { useDeleteHiringTemplateMutation } from '../api/hiringTemplatesApi';
-import { formatDateTime } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 import type { HiringTemplateDto } from '../../../types/api';
 
 interface HiringTemplatesTableProps {
@@ -14,6 +14,7 @@ interface HiringTemplatesTableProps {
 }
 
 export function HiringTemplatesTable({ templates, onEdit, onSuccess, onError }: HiringTemplatesTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmItem, setConfirmItem] = useState<HiringTemplateDto | null>(null);
   const [deleteTemplate] = useDeleteHiringTemplateMutation();

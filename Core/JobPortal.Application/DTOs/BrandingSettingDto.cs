@@ -10,4 +10,5 @@ public record BrandingSettingDto(
     string ContactEmail,
     string ContactPhone,
     string Address,
-    string Description);
+    string Description,
+    string Timezone);

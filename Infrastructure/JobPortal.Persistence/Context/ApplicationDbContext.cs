@@ -7,6 +7,7 @@ using JobPortal.Domain.Entities.Masters;
 using JobPortal.Domain.Entities.TalentPool;
 using JobPortal.Domain.Entities.Users;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace JobPortal.Persistence.Context;
 
@@ -66,6 +67,26 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        // MySQL stores DATETIME without timezone; mark all DateTime values read from DB as UTC
+        // so System.Text.Json serializes them with 'Z' suffix and browsers parse them correctly.
+        var utcConverter = new ValueConverter<DateTime, DateTime>(
+            v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+        var utcNullableConverter = new ValueConverter<DateTime?, DateTime?>(
+            v => v.HasValue ? (v.Value.Kind == DateTimeKind.Utc ? v : v.Value.ToUniversalTime()) : v,
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime))
+                    property.SetValueConverter(utcConverter);
+                else if (property.ClrType == typeof(DateTime?))
+                    property.SetValueConverter(utcNullableConverter);
+            }
+        }
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes()
             .Where(e => typeof(AuditableEntity).IsAssignableFrom(e.ClrType)

@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteJobCategoryMutation } from "../api/jobCategoriesApi";
-import { formatDateTime } from "../../../lib/format";
+import { useFormatter } from "../../../lib/useFormatter";
 import type { JobCategoryDto } from "../../../types/api";
 
 interface JobCategoriesTableProps {
@@ -14,6 +14,7 @@ interface JobCategoriesTableProps {
 }
 
 export function JobCategoriesTable({ jobCategories, onEdit, onSuccess, onError }: JobCategoriesTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmItem, setConfirmItem] = useState<JobCategoryDto | null>(null);
   const [deleteJobCategory] = useDeleteJobCategoryMutation();

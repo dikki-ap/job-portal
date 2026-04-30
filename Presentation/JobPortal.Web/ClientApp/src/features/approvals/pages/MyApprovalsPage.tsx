@@ -7,10 +7,11 @@ import { Button } from '../../../components/ui/Button';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { useGetPendingApprovalsQuery, useApproveJobPostMutation, useRejectJobPostMutation } from '../api/approvalsApi';
 import { useToast } from '../../../hooks/useToast';
-import { formatDateTime } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 
 export function MyApprovalsPage() {
   const navigate = useNavigate();
+  const { formatDateTime } = useFormatter();
   const { toasts, addToast, dismissToast } = useToast();
   const { data: pending = [], isLoading, isError } = useGetPendingApprovalsQuery();
 

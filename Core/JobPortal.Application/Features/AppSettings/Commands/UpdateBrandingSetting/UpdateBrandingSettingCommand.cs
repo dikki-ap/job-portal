@@ -12,4 +12,5 @@ public record UpdateBrandingSettingCommand(
     string ContactEmail,
     string ContactPhone,
     string Address,
-    string Description) : IRequest<Unit>;
+    string Description,
+    string Timezone) : IRequest<Unit>;

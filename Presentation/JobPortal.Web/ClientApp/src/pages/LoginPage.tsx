@@ -1,10 +1,13 @@
 import { useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { Briefcase } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { useBranding } from '../contexts/BrandingContext'
 import keycloak from '../lib/keycloak'
 
 export function LoginPage() {
   const { isAuthenticated, isLoading, isAdmin, isHR } = useAuth()
+  const { companyName, logoUrl, description } = useBranding()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from
@@ -38,17 +41,16 @@ export function LoginPage() {
       >
         <div className="max-w-sm text-center">
           <div className="mb-8">
-            <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4${!logoUrl ? ' bg-white/20' : ''}`}>
+              {logoUrl
+                ? <img src={logoUrl} alt={companyName} className="w-20 h-20 object-contain" />
+                : <Briefcase className="w-10 h-10 text-white" />
+              }
             </div>
-            <h1 className="text-3xl font-bold mb-2">Job Portal</h1>
-            <p className="text-blue-200 text-sm">Internal Recruitment System</p>
+            <h1 className="text-3xl font-bold mb-2">{companyName}</h1>
+            <p className="text-blue-200 text-sm">Recruitment Portal</p>
           </div>
-          <p className="text-blue-100 leading-relaxed">
-            Find your next opportunity and build your career with us. Apply for open positions and track your application progress.
-          </p>
+          <p className="text-blue-100 leading-relaxed">{description}</p>
         </div>
       </div>
 
@@ -57,15 +59,16 @@ export function LoginPage() {
         {/* Mobile logo */}
         <div className="md:hidden mb-8 text-center">
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3"
-            style={{ backgroundColor: 'var(--primary)' }}
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3${!logoUrl ? '' : ''}`}
+            style={!logoUrl ? { backgroundColor: 'var(--primary)' } : {}}
           >
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+            {logoUrl
+              ? <img src={logoUrl} alt={companyName} className="w-16 h-16 object-contain" />
+              : <Briefcase className="w-8 h-8 text-white" />
+            }
           </div>
-          <h1 className="text-xl font-bold" style={{ color: 'var(--primary)' }}>Job Portal</h1>
-          <p className="text-sm text-gray-500">Internal Recruitment System</p>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--primary)' }}>{companyName}</h1>
+          <p className="text-sm text-gray-500">Recruitment Portal</p>
         </div>
 
         <div className="w-full max-w-sm">
@@ -107,9 +110,9 @@ export function LoginPage() {
 
           <p className="mt-8 text-center text-xs text-gray-400">
             By signing in, you agree to our{' '}
-            <span className="underline cursor-pointer" style={{ color: 'var(--primary)' }}>Terms of Service</span>
+            <Link to="/terms" className="underline" style={{ color: 'var(--primary)' }}>Terms of Service</Link>
             {' '}and{' '}
-            <span className="underline cursor-pointer" style={{ color: 'var(--primary)' }}>Privacy Policy</span>
+            <Link to="/privacy" className="underline" style={{ color: 'var(--primary)' }}>Privacy Policy</Link>
           </p>
         </div>
       </div>

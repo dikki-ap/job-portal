@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteJobLevelMutation } from "../api/jobLevelsApi";
-import { formatDateTime } from "../../../lib/format";
+import { useFormatter } from "../../../lib/useFormatter";
 import type { JobLevelDto } from "../../../types/api";
 
 interface JobLevelsTableProps {
@@ -14,6 +14,7 @@ interface JobLevelsTableProps {
 }
 
 export function JobLevelsTable({ jobLevels, onEdit, onSuccess, onError }: JobLevelsTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmItem, setConfirmItem] = useState<JobLevelDto | null>(null);
   const [deleteJobLevel] = useDeleteJobLevelMutation();

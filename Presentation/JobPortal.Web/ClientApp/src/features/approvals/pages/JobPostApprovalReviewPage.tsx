@@ -15,7 +15,7 @@ import {
   useRejectJobPostMutation,
 } from '../api/approvalsApi';
 import { useToast } from '../../../hooks/useToast';
-import { formatDateTime } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 
 function buildSalary(prefix: string | null, min: number | null, max: number | null): string | null {
   if (!min && !max) return null;
@@ -41,6 +41,7 @@ const STEP_BORDER: Record<string, string> = {
 
 export function JobPostApprovalReviewPage() {
   const navigate = useNavigate();
+  const { formatDateTime } = useFormatter();
   const { id } = useParams<{ id: string }>();
   const jobPostId = Number(id);
   const { toasts, addToast, dismissToast } = useToast();

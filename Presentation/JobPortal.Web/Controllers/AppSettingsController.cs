@@ -1,8 +1,10 @@
 using JobPortal.Application.Common;
 using JobPortal.Application.Features.AppSettings.Commands.UpdateBrandingSetting;
+using JobPortal.Application.Features.AppSettings.Commands.UpdateLegalPage;
 using JobPortal.Application.Features.AppSettings.Commands.UpdatePrivacyConsentSetting;
 using JobPortal.Application.Features.AppSettings.Commands.UpdateSmtpSetting;
 using JobPortal.Application.Features.AppSettings.Queries.GetBrandingSetting;
+using JobPortal.Application.Features.AppSettings.Queries.GetLegalPage;
 using JobPortal.Application.Features.AppSettings.Queries.GetPrivacyConsentSetting;
 using JobPortal.Application.Features.AppSettings.Queries.GetSmtpSetting;
 using JobPortal.Application.Interfaces.Repositories;
@@ -75,14 +77,14 @@ public class AppSettingsController(
         await mediator.Send(new UpdateBrandingSettingCommand(
             req.CompanyName, req.LogoUrl, req.PrimaryColor, req.PrimaryHoverColor,
             req.GradientMidColor, req.GradientEndColor, req.ContactEmail,
-            req.ContactPhone, req.Address, req.Description), ct);
+            req.ContactPhone, req.Address, req.Description, req.Timezone), ct);
         return NoContent();
     }
 
     public record UpdateBrandingSettingRequest(
         string CompanyName, string LogoUrl, string PrimaryColor, string PrimaryHoverColor,
         string GradientMidColor, string GradientEndColor, string ContactEmail,
-        string ContactPhone, string Address, string Description);
+        string ContactPhone, string Address, string Description, string Timezone);
 
     [HttpGet("require-privacy-consent")]
     [AllowAnonymous]
@@ -99,6 +101,29 @@ public class AppSettingsController(
     }
 
     public record UpdatePrivacyConsentSettingRequest(bool RequireConsent);
+
+    [HttpGet("legal/{type}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetLegalPage(string type, CancellationToken ct)
+    {
+        if (type != "privacy" && type != "terms")
+            return BadRequest("Invalid page type. Use 'privacy' or 'terms'.");
+        return Ok(await mediator.Send(new GetLegalPageQuery(type), ct));
+    }
+
+    [HttpPut("legal/{type}")]
+    [Authorize]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> UpdateLegalPage(
+        string type, [FromBody] UpdateLegalPageRequest req, CancellationToken ct)
+    {
+        if (type != "privacy" && type != "terms")
+            return BadRequest("Invalid page type. Use 'privacy' or 'terms'.");
+        await mediator.Send(new UpdateLegalPageCommand(type, req.Content), ct);
+        return NoContent();
+    }
+
+    public record UpdateLegalPageRequest(string Content);
 
     [HttpGet("smtp")]
     [Authorize]

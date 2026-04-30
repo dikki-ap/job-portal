@@ -4,7 +4,7 @@ import { FileText, CheckCircle2, TrendingUp } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
 import { useAuth } from '../contexts/AuthContext';
 import { deriveStatus, STATUS_BADGE, STATUS_LABEL } from '../lib/applicationStatus';
-import { formatDate } from '../lib/format';
+import { useFormatter } from '../lib/useFormatter';
 import { useGetMyApplicationsQuery } from '../features/myApplications/api/myApplicationsApi';
 
 function StatCard({ label, value, icon: Icon, color, loading }: {
@@ -31,6 +31,7 @@ function StatCard({ label, value, icon: Icon, color, loading }: {
 
 function CandidateDashboard({ userName }: { userName: string | undefined }) {
   const navigate = useNavigate();
+  const { formatDate } = useFormatter();
   const { data: applications = [], isLoading } = useGetMyApplicationsQuery();
 
   const stats = useMemo(() => ({

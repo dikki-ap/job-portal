@@ -7,7 +7,7 @@ import { ToastContainer } from '../../../components/ui/Toast';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import { downloadWithAuth } from '../../../lib/download';
-import { formatDate, formatDateTime } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
 import { cn } from '../../../lib/utils';
 import {
@@ -57,6 +57,7 @@ function friendlyFileType(mime: string) {
 
 export function ApplicationDetailPage() {
   const { code } = useParams<{ code: string }>();
+  const { formatDate, formatDateTime } = useFormatter();
   const { token } = useAuth();
   const { toasts, addToast, dismissToast } = useToast();
 

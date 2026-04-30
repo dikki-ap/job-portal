@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Palette, Building2, ImageIcon, UploadCloud, Info, CheckCircle2, X } from 'lucide-react';
+import { Palette, Building2, ImageIcon, UploadCloud, Info, CheckCircle2, X, Globe } from 'lucide-react';
 import { BrandingGate } from '../components/BrandingGate';
 import { Button } from '../../../components/ui/Button';
 import { ToastContainer } from '../../../components/ui/Toast';
@@ -12,6 +12,34 @@ import {
 } from '../api/brandingSettingsApi';
 import { useBranding, defaults, type BrandingConfig } from '../../../contexts/BrandingContext';
 import { cn } from '../../../lib/utils';
+
+const COMMON_TIMEZONES = [
+  { label: 'UTC (Coordinated Universal Time)', value: 'UTC' },
+  { label: 'WIB – Jakarta (UTC+7)', value: 'Asia/Jakarta' },
+  { label: 'WITA – Makassar (UTC+8)', value: 'Asia/Makassar' },
+  { label: 'WIT – Jayapura (UTC+9)', value: 'Asia/Jayapura' },
+  { label: 'SGT – Singapore (UTC+8)', value: 'Asia/Singapore' },
+  { label: 'MYT – Kuala Lumpur (UTC+8)', value: 'Asia/Kuala_Lumpur' },
+  { label: 'ICT – Bangkok (UTC+7)', value: 'Asia/Bangkok' },
+  { label: 'PHT – Manila (UTC+8)', value: 'Asia/Manila' },
+  { label: 'HKT – Hong Kong (UTC+8)', value: 'Asia/Hong_Kong' },
+  { label: 'CST – Shanghai (UTC+8)', value: 'Asia/Shanghai' },
+  { label: 'JST – Tokyo (UTC+9)', value: 'Asia/Tokyo' },
+  { label: 'KST – Seoul (UTC+9)', value: 'Asia/Seoul' },
+  { label: 'IST – Kolkata (UTC+5:30)', value: 'Asia/Kolkata' },
+  { label: 'PKT – Karachi (UTC+5)', value: 'Asia/Karachi' },
+  { label: 'AEST – Sydney (UTC+10/11)', value: 'Australia/Sydney' },
+  { label: 'AWST – Perth (UTC+8)', value: 'Australia/Perth' },
+  { label: 'NZST – Auckland (UTC+12/13)', value: 'Pacific/Auckland' },
+  { label: 'GMT – London (UTC+0/1)', value: 'Europe/London' },
+  { label: 'CET – Paris (UTC+1/2)', value: 'Europe/Paris' },
+  { label: 'TRT – Istanbul (UTC+3)', value: 'Europe/Istanbul' },
+  { label: 'EST – New York (UTC-5/-4)', value: 'America/New_York' },
+  { label: 'CST – Chicago (UTC-6/-5)', value: 'America/Chicago' },
+  { label: 'MST – Denver (UTC-7/-6)', value: 'America/Denver' },
+  { label: 'PST – Los Angeles (UTC-8/-7)', value: 'America/Los_Angeles' },
+  { label: 'BRT – São Paulo (UTC-3)', value: 'America/Sao_Paulo' },
+];
 
 const inputCls = cn(
   'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900',
@@ -294,6 +322,29 @@ export function BrandingSettingsPage() {
               />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Date & Time */}
+      <div className="rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
+        <div className="flex items-center gap-3 px-6 py-4">
+          <Globe className="h-4 w-4 text-gray-400" />
+          <h2 className="text-sm font-semibold text-gray-900">Date & Time</h2>
+        </div>
+        <div className="px-6 py-5 flex flex-col gap-3">
+          <label className="text-sm font-medium text-gray-700">Timezone</label>
+          <select
+            value={form.timezone}
+            onChange={(e) => set('timezone', e.target.value)}
+            className={inputCls}
+          >
+            {COMMON_TIMEZONES.map((tz) => (
+              <option key={tz.value} value={tz.value}>{tz.label}</option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-400">
+            All audit trail timestamps across the app will be displayed in this timezone.
+          </p>
         </div>
       </div>
 
