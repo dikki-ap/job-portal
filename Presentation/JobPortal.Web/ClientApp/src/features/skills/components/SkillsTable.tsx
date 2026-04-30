@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteSkillMutation } from "../api/skillsApi";
-import { formatDateTime } from "../../../lib/format";
+import { useFormatter } from "../../../lib/useFormatter";
 import type { SkillDto } from "../../../types/api";
 
 interface SkillsTableProps {
@@ -14,6 +14,7 @@ interface SkillsTableProps {
 }
 
 export function SkillsTable({ skills, onEdit, onSuccess, onError }: SkillsTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmSkill, setConfirmSkill] = useState<SkillDto | null>(null);
   const [deleteSkill] = useDeleteSkillMutation();
