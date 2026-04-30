@@ -7,4 +7,6 @@ public static class CacheKeys
     public const string DocumentTypes = "cache:document-types";
     public const string PublishedJobsVersion = "cache:jobs:version";
     public const string PublishedCountries = "cache:published-countries";
+    public const string LegalPrivacy = "cache:legal:privacy";
+    public const string LegalTerms = "cache:legal:terms";
 }

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { setTimezone } from '../lib/format';
 
 export interface BrandingConfig {
   companyName: string;
@@ -11,6 +12,7 @@ export interface BrandingConfig {
   contactPhone: string;
   address: string;
   description: string;
+  timezone: string;
 }
 
 interface BrandingContextValue extends BrandingConfig {
@@ -29,6 +31,7 @@ export const defaults: BrandingConfig = {
   contactPhone: '+62 21 0000 0000',
   address: 'South Jakarta, Indonesia',
   description: 'Empowering businesses through innovative technology solutions.',
+  timezone: 'Asia/Jakarta',
 };
 
 const BrandingContext = createContext<BrandingContextValue>({
@@ -43,6 +46,8 @@ function applyBranding(b: BrandingConfig) {
   r.style.setProperty('--primary-hover', b.primaryHoverColor);
   r.style.setProperty('--gradient-mid', b.gradientMidColor);
   r.style.setProperty('--gradient-end', b.gradientEndColor);
+
+  setTimezone(b.timezone);
 
   if (b.logoUrl) {
     let link = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;

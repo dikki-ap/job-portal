@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteEducationLevelMutation } from "../api/educationLevelsApi";
-import { formatDateTime } from "../../../lib/format";
+import { useFormatter } from "../../../lib/useFormatter";
 import type { EducationLevelDto } from "../../../types/api";
 
 interface EducationLevelsTableProps {
@@ -14,6 +14,7 @@ interface EducationLevelsTableProps {
 }
 
 export function EducationLevelsTable({ educationLevels, onEdit, onSuccess, onError }: EducationLevelsTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmItem, setConfirmItem] = useState<EducationLevelDto | null>(null);
   const [deleteEducationLevel] = useDeleteEducationLevelMutation();

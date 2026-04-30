@@ -5,7 +5,7 @@ import { Button } from '../../../components/ui/Button';
 import { useGetMyApplicationByCodeQuery } from '../api/myApplicationsApi';
 import { useAuth } from '../../../contexts/AuthContext';
 import { downloadWithAuth } from '../../../lib/download';
-import { formatDate, formatDateTime } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 
 const STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
@@ -36,6 +36,7 @@ function StepIcon({ status }: { status: string }) {
 
 export function MyApplicationDetailPage() {
   const { code } = useParams<{ code: string }>();
+  const { formatDate, formatDateTime } = useFormatter();
   const { token } = useAuth();
   const { data: application, isLoading, isError } = useGetMyApplicationByCodeQuery(code!);
 

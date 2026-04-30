@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx';
 import { Spinner } from '../../../components/ui/Spinner';
 import { cn } from '../../../lib/utils';
 import { deriveStatus, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
-import { formatDate } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 import { useGetApplicationsQuery } from '../../applications/api/applicationsApi';
 import { useGetJobPostsQuery } from '../../jobPosts/api/jobPostsApi';
 import type { ApplicationDto, JobPostDto } from '../../../types/api';
@@ -99,7 +99,7 @@ function HiringFunnel({ data }: { data: { stage: string; count: number; pct: num
   );
 }
 
-function buildExcelRows(applications: ApplicationDto[], jobPosts: JobPostDto[]) {
+function buildExcelRows(applications: ApplicationDto[], jobPosts: JobPostDto[], formatDate: (iso: string) => string) {
   const jpMap = new Map(jobPosts.map((jp) => [jp.id, jp]));
   return applications.map((a) => {
     const jp = jpMap.get(a.jobPostId);
@@ -114,7 +114,7 @@ function buildExcelRows(applications: ApplicationDto[], jobPosts: JobPostDto[]) 
       'Phone': a.candidatePhone ?? '—',
       'Job Post': a.jobPostTitle,
       'Department': jp?.departmentName ?? '—',
-      'Applied Date': new Date(a.appliedAt).toLocaleDateString('id-ID'),
+      'Applied Date': formatDate(a.appliedAt),
       'Status': deriveStatus(a),
       'Days to Hire': deriveStatus(a) === 'Accepted' ? Math.round(daysBetween(a.appliedAt, a.updatedAt)) : '—',
       'Rating': a.rating ?? '—',
@@ -126,6 +126,7 @@ function buildExcelRows(applications: ApplicationDto[], jobPosts: JobPostDto[]) 
 
 export function AnalyticsPage() {
   const navigate = useNavigate();
+  const { formatDate } = useFormatter();
   const [dateRange, setDateRange] = useState<DateRange>('all');
 
   const { data: applications = [], isLoading: appsLoading } = useGetApplicationsQuery({});
@@ -241,7 +242,7 @@ export function AnalyticsPage() {
   );
 
   const handleExport = () => {
-    const rows = buildExcelRows(filtered, jobPosts);
+    const rows = buildExcelRows(filtered, jobPosts, formatDate);
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Applications');

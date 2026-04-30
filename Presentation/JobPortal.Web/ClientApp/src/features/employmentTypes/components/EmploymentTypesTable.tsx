@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteEmploymentTypeMutation } from "../api/employmentTypesApi";
-import { formatDateTime } from "../../../lib/format";
+import { useFormatter } from "../../../lib/useFormatter";
 import type { EmploymentTypeDto } from "../../../types/api";
 
 interface EmploymentTypesTableProps {
@@ -14,6 +14,7 @@ interface EmploymentTypesTableProps {
 }
 
 export function EmploymentTypesTable({ employmentTypes, onEdit, onSuccess, onError }: EmploymentTypesTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmItem, setConfirmItem] = useState<EmploymentTypeDto | null>(null);
   const [deleteEmploymentType] = useDeleteEmploymentTypeMutation();

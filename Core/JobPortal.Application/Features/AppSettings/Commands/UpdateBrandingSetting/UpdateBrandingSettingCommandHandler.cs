@@ -25,6 +25,7 @@ public class UpdateBrandingSettingCommandHandler(
         await repo.SetValueAsync("BrandContactPhone",     request.ContactPhone,     userId, ct);
         await repo.SetValueAsync("BrandAddress",          request.Address,          userId, ct);
         await repo.SetValueAsync("BrandDescription",      request.Description,      userId, ct);
+        await repo.SetValueAsync("BrandTimezone",          request.Timezone,         userId, ct);
         await repo.SaveChangesAsync(ct);
         cache.Remove(CacheKeys.Branding);
         return Unit.Value;

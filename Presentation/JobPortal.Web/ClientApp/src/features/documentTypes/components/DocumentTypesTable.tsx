@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteDocumentTypeMutation } from "../api/documentTypesApi";
-import { formatDateTime } from "../../../lib/format";
+import { useFormatter } from "../../../lib/useFormatter";
 import type { DocumentTypeDto } from "../../../types/api";
 
 interface DocumentTypesTableProps {
@@ -22,6 +22,7 @@ const MIME_LABELS: Record<string, string> = {
 };
 
 export function DocumentTypesTable({ documentTypes, onEdit, onSuccess, onError }: DocumentTypesTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmItem, setConfirmItem] = useState<DocumentTypeDto | null>(null);
   const [deleteDocumentType] = useDeleteDocumentTypeMutation();

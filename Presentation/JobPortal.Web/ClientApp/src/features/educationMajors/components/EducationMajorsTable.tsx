@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteEducationMajorMutation } from "../api/educationMajorsApi";
-import { formatDateTime } from "../../../lib/format";
+import { useFormatter } from "../../../lib/useFormatter";
 import type { EducationMajorDto } from "../../../types/api";
 
 interface EducationMajorsTableProps {
@@ -14,6 +14,7 @@ interface EducationMajorsTableProps {
 }
 
 export function EducationMajorsTable({ educationMajors, onEdit, onSuccess, onError }: EducationMajorsTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmItem, setConfirmItem] = useState<EducationMajorDto | null>(null);
   const [deleteEducationMajor] = useDeleteEducationMajorMutation();

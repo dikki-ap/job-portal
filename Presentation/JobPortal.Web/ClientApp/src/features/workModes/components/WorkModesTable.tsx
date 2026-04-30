@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { useDeleteWorkModeMutation } from "../api/workModesApi";
-import { formatDateTime } from "../../../lib/format";
+import { useFormatter } from "../../../lib/useFormatter";
 import type { WorkModeDto } from "../../../types/api";
 
 interface WorkModesTableProps {
@@ -14,6 +14,7 @@ interface WorkModesTableProps {
 }
 
 export function WorkModesTable({ workModes, onEdit, onSuccess, onError }: WorkModesTableProps) {
+  const { formatDateTime } = useFormatter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmItem, setConfirmItem] = useState<WorkModeDto | null>(null);
   const [deleteWorkMode] = useDeleteWorkModeMutation();

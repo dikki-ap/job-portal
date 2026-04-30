@@ -7,7 +7,7 @@ import { SearchableSelect } from '../../../components/ui/SearchableSelect';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { useToast } from '../../../hooks/useToast';
-import { formatDate } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 import { cn } from '../../../lib/utils';
 import { useGetTalentPoolQuery, useRemoveFromTalentPoolMutation, useReengageCandidateMutation } from '../api/talentPoolApi';
 import { useGetJobPostsQuery } from '../../jobPosts/api/jobPostsApi';
@@ -104,6 +104,7 @@ function ReengageModal({
 
 export function TalentPoolPage() {
   const navigate = useNavigate();
+  const { formatDate } = useFormatter();
   const { toasts, addToast, dismissToast } = useToast();
   const { data: entries = [], isLoading } = useGetTalentPoolQuery();
   const [remove, { isLoading: removing }] = useRemoveFromTalentPoolMutation();

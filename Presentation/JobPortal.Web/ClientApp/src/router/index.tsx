@@ -37,6 +37,9 @@ import { PrivacyConsentSettingPage } from '../features/privacyConsent/pages/Priv
 import { SmtpSettingsPage } from '../features/smtpSettings/pages/SmtpSettingsPage';
 import { TalentPoolPage } from '../features/talentPool/pages/TalentPoolPage';
 import { BrandingSettingsPage } from '../features/brandingSettings/pages/BrandingSettingsPage';
+import { LegalPagesPage } from '../features/legalPages/pages/LegalPagesPage';
+import { PrivacyPage } from '../pages/PrivacyPage';
+import { TermsPage } from '../pages/TermsPage';
 
 const HR_ADMIN_ROLES = ['Admin', 'HR'];
 const ADMIN_ROLES = ['Admin'];
@@ -56,6 +59,10 @@ export function AppRouter() {
 
       {/* Privacy policy — public */}
       <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+
+      {/* Legal pages — public */}
+      <Route path="privacy" element={<PrivacyPage />} />
+      <Route path="terms" element={<TermsPage />} />
 
       {/* Login */}
       <Route path="/login" element={<LoginPage />} />
@@ -83,6 +90,7 @@ export function AppRouter() {
           <Route path="applications/:code" element={<ApplicationDetailPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="talent-pool" element={<TalentPoolPage />} />
+          <Route path="master/legal-pages" element={<LegalPagesPage />} />
         </Route>
 
         {/* Approvals — all authenticated users (content filtered by API) */}

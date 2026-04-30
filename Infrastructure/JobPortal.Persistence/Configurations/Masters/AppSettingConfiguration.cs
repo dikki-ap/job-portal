@@ -10,7 +10,7 @@ public class AppSettingConfiguration : IEntityTypeConfiguration<AppSetting>
     {
         builder.HasKey(a => a.Id);
         builder.Property(a => a.Key).HasMaxLength(100).IsRequired();
-        builder.Property(a => a.Value).HasMaxLength(500).IsRequired();
+        builder.Property(a => a.Value).HasColumnType("longtext").IsRequired();
         builder.HasIndex(a => a.Key).IsUnique();
     }
 }

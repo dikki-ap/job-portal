@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
-import { formatDate } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 import { deriveStatus, getCurrentStepInfo, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
 import { cn } from '../../../lib/utils';
 import type { ApplicationDto } from '../../../types/api';
@@ -19,6 +19,7 @@ interface ApplicationsTableProps {
 
 export function ApplicationsTable({ applications, selectedIds, onSelectionChange }: ApplicationsTableProps) {
   const navigate = useNavigate();
+  const { formatDate } = useFormatter();
 
   const allSelected = applications.length > 0 && applications.every((a) => selectedIds.has(a.id));
   const someSelected = applications.some((a) => selectedIds.has(a.id));

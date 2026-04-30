@@ -4,11 +4,12 @@ import { Button } from '../../../components/ui/Button';
 import { Pagination } from '../../../components/ui/Pagination';
 import { useGetMyApplicationsQuery } from '../api/myApplicationsApi';
 import { usePagination } from '../../../hooks/usePagination';
-import { formatDate } from '../../../lib/format';
+import { useFormatter } from '../../../lib/useFormatter';
 import { deriveStatus, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
 
 export function MyApplicationsPage() {
   const navigate = useNavigate();
+  const { formatDate } = useFormatter();
   const { data: applications = [], isLoading, isError } = useGetMyApplicationsQuery();
   const { paginated, currentPage, totalPages, totalItems, pageSize, from, to, goToPage, setPageSize } =
     usePagination(applications);
