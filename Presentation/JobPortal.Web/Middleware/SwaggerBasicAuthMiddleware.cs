@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 
 namespace JobPortal.Web.Middleware;
@@ -47,7 +48,18 @@ public class SwaggerBasicAuthMiddleware(RequestDelegate next)
 
             var user = decoded[..colon];
             var pass = decoded[(colon + 1)..];
-            return user == expectedUser && pass == expectedPass;
+
+            // Hash both sides before comparing so FixedTimeEquals always receives
+            // equal-length inputs regardless of credential length.
+            var userMatch = CryptographicOperations.FixedTimeEquals(
+                SHA256.HashData(Encoding.UTF8.GetBytes(user)),
+                SHA256.HashData(Encoding.UTF8.GetBytes(expectedUser)));
+
+            var passMatch = CryptographicOperations.FixedTimeEquals(
+                SHA256.HashData(Encoding.UTF8.GetBytes(pass)),
+                SHA256.HashData(Encoding.UTF8.GetBytes(expectedPass)));
+
+            return userMatch && passMatch;
         }
         catch
         {
