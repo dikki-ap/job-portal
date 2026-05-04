@@ -6,11 +6,13 @@ using JobPortal.Application.Features.JobPosts.Queries.GetPublishedJobPosts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace JobPortal.Web.Controllers;
 
 [ApiController]
 [Route("api/careers")]
+[EnableRateLimiting("public")]
 public class CareersController(IMediator mediator, ILogger<CareersController> logger) : ControllerBase
 {
     [HttpGet]
@@ -56,6 +58,7 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
 
     [HttpPost("{id:int}/apply")]
     [Authorize]
+    [EnableRateLimiting("apply")]
     public async Task<IActionResult> Apply(int id, [FromBody] ApplyRequest request, CancellationToken cancellationToken)
     {
         logger.LogDebug("Apply: jobPostId={Id}", id);

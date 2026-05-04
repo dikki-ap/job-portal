@@ -9,9 +9,11 @@ using JobPortal.Application.Features.AppSettings.Queries.GetPrivacyConsentSettin
 using JobPortal.Application.Features.AppSettings.Queries.GetSmtpSetting;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
+using JobPortal.Web.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace JobPortal.Web.Controllers;
@@ -30,6 +32,7 @@ public class AppSettingsController(
 
     [HttpGet("branding")]
     [AllowAnonymous]
+    [EnableRateLimiting("public")]
     public async Task<IActionResult> GetBranding(CancellationToken ct)
         => Ok(await mediator.Send(new GetBrandingSettingQuery(), ct));
 
@@ -43,6 +46,12 @@ public class AppSettingsController(
 
         if (file.Length > MaxLogoSizeMb * 1024 * 1024)
             return BadRequest($"File size must not exceed {MaxLogoSizeMb} MB.");
+
+        await using (var sigStream = file.OpenReadStream())
+        {
+            if (!FileSignatureValidator.IsValidSignature(sigStream, file.ContentType))
+                return BadRequest("File content does not match the declared file type.");
+        }
 
         var ext = file.ContentType == "image/svg+xml" ? ".svg" : ".png";
         using var stream = file.OpenReadStream();
@@ -59,12 +68,20 @@ public class AppSettingsController(
 
     [HttpGet("branding/logo")]
     [AllowAnonymous]
+    [EnableRateLimiting("public")]
     public async Task<IActionResult> GetBrandingLogo(CancellationToken ct)
     {
         var key = await appSettingRepository.GetValueAsync("BrandLogoStorageKey", ct);
         if (string.IsNullOrEmpty(key)) return NotFound();
 
         var (stream, contentType) = await storageService.DownloadAsync(key, ct);
+
+        // SVG can execute scripts when rendered inline in a browser tab.
+        // Attachment disposition forces a download for direct navigation while
+        // still allowing <img src> usage (browsers ignore Content-Disposition for images).
+        if (contentType == "image/svg+xml")
+            return File(stream, contentType, "logo.svg");
+
         return File(stream, contentType);
     }
 
@@ -88,6 +105,7 @@ public class AppSettingsController(
 
     [HttpGet("require-privacy-consent")]
     [AllowAnonymous]
+    [EnableRateLimiting("public")]
     public async Task<IActionResult> GetRequirePrivacyConsent(CancellationToken ct)
         => Ok(await mediator.Send(new GetPrivacyConsentSettingQuery(), ct));
 
@@ -104,6 +122,7 @@ public class AppSettingsController(
 
     [HttpGet("legal/{type}")]
     [AllowAnonymous]
+    [EnableRateLimiting("public")]
     public async Task<IActionResult> GetLegalPage(string type, CancellationToken ct)
     {
         if (type != "privacy" && type != "terms")

@@ -5,9 +5,11 @@ using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Documents;
 using JobPortal.Persistence.Context;
+using JobPortal.Web.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobPortal.Web.Controllers;
@@ -60,6 +62,7 @@ public class CandidateProfileController(
     private const int CvMaxMb = 3;
 
     [HttpPost("cv")]
+    [EnableRateLimiting("upload")]
     public async Task<IActionResult> UploadCv(
         [FromForm] IFormFile file,
         CancellationToken cancellationToken)
@@ -76,6 +79,12 @@ public class CandidateProfileController(
 
         if (file.Length > (long)CvMaxMb * 1024 * 1024)
             return BadRequest(new { error = $"File exceeds the maximum size of {CvMaxMb} MB." });
+
+        await using (var sigStream = file.OpenReadStream())
+        {
+            if (!FileSignatureValidator.IsValidSignature(sigStream, file.ContentType))
+                return BadRequest(new { error = "File content does not match the declared file type." });
+        }
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         string storageKey;

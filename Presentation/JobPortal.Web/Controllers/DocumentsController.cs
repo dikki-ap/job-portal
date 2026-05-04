@@ -1,8 +1,10 @@
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Documents;
 using JobPortal.Persistence.Context;
+using JobPortal.Web.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobPortal.Web.Controllers;
@@ -17,6 +19,7 @@ public class DocumentsController(
     ILogger<DocumentsController> logger) : ControllerBase
 {
     [HttpPost("upload")]
+    [EnableRateLimiting("upload")]
     public async Task<IActionResult> Upload(
         [FromForm] IFormFile file,
         [FromForm] int documentTypeId,
@@ -45,6 +48,12 @@ public class DocumentsController(
         if (file.Length > maxBytes)
             return BadRequest(new { error = $"File exceeds the maximum size of {docType.MaxFileSizeMb} MB." });
 
+        await using (var sigStream = file.OpenReadStream())
+        {
+            if (!FileSignatureValidator.IsValidSignature(sigStream, file.ContentType))
+                return BadRequest(new { error = "File content does not match the declared file type." });
+        }
+
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         string storageKey;
         await using (var stream = file.OpenReadStream())
@@ -72,6 +81,7 @@ public class DocumentsController(
     {
         var appDoc = await context.ApplicationDocuments
             .Include(ad => ad.Document)
+            .Include(ad => ad.Application)
             .FirstOrDefaultAsync(ad => ad.Id == id, cancellationToken);
 
         if (appDoc?.Document is null)
@@ -79,6 +89,11 @@ public class DocumentsController(
             logger.LogWarning("Download: document id={Id} not found", id);
             return NotFound();
         }
+
+        // HR and Admin can access any application document; candidates can only access their own.
+        var isHrOrAdmin = User.IsInRole("Admin") || User.IsInRole("HR");
+        if (!isHrOrAdmin && appDoc.Application.UserId != currentUserService.GetCurrentUserId())
+            return Forbid();
 
         var (stream, contentType) = await storageService.DownloadAsync(appDoc.Document.FilePath, cancellationToken);
         var fileName = appDoc.Document.OriginalFileName;
