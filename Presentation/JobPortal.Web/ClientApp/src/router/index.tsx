@@ -38,6 +38,9 @@ import { SmtpSettingsPage } from '../features/smtpSettings/pages/SmtpSettingsPag
 import { TalentPoolPage } from '../features/talentPool/pages/TalentPoolPage';
 import { BrandingSettingsPage } from '../features/brandingSettings/pages/BrandingSettingsPage';
 import { LegalPagesPage } from '../features/legalPages/pages/LegalPagesPage';
+import { DepartmentManagersPage } from '../features/departmentManagers/pages/DepartmentManagersPage';
+import { DepartmentApplicationsPage } from '../features/departmentApplications/pages/DepartmentApplicationsPage';
+import { DepartmentApplicationDetailPage } from '../features/departmentApplications/pages/DepartmentApplicationDetailPage';
 import { PrivacyPage } from '../pages/PrivacyPage';
 import { TermsPage } from '../pages/TermsPage';
 
@@ -80,6 +83,10 @@ export function AppRouter() {
         <Route path="my-applications" element={<MyApplicationsPage />} />
         <Route path="my-applications/:code" element={<MyApplicationDetailPage />} />
 
+        {/* Department Manager routes — API enforces access control */}
+        <Route path="department-applications" element={<DepartmentApplicationsPage />} />
+        <Route path="department-applications/:id" element={<DepartmentApplicationDetailPage />} />
+
         {/* HR + Admin routes */}
         <Route element={<RoleRoute roles={HR_ADMIN_ROLES} />}>
           <Route path="dashboard" element={<DashboardPage />} />
@@ -111,6 +118,7 @@ export function AppRouter() {
           <Route path="master/education-majors" element={<EducationMajorsPage />} />
           <Route path="master/hiring-templates" element={<HiringTemplatesPage />} />
           <Route path="master/approval-levels" element={<ApprovalLevelsPage />} />
+          <Route path="master/department-managers" element={<DepartmentManagersPage />} />
           <Route path="master/privacy-consent" element={<PrivacyConsentSettingPage />} />
           <Route path="master/smtp-settings" element={<SmtpSettingsPage />} />
           <Route path="master/branding" element={<BrandingSettingsPage />} />

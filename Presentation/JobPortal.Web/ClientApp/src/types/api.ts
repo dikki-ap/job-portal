@@ -326,3 +326,24 @@ export interface ApprovalStatusDto {
   completedAt: string | null;
   steps: ApprovalStepStatusDto[];
 }
+
+export interface DepartmentManagerDto {
+  id: number;
+  fullName: string;
+  position: string;
+  email: string;
+  departmentId: number;
+  departmentName: string;
+  createdAt: string;
+  createdByUserId: number;
+  createdByName: string | null;
+  updatedAt: string | null;
+  updatedByUserId: number | null;
+  updatedByName: string | null;
+}
+
+export interface IsDepartmentManagerDto {
+  isDepartmentManager: boolean;
+  departmentId: number | null;
+  departmentName: string | null;
+}

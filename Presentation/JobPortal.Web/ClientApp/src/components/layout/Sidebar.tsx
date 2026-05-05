@@ -19,6 +19,7 @@ import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBranding } from '../../contexts/BrandingContext';
 import { useIsApproverQuery } from '../../features/approvals/api/approvalsApi';
+import { useGetIsDepartmentManagerQuery } from '../../features/departmentManagers/api/departmentManagersApi';
 
 interface NavItem {
   label: string;
@@ -121,9 +122,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const { isAdmin, isCandidate } = useAuth();
+  const { isAdmin, isCandidate, isAuthenticated } = useAuth();
   const { companyName, logoUrl } = useBranding();
   const { data: isApprover } = useIsApproverQuery(undefined, { skip: isCandidate });
+  const { data: dmInfo } = useGetIsDepartmentManagerQuery(undefined, { skip: !isAuthenticated || !isCandidate });
+  const isDepartmentManager = dmInfo?.isDepartmentManager ?? false;
 
   const hrAdminSections: NavSection[] = [
     {
@@ -155,6 +158,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   { label: 'Education Major', to: '/master/education-majors' },
                   { label: 'Employment Type', to: '/master/employment-types' },
                   { label: 'Approval Levels', to: '/master/approval-levels' },
+                  { label: 'Department Managers', to: '/master/department-managers' },
                   { label: 'Hiring Template', to: '/master/hiring-templates' },
                   { label: 'Job Category', to: '/master/job-categories' },
                   { label: 'Job Level', to: '/master/job-levels' },
@@ -183,10 +187,25 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     },
   ];
 
-  const candidateItems: NavItem[] = [
-    { label: 'My Profile', to: '/profile', icon: <UserCircle className="h-5 w-5" /> },
-    { label: 'My Applications', to: '/my-applications', icon: <ClipboardList className="h-5 w-5" /> },
-    { label: 'Open Positions', to: '/careers', icon: <Briefcase className="h-5 w-5" /> },
+  const candidateSections: NavSection[] = [
+    ...(isDepartmentManager
+      ? [
+          {
+            label: 'Department',
+            items: [
+              { label: 'Applications', to: '/department-applications', icon: <FileText className="h-5 w-5" /> },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: 'Candidate Portal',
+      items: [
+        { label: 'My Profile', to: '/profile', icon: <UserCircle className="h-5 w-5" /> },
+        { label: 'My Applications', to: '/my-applications', icon: <ClipboardList className="h-5 w-5" /> },
+        { label: 'Open Positions', to: '/careers', icon: <Briefcase className="h-5 w-5" /> },
+      ],
+    },
   ];
 
   return (
@@ -225,11 +244,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         <nav className="flex flex-col overflow-y-auto p-4">
           {isCandidate ? (
-            <div className="flex flex-col gap-0.5">
-              {candidateItems.map((item) => (
-                <NavGroup key={item.label} item={item} />
-              ))}
-            </div>
+            <SectionedNav sections={candidateSections} />
           ) : (
             <SectionedNav sections={hrAdminSections} />
           )}

@@ -22,6 +22,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
     public DbSet<DocumentTypeMimeType> DocumentTypeMimeTypes => Set<DocumentTypeMimeType>();
     public DbSet<Department> Departments => Set<Department>();
+    public DbSet<DepartmentManager> DepartmentManagers => Set<DepartmentManager>();
     public DbSet<WorkMode> WorkModes => Set<WorkMode>();
     public DbSet<EmploymentType> EmploymentTypes => Set<EmploymentType>();
     public DbSet<JobCategory> JobCategories => Set<JobCategory>();
