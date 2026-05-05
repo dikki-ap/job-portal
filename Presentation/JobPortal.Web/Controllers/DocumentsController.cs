@@ -82,6 +82,7 @@ public class DocumentsController(
         var appDoc = await context.ApplicationDocuments
             .Include(ad => ad.Document)
             .Include(ad => ad.Application)
+                .ThenInclude(a => a.JobPost)
             .FirstOrDefaultAsync(ad => ad.Id == id, cancellationToken);
 
         if (appDoc?.Document is null)
@@ -90,10 +91,20 @@ public class DocumentsController(
             return NotFound();
         }
 
-        // HR and Admin can access any application document; candidates can only access their own.
+        // HR/Admin can access any document; candidates can access their own;
+        // Department Managers can access documents for applications in their department.
         var isHrOrAdmin = User.IsInRole("Admin") || User.IsInRole("HR");
         if (!isHrOrAdmin && appDoc.Application.UserId != currentUserService.GetCurrentUserId())
-            return Forbid();
+        {
+            var email = currentUserService.GetCurrentUserEmail()?.Trim().ToLowerInvariant();
+            var dm = string.IsNullOrEmpty(email)
+                ? null
+                : await context.DepartmentManagers
+                    .FirstOrDefaultAsync(m => m.Email.ToLower() == email, cancellationToken);
+
+            if (dm is null || appDoc.Application.JobPost?.DepartmentId != dm.DepartmentId)
+                return Forbid();
+        }
 
         var (stream, contentType) = await storageService.DownloadAsync(appDoc.Document.FilePath, cancellationToken);
         var fileName = appDoc.Document.OriginalFileName;
