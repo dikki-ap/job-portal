@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IJobApprovalRepository, JobApprovalRepository>();
         services.AddScoped<IAppSettingRepository, AppSettingRepository>();
         services.AddScoped<ITalentPoolRepository, TalentPoolRepository>();
+        services.AddScoped<IDepartmentManagerRepository, DepartmentManagerRepository>();
 
         return services;
     }

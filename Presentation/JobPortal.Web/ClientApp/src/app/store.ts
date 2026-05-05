@@ -23,6 +23,8 @@ import { smtpSettingsApi } from '../features/smtpSettings/api/smtpSettingsApi';
 import { talentPoolApi } from '../features/talentPool/api/talentPoolApi';
 import { brandingSettingsApi } from '../features/brandingSettings/api/brandingSettingsApi';
 import { legalPagesApi } from '../features/legalPages/api/legalPagesApi';
+import { departmentManagersApi } from '../features/departmentManagers/api/departmentManagersApi';
+import { departmentApplicationsApi } from '../features/departmentApplications/api/departmentApplicationsApi';
 
 export const store = configureStore({
   reducer: {
@@ -50,6 +52,8 @@ export const store = configureStore({
     [talentPoolApi.reducerPath]: talentPoolApi.reducer,
     [brandingSettingsApi.reducerPath]: brandingSettingsApi.reducer,
     [legalPagesApi.reducerPath]: legalPagesApi.reducer,
+    [departmentManagersApi.reducerPath]: departmentManagersApi.reducer,
+    [departmentApplicationsApi.reducerPath]: departmentApplicationsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -76,7 +80,9 @@ export const store = configureStore({
       .concat(smtpSettingsApi.middleware)
       .concat(talentPoolApi.middleware)
       .concat(brandingSettingsApi.middleware)
-      .concat(legalPagesApi.middleware),
+      .concat(legalPagesApi.middleware)
+      .concat(departmentManagersApi.middleware)
+      .concat(departmentApplicationsApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
