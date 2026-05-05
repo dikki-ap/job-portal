@@ -108,3 +108,20 @@ public class JobLevelConfiguration : IEntityTypeConfiguration<JobLevel>
         builder.Property(e => e.Name).HasMaxLength(100).IsRequired();
     }
 }
+
+public class DepartmentManagerConfiguration : IEntityTypeConfiguration<DepartmentManager>
+{
+    public void Configure(EntityTypeBuilder<DepartmentManager> builder)
+    {
+        builder.Property(e => e.FullName).HasMaxLength(150).IsRequired();
+        builder.Property(e => e.Position).HasMaxLength(100).IsRequired();
+        builder.Property(e => e.Email).HasMaxLength(255).IsRequired();
+
+        builder.HasIndex(e => e.Email).IsUnique();
+
+        builder.HasOne(e => e.Department)
+            .WithMany()
+            .HasForeignKey(e => e.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
