@@ -100,9 +100,10 @@ public class DocumentsController(
             var dm = string.IsNullOrEmpty(email)
                 ? null
                 : await context.DepartmentManagers
+                    .Include(m => m.Departments)
                     .FirstOrDefaultAsync(m => m.Email.ToLower() == email, cancellationToken);
 
-            if (dm is null || appDoc.Application.JobPost?.DepartmentId != dm.DepartmentId)
+            if (dm is null || !dm.Departments.Any(d => d.DepartmentId == appDoc.Application.JobPost?.DepartmentId))
                 return Forbid();
         }
 

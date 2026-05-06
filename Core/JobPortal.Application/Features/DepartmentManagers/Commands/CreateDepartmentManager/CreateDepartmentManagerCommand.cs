@@ -7,4 +7,4 @@ public record CreateDepartmentManagerCommand(
     string FullName,
     string Position,
     string Email,
-    int DepartmentId) : IRequest<DepartmentManagerDto>;
+    IReadOnlyList<int> DepartmentIds) : IRequest<DepartmentManagerDto>;

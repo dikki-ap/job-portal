@@ -13,19 +13,19 @@ namespace JobPortal.Web.Controllers;
 public class DepartmentApplicationsController(IMediator mediator, ILogger<DepartmentApplicationsController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? status, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        logger.LogDebug("GetAll: fetching department applications status={Status}", status);
+        logger.LogDebug("GetAll: fetching department applications");
         try
         {
             var dmInfo = await mediator.Send(new IsDepartmentManagerQuery(), cancellationToken);
-            if (!dmInfo.IsDepartmentManager || dmInfo.DepartmentId is null)
+            if (!dmInfo.IsDepartmentManager || dmInfo.DepartmentIds.Count == 0)
             {
                 logger.LogInformation("GetAll: access denied — user is not a department manager");
                 return Forbid();
             }
 
-            var result = await mediator.Send(new GetDepartmentApplicationsQuery(dmInfo.DepartmentId.Value, status), cancellationToken);
+            var result = await mediator.Send(new GetDepartmentApplicationsQuery(dmInfo.DepartmentIds), cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)
@@ -42,13 +42,13 @@ public class DepartmentApplicationsController(IMediator mediator, ILogger<Depart
         try
         {
             var dmInfo = await mediator.Send(new IsDepartmentManagerQuery(), cancellationToken);
-            if (!dmInfo.IsDepartmentManager || dmInfo.DepartmentId is null)
+            if (!dmInfo.IsDepartmentManager || dmInfo.DepartmentIds.Count == 0)
             {
                 logger.LogInformation("GetById: access denied — user is not a department manager");
                 return Forbid();
             }
 
-            var result = await mediator.Send(new GetDepartmentApplicationByIdQuery(id, dmInfo.DepartmentId.Value), cancellationToken);
+            var result = await mediator.Send(new GetDepartmentApplicationByIdQuery(id, dmInfo.DepartmentIds), cancellationToken);
             if (result is null) return NotFound();
             return Ok(result);
         }

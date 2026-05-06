@@ -8,4 +8,4 @@ public record UpdateDepartmentManagerCommand(
     string FullName,
     string Position,
     string Email,
-    int DepartmentId) : IRequest<DepartmentManagerDto>;
+    IReadOnlyList<int> DepartmentIds) : IRequest<DepartmentManagerDto>;

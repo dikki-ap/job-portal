@@ -2,16 +2,17 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, FileText } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
+import { MultiSelectFilter } from '../../../components/ui/MultiSelectFilter';
 import { useGetDepartmentApplicationsQuery } from '../api/departmentApplicationsApi';
+import { useGetIsDepartmentManagerQuery } from '../../departmentManagers/api/departmentManagersApi';
 import { deriveStatus } from '../../../lib/applicationStatus';
 import { useFormatter } from '../../../lib/useFormatter';
 
 const STATUS_OPTIONS = [
-  { value: '', label: 'All Status' },
-  { value: 'Pending', label: 'Pending' },
-  { value: 'InReview', label: 'In Review' },
-  { value: 'Accepted', label: 'Accepted' },
-  { value: 'Rejected', label: 'Rejected' },
+  { id: 'Pending', label: 'Pending' },
+  { id: 'InReview', label: 'In Review' },
+  { id: 'Accepted', label: 'Accepted' },
+  { id: 'Rejected', label: 'Rejected' },
 ];
 
 const APP_STATUS_BADGE: Record<string, string> = {
@@ -29,39 +30,72 @@ export function DepartmentApplicationsPage() {
   const navigate = useNavigate();
   const { formatDate } = useFormatter();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedDeptIds, setSelectedDeptIds] = useState<number[]>([]);
 
+  const { data: dmInfo } = useGetIsDepartmentManagerQuery();
   const { data: applications = [], isLoading, isError } = useGetDepartmentApplicationsQuery({});
+
+  const isMultiDept = (dmInfo?.departmentIds?.length ?? 0) > 1;
+
+  const deptFilterOptions = useMemo(() =>
+    (dmInfo?.departmentIds ?? []).map((id, i) => ({
+      id,
+      label: dmInfo?.departmentNames?.[i] ?? `Dept ${id}`,
+    })),
+    [dmInfo]
+  );
+
+  const selectedDeptNames = useMemo(() =>
+    selectedDeptIds.map((id) => {
+      const idx = (dmInfo?.departmentIds ?? []).indexOf(id);
+      return idx >= 0 ? (dmInfo?.departmentNames?.[idx] ?? '') : '';
+    }).filter(Boolean),
+    [selectedDeptIds, dmInfo]
+  );
 
   const filtered = useMemo(() => {
     let result = applications;
+
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
         (a) => a.candidateName.toLowerCase().includes(q) || a.candidateEmail.toLowerCase().includes(q)
       );
     }
-    if (statusFilter) {
-      result = result.filter((a) => deriveStatus(a) === statusFilter);
-    }
-    return result;
-  }, [applications, search, statusFilter]);
 
-  const departmentName = applications[0]?.jobPostDepartmentName ?? '';
+    if (selectedStatuses.length > 0) {
+      result = result.filter((a) => selectedStatuses.includes(deriveStatus(a)));
+    }
+
+    if (isMultiDept && selectedDeptNames.length > 0) {
+      result = result.filter((a) => selectedDeptNames.includes(a.jobPostDepartmentName ?? ''));
+    }
+
+    return result;
+  }, [applications, search, selectedStatuses, selectedDeptNames, isMultiDept]);
+
+  const subtitleText = useMemo(() => {
+    if (!dmInfo?.isDepartmentManager) return null;
+    const names = dmInfo.departmentNames ?? [];
+    if (names.length === 0) return null;
+    if (names.length === 1) return `Showing all candidate applications for the ${names[0]} department.`;
+    const listed = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+    return `Showing applications across your departments: ${listed}.`;
+  }, [dmInfo]);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-gray-900">Applications</h1>
-        {departmentName && (
-          <p className="text-sm text-gray-500">
-            Showing all candidate applications for the <span className="font-medium text-gray-700">{departmentName}</span> department.
-          </p>
+        {subtitleText && (
+          <p className="text-sm text-gray-500">{subtitleText}</p>
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
@@ -71,15 +105,28 @@ export function DepartmentApplicationsPage() {
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)]"
-        >
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+
+        {/* Status multi-select — max 5 visible, show all available */}
+        <MultiSelectFilter<string>
+          label="Status"
+          options={STATUS_OPTIONS}
+          selected={selectedStatuses}
+          onChange={setSelectedStatuses}
+          searchPlaceholder="Search status…"
+          maxVisible={5}
+        />
+
+        {/* Department multi-select — only shown if manager has >1 dept, max 3 visible */}
+        {isMultiDept && (
+          <MultiSelectFilter<number>
+            label="Department"
+            options={deptFilterOptions}
+            selected={selectedDeptIds}
+            onChange={setSelectedDeptIds}
+            searchPlaceholder="Search department…"
+            maxVisible={3}
+          />
+        )}
       </div>
 
       {isLoading && (
@@ -99,7 +146,11 @@ export function DepartmentApplicationsPage() {
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <FileText className="h-10 w-10 mb-3 opacity-30" />
-              <p className="text-sm">{applications.length === 0 ? 'No applications yet for your department.' : 'No results match your search.'}</p>
+              <p className="text-sm">
+                {applications.length === 0
+                  ? 'No applications yet for your department.'
+                  : 'No results match your search or filters.'}
+              </p>
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -108,6 +159,7 @@ export function DepartmentApplicationsPage() {
                   <th className="px-6 py-3">Code</th>
                   <th className="px-6 py-3">Candidate</th>
                   <th className="px-6 py-3">Position</th>
+                  {isMultiDept && <th className="px-6 py-3">Department</th>}
                   <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Applied</th>
                 </tr>
@@ -127,6 +179,11 @@ export function DepartmentApplicationsPage() {
                         <div className="text-xs text-gray-400">{app.candidateEmail}</div>
                       </td>
                       <td className="px-6 py-4 text-gray-700">{app.jobPostTitle}</td>
+                      {isMultiDept && (
+                        <td className="px-6 py-4 text-gray-600 text-xs">
+                          {app.jobPostDepartmentName ?? '-'}
+                        </td>
+                      )}
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${APP_STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
                           {APP_STATUS_LABEL[status] ?? status}

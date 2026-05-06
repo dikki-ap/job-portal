@@ -6,7 +6,7 @@ interface DepartmentManagerInput {
   fullName: string;
   position: string;
   email: string;
-  departmentId: number;
+  departmentIds: number[];
 }
 
 export const departmentManagersApi = createApi({

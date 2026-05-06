@@ -1,6 +1,7 @@
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
+using JobPortal.Domain.Entities.Masters;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -22,20 +23,26 @@ public class UpdateDepartmentManagerCommandHandler(
             manager.FullName = request.FullName;
             manager.Position = request.Position;
             manager.Email = request.Email.Trim().ToLowerInvariant();
-            manager.DepartmentId = request.DepartmentId;
             manager.UpdatedAt = DateTime.UtcNow;
             manager.UpdatedByUserId = currentUserService.GetCurrentUserId();
 
+            manager.Departments.Clear();
+            foreach (var deptId in request.DepartmentIds)
+                manager.Departments.Add(new DepartmentManagerDepartment { DepartmentId = deptId });
+
             await repository.UpdateAsync(manager, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+
+            var deptIds = manager.Departments.Select(d => d.DepartmentId).ToList();
+            var deptNames = manager.Departments.Select(d => d.Department?.Name ?? string.Empty).ToList();
 
             return new DepartmentManagerDto(
                 manager.Id,
                 manager.FullName,
                 manager.Position,
                 manager.Email,
-                manager.DepartmentId,
-                manager.Department?.Name ?? string.Empty,
+                deptIds,
+                deptNames,
                 manager.CreatedAt,
                 manager.CreatedByUserId,
                 manager.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null,

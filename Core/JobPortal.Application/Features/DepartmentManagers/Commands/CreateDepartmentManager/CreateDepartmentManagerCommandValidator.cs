@@ -24,9 +24,14 @@ public class CreateDepartmentManagerCommandValidator : AbstractValidator<CreateD
             .MustAsync(async (email, ct) => !await repository.ExistsByEmailAsync(email, null, ct))
             .WithMessage("A department manager with this email already exists.");
 
-        RuleFor(x => x.DepartmentId)
-            .GreaterThan(0).WithMessage("Department is required.")
-            .MustAsync(async (id, ct) => await departmentRepository.GetByIdAsync(id, ct) is not null)
-            .WithMessage("The selected department does not exist.");
+        RuleFor(x => x.DepartmentIds)
+            .NotEmpty().WithMessage("At least one department is required.")
+            .MustAsync(async (ids, ct) =>
+            {
+                foreach (var id in ids)
+                    if (await departmentRepository.GetByIdAsync(id, ct) is null) return false;
+                return true;
+            })
+            .WithMessage("One or more selected departments do not exist.");
     }
 }

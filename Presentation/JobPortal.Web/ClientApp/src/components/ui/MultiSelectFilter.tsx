@@ -13,6 +13,7 @@ interface MultiSelectFilterProps<T extends string | number> {
   selected: T[];
   onChange: (ids: T[]) => void;
   searchPlaceholder?: string;
+  maxVisible?: number;
 }
 
 export function MultiSelectFilter<T extends string | number>({
@@ -21,9 +22,11 @@ export function MultiSelectFilter<T extends string | number>({
   selected,
   onChange,
   searchPlaceholder,
+  maxVisible,
 }: MultiSelectFilterProps<T>) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [showAll, setShowAll] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,15 +34,18 @@ export function MultiSelectFilter<T extends string | number>({
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
         setSearch('');
+        setShowAll(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const filtered = options.filter((o) =>
+  const allFiltered = options.filter((o) =>
     o.label.toLowerCase().includes(search.toLowerCase())
   );
+  const filtered = maxVisible && !showAll && !search ? allFiltered.slice(0, maxVisible) : allFiltered;
+  const hasMore = maxVisible && !showAll && !search && allFiltered.length > maxVisible;
 
   const toggle = (id: T) => {
     if (selected.includes(id)) {
@@ -110,33 +116,44 @@ export function MultiSelectFilter<T extends string | number>({
 
           {/* Options list */}
           <div className="max-h-[220px] overflow-y-auto py-1">
-            {filtered.length === 0 ? (
+            {allFiltered.length === 0 ? (
               <p className="px-4 py-3 text-sm text-gray-400">
                 {search ? `No matches for "${search}"` : 'No options available'}
               </p>
             ) : (
-              filtered.map((opt) => {
-                const isSelected = selected.includes(opt.id as T);
-                return (
+              <>
+                {filtered.map((opt) => {
+                  const isSelected = selected.includes(opt.id as T);
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => toggle(opt.id as T)}
+                      className={cn(
+                        'flex w-full items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors',
+                        isSelected ? 'bg-[var(--primary)]/5 text-[var(--primary)]' : 'text-gray-700 hover:bg-gray-50'
+                      )}
+                    >
+                      <span className={cn(
+                        'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+                        isSelected ? 'border-[var(--primary)] bg-[var(--primary)]' : 'border-gray-300'
+                      )}>
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </span>
+                      <span className="truncate">{opt.label}</span>
+                    </button>
+                  );
+                })}
+                {hasMore && (
                   <button
-                    key={opt.id}
                     type="button"
-                    onClick={() => toggle(opt.id as T)}
-                    className={cn(
-                      'flex w-full items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors',
-                      isSelected ? 'bg-[var(--primary)]/5 text-[var(--primary)]' : 'text-gray-700 hover:bg-gray-50'
-                    )}
+                    onClick={() => setShowAll(true)}
+                    className="flex w-full items-center justify-center border-t border-gray-100 px-3 py-2 text-xs text-[var(--primary)] hover:bg-gray-50 transition-colors"
                   >
-                    <span className={cn(
-                      'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                      isSelected ? 'border-[var(--primary)] bg-[var(--primary)]' : 'border-gray-300'
-                    )}>
-                      {isSelected && <Check className="h-3 w-3 text-white" />}
-                    </span>
-                    <span className="truncate">{opt.label}</span>
+                    Show all {allFiltered.length} options
                   </button>
-                );
-              })
+                )}
+              </>
             )}
           </div>
 

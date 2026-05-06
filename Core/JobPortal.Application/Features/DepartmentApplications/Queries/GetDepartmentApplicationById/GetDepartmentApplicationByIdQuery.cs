@@ -3,5 +3,5 @@ using MediatR;
 
 namespace JobPortal.Application.Features.DepartmentApplications.Queries.GetDepartmentApplicationById;
 
-public record GetDepartmentApplicationByIdQuery(int ApplicationId, int DepartmentId)
+public record GetDepartmentApplicationByIdQuery(int ApplicationId, IReadOnlyList<int> DepartmentIds)
     : IRequest<ApplicationDto?>;

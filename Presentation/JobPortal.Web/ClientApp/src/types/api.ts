@@ -332,8 +332,8 @@ export interface DepartmentManagerDto {
   fullName: string;
   position: string;
   email: string;
-  departmentId: number;
-  departmentName: string;
+  departmentIds: number[];
+  departmentNames: string[];
   createdAt: string;
   createdByUserId: number;
   createdByName: string | null;
@@ -344,6 +344,6 @@ export interface DepartmentManagerDto {
 
 export interface IsDepartmentManagerDto {
   isDepartmentManager: boolean;
-  departmentId: number | null;
-  departmentName: string | null;
+  departmentIds: number[];
+  departmentNames: string[];
 }

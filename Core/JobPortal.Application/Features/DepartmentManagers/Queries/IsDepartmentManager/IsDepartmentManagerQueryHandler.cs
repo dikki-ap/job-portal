@@ -18,13 +18,15 @@ public class IsDepartmentManagerQueryHandler(
         {
             var email = currentUserService.GetCurrentUserEmail() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(email))
-                return new IsDepartmentManagerDto(false, null, null);
+                return new IsDepartmentManagerDto(false, [], []);
 
             var manager = await repository.GetByEmailAsync(email, cancellationToken);
             if (manager is null)
-                return new IsDepartmentManagerDto(false, null, null);
+                return new IsDepartmentManagerDto(false, [], []);
 
-            return new IsDepartmentManagerDto(true, manager.DepartmentId, manager.Department?.Name);
+            var deptIds = manager.Departments.Select(d => d.DepartmentId).ToList();
+            var deptNames = manager.Departments.Select(d => d.Department?.Name ?? string.Empty).ToList();
+            return new IsDepartmentManagerDto(true, deptIds, deptNames);
         }
         catch (Exception ex)
         {
