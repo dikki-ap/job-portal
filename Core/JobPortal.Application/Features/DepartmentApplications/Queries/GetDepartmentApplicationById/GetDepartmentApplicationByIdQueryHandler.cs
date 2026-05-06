@@ -19,7 +19,7 @@ public class GetDepartmentApplicationByIdQueryHandler(
             if (application is null)
                 return null;
 
-            if (application.JobPost?.DepartmentId != request.DepartmentId)
+            if (!request.DepartmentIds.Contains(application.JobPost?.DepartmentId ?? 0))
                 throw new UnauthorizedAccessException("You do not have access to this application.");
 
             return GetAllApplicationsQueryHandler.MapToDto(application);

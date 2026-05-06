@@ -67,7 +67,7 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .ToListAsync(cancellationToken);
 
     public async Task<IEnumerable<ApplicationEntity>> GetAllByDepartmentAsync(
-        int departmentId, string? status = null, CancellationToken cancellationToken = default)
+        IReadOnlyList<int> departmentIds, CancellationToken cancellationToken = default)
         => await context.Applications
             .Include(a => a.User).ThenInclude(u => u.Profile)
             .Include(a => a.JobPost).ThenInclude(j => j.Department)
@@ -76,8 +76,7 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .Include(a => a.JobPost).ThenInclude(j => j.JobLevel)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
             .Include(a => a.Documents).ThenInclude(d => d.Document)
-            .Where(a => !a.IsDeleted && a.JobPost!.DepartmentId == departmentId)
-            .Where(a => status == null || a.Status == status)
+            .Where(a => !a.IsDeleted && departmentIds.Contains(a.JobPost!.DepartmentId))
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
 

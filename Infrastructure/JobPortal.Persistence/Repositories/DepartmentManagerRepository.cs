@@ -9,23 +9,22 @@ public class DepartmentManagerRepository(ApplicationDbContext context) : IDepart
 {
     public async Task<IEnumerable<DepartmentManager>> GetAllAsync(CancellationToken cancellationToken = default)
         => await context.DepartmentManagers
-            .Include(m => m.Department)
+            .Include(m => m.Departments).ThenInclude(d => d.Department)
             .Include(m => m.CreatedByUser)
             .Include(m => m.UpdatedByUser)
-            .OrderBy(m => m.Department!.Name)
-            .ThenBy(m => m.FullName)
+            .OrderBy(m => m.FullName)
             .ToListAsync(cancellationToken);
 
     public async Task<DepartmentManager?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await context.DepartmentManagers
-            .Include(m => m.Department)
+            .Include(m => m.Departments).ThenInclude(d => d.Department)
             .Include(m => m.CreatedByUser)
             .Include(m => m.UpdatedByUser)
             .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
     public async Task<DepartmentManager?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
         => await context.DepartmentManagers
-            .Include(m => m.Department)
+            .Include(m => m.Departments).ThenInclude(d => d.Department)
             .FirstOrDefaultAsync(m => m.Email == email.Trim().ToLowerInvariant(), cancellationToken);
 
     public async Task<bool> ExistsByEmailAsync(string email, int? excludeId = null, CancellationToken cancellationToken = default)

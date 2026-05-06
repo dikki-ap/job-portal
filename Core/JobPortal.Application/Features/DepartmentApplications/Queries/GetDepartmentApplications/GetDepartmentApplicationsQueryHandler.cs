@@ -15,12 +15,12 @@ public class GetDepartmentApplicationsQueryHandler(
     {
         try
         {
-            var items = await repository.GetAllByDepartmentAsync(request.DepartmentId, request.Status, cancellationToken);
+            var items = await repository.GetAllByDepartmentAsync(request.DepartmentIds, cancellationToken);
             return items.Select(GetAllApplicationsQueryHandler.MapToDto);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error getting department applications departmentId={DepartmentId}", request.DepartmentId);
+            logger.LogError(ex, "Error getting department applications for {Count} departments", request.DepartmentIds.Count);
             throw;
         }
     }

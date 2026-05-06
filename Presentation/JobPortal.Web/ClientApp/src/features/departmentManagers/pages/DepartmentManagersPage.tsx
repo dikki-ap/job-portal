@@ -83,10 +83,14 @@ export function DepartmentManagersPage() {
                     <td className="px-6 py-4 text-gray-600">{manager.position}</td>
                     <td className="px-6 py-4 text-gray-600">{manager.email}</td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
-                        <Building2 className="h-3 w-3" />
-                        {manager.departmentName}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {manager.departmentNames.map((name) => (
+                          <span key={name} className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
+                            <Building2 className="h-3 w-3" />
+                            {name}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-gray-500 text-xs">{manager.createdByName ?? '-'}</td>
                     <td className="px-6 py-4">

@@ -119,9 +119,23 @@ public class DepartmentManagerConfiguration : IEntityTypeConfiguration<Departmen
 
         builder.HasIndex(e => e.Email).IsUnique();
 
-        builder.HasOne(e => e.Department)
+        builder.HasMany(e => e.Departments)
+            .WithOne(d => d.DepartmentManager)
+            .HasForeignKey(d => d.DepartmentManagerId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class DepartmentManagerDepartmentConfiguration : IEntityTypeConfiguration<DepartmentManagerDepartment>
+{
+    public void Configure(EntityTypeBuilder<DepartmentManagerDepartment> builder)
+    {
+        builder.ToTable("DepartmentManagerDepartments");
+        builder.HasKey(d => new { d.DepartmentManagerId, d.DepartmentId });
+
+        builder.HasOne(d => d.Department)
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(d => d.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
