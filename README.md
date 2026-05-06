@@ -107,6 +107,7 @@ JWT Bearer (Keycloak) → Policy: HrOrAdmin | AdminOnly | Authorize | AllowAnony
 
 ### Administration (Admin role only)
 - **Master Data** — Department, Skill, Work Mode, Employment Type, Job Category, Job Level, Currency Type, Document Type, Education Level, Education Major, Approval Levels
+- **Department Managers** — Assign one or more email addresses as department managers; each manager can oversee multiple departments (many-to-many). Managers can log in as candidates and access a scoped view of applications only from their assigned departments
 - **Branding Settings** — Company name, logo, primary color, gradient colors, contact info, description (all via DB; no redeploy needed)
 - **SMTP Settings** — Configure email host/port/sender via UI (ENV overrides UI for secrets)
 - **Privacy Consent Settings** — Toggle privacy consent requirement on/off
@@ -157,7 +158,7 @@ Documents                        AUDIT
 Documents                        AuditLogs
 ```
 
-### All Tables (36 total)
+### All Tables (38 total)
 
 | Group | Table | Key Columns |
 |-------|-------|-------------|
@@ -173,6 +174,8 @@ Documents                        AuditLogs
 | | `DocumentTypeMimeTypes` | `Id`, `DocumentTypeId`, `MimeType` |
 | | `EducationLevels` | `Id`, `Name` |
 | | `EducationMajors` | `Id`, `Name` |
+| | `DepartmentManagers` | `Id`, `FullName`, `Position`, `Email` (unique) |
+| | `DepartmentManagerDepartments` | `DepartmentManagerId`, `DepartmentId` (composite PK) |
 | **Users** | `Users` | `Id`, `ExternalId` (Keycloak), `Email`, `FirstName`, `LastName`, `IsDeleted` |
 | | `UserProfiles` | `Id`, `UserId`, `PhoneNumber`, `EducationLevelId`, `EducationMajorId`, `EducationMajorCustom`, `InstitutionName`, `EducationStartYear`, `EducationEndYear`, `CvDocumentId`, `HasConsentedToPrivacyPolicy` |
 | | `UserAddresses` | `Id`, `UserId`, `Street`, `City`, `Province`, `Country`, `PostalCode` |
@@ -349,6 +352,24 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | POST | `/approval-levels` | A | Create |
 | PUT | `/approval-levels/{id}` | A | Update |
 | DELETE | `/approval-levels/{id}` | A | Delete |
+
+### Department Managers
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/department-managers` | HR | List all managers (with departments) |
+| GET | `/department-managers/{id}` | HR | Get by ID |
+| GET | `/department-managers/is-department-manager` | ✓ | Check if current user is a manager; returns assigned department IDs & names |
+| POST | `/department-managers` | A | Create manager with one or more departments |
+| PUT | `/department-managers/{id}` | A | Update manager info and department assignments |
+| DELETE | `/department-managers/{id}` | A | Remove manager |
+
+### Department Applications (Manager-scoped)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/department-applications` | ✓ | Applications from all departments assigned to the current manager |
+| GET | `/department-applications/{id}` | ✓ | Application detail (returns 403 if application is outside manager's departments) |
 
 ---
 
@@ -714,3 +735,7 @@ Migrations live in `Infrastructure/JobPortal.Persistence/Migrations/`.
 | 19 | `AddTalentPool` | TalentPoolEntries table (unique per user) |
 | 20 | `AddEducationYearsToUserProfile` | `EducationStartYear`, `EducationEndYear` on UserProfile |
 | 21 | `AddInstitutionNameToUserProfile` | `InstitutionName` (max 255, ToTitleCase on save) on UserProfile |
+| 22 | `ExpandAppSettingValueToLongText` | Expand `AppSettings.Value` column to `LONGTEXT` |
+| 23 | `AddDepartmentManagers` | `DepartmentManagers` table with unique email index |
+| 24 | `FixDepartmentManagerSnapshot` | EF Core model snapshot reconciliation (no schema change) |
+| 25 | `AddDepartmentManagerDepartments` | `DepartmentManagerDepartments` junction table; drop old `DepartmentId` column from `DepartmentManagers` |
