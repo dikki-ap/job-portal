@@ -45,6 +45,7 @@ public class GetAllApplicationsQueryHandler(
         a.User?.Profile?.InstitutionName,
         a.User?.Profile?.EducationStartYear,
         a.User?.Profile?.EducationEndYear,
+        a.User?.Profile?.DateOfBirth,
         a.Status,
         a.AppliedAt,
         a.UpdatedAt,

@@ -16,6 +16,7 @@ public class UserProfile : AuditableEntity
     public int? EducationStartYear { get; set; }
     public int? EducationEndYear { get; set; }
     public int? CvDocumentId { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
     public bool HasConsentedToPrivacyPolicy { get; set; }
     public DateTime? ConsentedAt { get; set; }
 

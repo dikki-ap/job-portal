@@ -13,4 +13,5 @@ public record CandidateProfileDto(
     string? EducationMajorCustom,
     string? InstitutionName,
     int? EducationStartYear,
-    int? EducationEndYear);
+    int? EducationEndYear,
+    DateOnly? DateOfBirth);

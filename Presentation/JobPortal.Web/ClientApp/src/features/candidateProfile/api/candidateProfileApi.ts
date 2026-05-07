@@ -12,6 +12,7 @@ interface UpsertProfileRequest {
   institutionName: string | null;
   educationStartYear: number | null;
   educationEndYear: number | null;
+  dateOfBirth: string | null;
 }
 
 interface UploadCvResult {

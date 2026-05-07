@@ -15,4 +15,5 @@ public record UpsertCandidateProfileCommand(
     string? InstitutionName = null,
     int? EducationStartYear = null,
     int? EducationEndYear = null,
+    DateOnly? DateOfBirth = null,
     List<UpsertSkillItem>? Skills = null) : IRequest<CandidateProfileDto>;

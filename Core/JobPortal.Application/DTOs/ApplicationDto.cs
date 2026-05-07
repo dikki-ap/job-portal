@@ -38,6 +38,7 @@ public record ApplicationDto(
     string? CandidateInstitutionName,
     int? CandidateEducationStartYear,
     int? CandidateEducationEndYear,
+    DateOnly? CandidateDateOfBirth,
     string Status,
     DateTime AppliedAt,
     DateTime UpdatedAt,

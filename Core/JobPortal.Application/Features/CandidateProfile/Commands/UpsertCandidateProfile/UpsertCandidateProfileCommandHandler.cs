@@ -43,6 +43,7 @@ public class UpsertCandidateProfileCommandHandler(
                 InstitutionName = institutionName,
                 EducationStartYear = request.EducationStartYear,
                 EducationEndYear = request.EducationEndYear,
+                DateOfBirth = request.DateOfBirth,
                 UpdatedAt = now,
                 UpdatedByUserId = userId,
                 NIK = string.Empty,
@@ -69,7 +70,8 @@ public class UpsertCandidateProfileCommandHandler(
                 null, null,
                 request.EducationMajorId, null, request.EducationMajorCustom,
                 institutionName,
-                request.EducationStartYear, request.EducationEndYear);
+                request.EducationStartYear, request.EducationEndYear,
+                request.DateOfBirth);
         }
         catch (Exception ex) when (ex is not UnauthorizedAccessException and not KeyNotFoundException)
         {
