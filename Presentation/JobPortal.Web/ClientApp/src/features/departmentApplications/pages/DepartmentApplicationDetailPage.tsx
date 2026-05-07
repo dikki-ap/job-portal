@@ -115,8 +115,8 @@ export function DepartmentApplicationDetailPage() {
           <div><span className="text-gray-500 font-medium block">Applied</span><span className="text-gray-900">{formatDate(application.appliedAt)}</span></div>
           {application.candidateDateOfBirth && (
             <div>
-              <span className="text-gray-500 font-medium block">Umur</span>
-              <span className="text-gray-900">{calculateAge(application.candidateDateOfBirth)} tahun</span>
+              <span className="text-gray-500 font-medium block">Age</span>
+              <span className="text-gray-900">{calculateAge(application.candidateDateOfBirth)} years old</span>
             </div>
           )}
         </div>
