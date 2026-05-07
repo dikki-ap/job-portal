@@ -322,6 +322,12 @@ export function CandidateProfilePage() {
     if (!firstName.trim()) e.firstName = 'First name is required.';
     if (!lastName.trim()) e.lastName = 'Last name is required.';
     if (!phoneNumber || phoneNumber.length < 6) e.phoneNumber = 'Valid phone number is required.';
+    if (dateOfBirth) {
+      const minAge = new Date();
+      minAge.setFullYear(minAge.getFullYear() - 17);
+      if (new Date(dateOfBirth) > minAge)
+        e.dateOfBirth = 'You must be at least 17 years old.';
+    }
     if (educationStartYear !== '' && (Number(educationStartYear) < 1950 || Number(educationStartYear) > CURRENT_YEAR))
       e.educationStartYear = `Year must be between 1950 and ${CURRENT_YEAR}.`;
     if (educationEndYear !== '' && educationStartYear !== '' && Number(educationEndYear) < Number(educationStartYear))
@@ -423,11 +429,15 @@ export function CandidateProfilePage() {
             id="dateOfBirth"
             type="date"
             value={dateOfBirth}
-            onChange={(e) => setDateOfBirth(e.target.value)}
-            max={new Date(new Date().setFullYear(new Date().getFullYear() - 15)).toISOString().split('T')[0]}
+            onChange={(e) => { setDateOfBirth(e.target.value); setErrors((p) => ({ ...p, dateOfBirth: '' })); }}
+            max={new Date(new Date().setFullYear(new Date().getFullYear() - 17)).toISOString().split('T')[0]}
             min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split('T')[0]}
-            className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+            className={cn(
+              'h-10 w-full rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20',
+              errors.dateOfBirth ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-[var(--primary)]',
+            )}
           />
+          {errors.dateOfBirth && <p className="text-xs text-red-500">{errors.dateOfBirth}</p>}
         </div>
       </div>
 

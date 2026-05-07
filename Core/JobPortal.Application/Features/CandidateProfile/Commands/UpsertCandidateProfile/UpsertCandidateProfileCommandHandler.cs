@@ -23,6 +23,15 @@ public class UpsertCandidateProfileCommandHandler(
             var userId = currentUserService.GetCurrentUserId()
                 ?? throw new UnauthorizedAccessException("User not authenticated.");
 
+            if (request.DateOfBirth.HasValue)
+            {
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var age = today.Year - request.DateOfBirth.Value.Year;
+                if (request.DateOfBirth.Value.AddYears(age) > today) age--;
+                if (age < 17)
+                    throw new ArgumentException("You must be at least 17 years old.");
+            }
+
             var now = DateTime.UtcNow;
             var (user, _, _) = await repository.GetProfileAsync(userId, cancellationToken);
 
