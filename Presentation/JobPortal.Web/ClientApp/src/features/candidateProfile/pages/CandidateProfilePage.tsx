@@ -277,6 +277,7 @@ export function CandidateProfilePage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [educationLevelId, setEducationLevelId] = useState<number | ''>('');
   const [majorId, setMajorId] = useState<number | null>(null);
   const [majorIsOther, setMajorIsOther] = useState(false);
@@ -300,6 +301,7 @@ export function CandidateProfilePage() {
     setFirstName(profile.firstName);
     setLastName(profile.lastName);
     setPhoneNumber(profile.phoneNumber || '');
+    setDateOfBirth(profile.dateOfBirth ?? '');
     setEducationLevelId(profile.educationLevelId ?? '');
     setInstitutionName(profile.institutionName ?? '');
     setEducationStartYear(profile.educationStartYear ?? '');
@@ -348,6 +350,7 @@ export function CandidateProfilePage() {
         institutionName: institutionName.trim() || null,
         educationStartYear: educationStartYear !== '' ? Number(educationStartYear) : null,
         educationEndYear: educationEndYear !== '' ? Number(educationEndYear) : null,
+        dateOfBirth: dateOfBirth || null,
       }).unwrap();
 
       addToast('Profile saved successfully.', 'success');
@@ -414,6 +417,18 @@ export function CandidateProfilePage() {
           onChange={(v) => { setPhoneNumber(v); setErrors((p) => ({ ...p, phoneNumber: '' })); }}
           error={errors.phoneNumber}
         />
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Tanggal Lahir</label>
+          <input
+            id="dateOfBirth"
+            type="date"
+            value={dateOfBirth}
+            onChange={(e) => setDateOfBirth(e.target.value)}
+            max={new Date(new Date().setFullYear(new Date().getFullYear() - 15)).toISOString().split('T')[0]}
+            min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split('T')[0]}
+            className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+          />
+        </div>
       </div>
 
       {/* Education */}

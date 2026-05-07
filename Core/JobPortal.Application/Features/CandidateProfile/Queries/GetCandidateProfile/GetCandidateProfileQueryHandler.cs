@@ -34,7 +34,8 @@ public class GetCandidateProfileQueryHandler(
                 profile?.EducationMajorCustom,
                 profile?.InstitutionName,
                 profile?.EducationStartYear,
-                profile?.EducationEndYear);
+                profile?.EducationEndYear,
+                profile?.DateOfBirth);
         }
         catch (KeyNotFoundException)
         {

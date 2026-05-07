@@ -1,5 +1,14 @@
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Download, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star } from 'lucide-react';
+
+function calculateAge(dateOfBirth: string): number {
+  const today = new Date();
+  const birth = new Date(dateOfBirth);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -104,6 +113,12 @@ export function DepartmentApplicationDetailPage() {
             </span>
           </div>
           <div><span className="text-gray-500 font-medium block">Applied</span><span className="text-gray-900">{formatDate(application.appliedAt)}</span></div>
+          {application.candidateDateOfBirth && (
+            <div>
+              <span className="text-gray-500 font-medium block">Umur</span>
+              <span className="text-gray-900">{calculateAge(application.candidateDateOfBirth)} tahun</span>
+            </div>
+          )}
         </div>
         {(application.candidateEducationLevelName || application.candidateEducationMajorName || application.candidateInstitutionName) && (
           <div className="pt-2 border-t border-gray-100">

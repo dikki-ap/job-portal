@@ -21,6 +21,15 @@ import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
 import { useAddToTalentPoolMutation } from '../../talentPool/api/talentPoolApi';
 import type { ApplicationStepDto } from '../../../types/api';
 
+function calculateAge(dateOfBirth: string): number {
+  const today = new Date();
+  const birth = new Date(dateOfBirth);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
 function ratingColor(r: number) {
   if (r <= 4) return 'bg-red-50 text-red-600 ring-red-200 border-red-200';
   if (r <= 7) return 'bg-amber-50 text-amber-700 ring-amber-200 border-amber-200';
@@ -190,6 +199,12 @@ export function ApplicationDetailPage() {
             </span>
           </div>
           <div><span className="text-gray-500 font-medium block">Applied</span><span className="text-gray-900">{formatDate(application.appliedAt)}</span></div>
+          {application.candidateDateOfBirth && (
+            <div>
+              <span className="text-gray-500 font-medium block">Umur</span>
+              <span className="text-gray-900">{calculateAge(application.candidateDateOfBirth)} tahun</span>
+            </div>
+          )}
         </div>
         {(application.candidateEducationLevelName || application.candidateEducationMajorName || application.candidateInstitutionName) && (
           <div className="pt-2 border-t border-gray-100">

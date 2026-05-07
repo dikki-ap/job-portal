@@ -164,6 +164,7 @@ export interface CandidateProfileDto {
   institutionName: string | null;
   educationStartYear: number | null;
   educationEndYear: number | null;
+  dateOfBirth: string | null;
 }
 
 export interface JobPostDto {
@@ -270,6 +271,7 @@ export interface ApplicationDto {
   candidateInstitutionName: string | null;
   candidateEducationStartYear: number | null;
   candidateEducationEndYear: number | null;
+  candidateDateOfBirth: string | null;
   status: string;
   appliedAt: string;
   updatedAt: string;
