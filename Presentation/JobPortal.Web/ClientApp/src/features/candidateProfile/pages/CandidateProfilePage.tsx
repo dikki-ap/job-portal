@@ -418,7 +418,7 @@ export function CandidateProfilePage() {
           error={errors.phoneNumber}
         />
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Tanggal Lahir</label>
+          <label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Date of Birth</label>
           <input
             id="dateOfBirth"
             type="date"
