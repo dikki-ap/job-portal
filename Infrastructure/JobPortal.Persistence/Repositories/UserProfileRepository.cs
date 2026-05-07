@@ -54,6 +54,7 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
             existing.InstitutionName = profile.InstitutionName;
             existing.EducationStartYear = profile.EducationStartYear;
             existing.EducationEndYear = profile.EducationEndYear;
+            existing.DateOfBirth = profile.DateOfBirth;
             existing.UpdatedAt = profile.UpdatedAt;
             existing.UpdatedByUserId = profile.UpdatedByUserId;
             context.UserProfiles.Update(existing);
