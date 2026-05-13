@@ -6,7 +6,6 @@ import {
   PieChart, Pie, Cell, Legend,
   AreaChart, Area,
 } from 'recharts';
-import * as XLSX from 'xlsx';
 import { Spinner } from '../../../components/ui/Spinner';
 import { cn } from '../../../lib/utils';
 import { deriveStatus, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
@@ -243,15 +242,23 @@ export function AnalyticsPage() {
 
   const handleExport = () => {
     const rows = buildExcelRows(filtered, jobPosts, formatDate);
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Applications');
-    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([buf], { type: 'application/octet-stream' });
+    if (rows.length === 0) return;
+
+    const headers = Object.keys(rows[0]) as (keyof (typeof rows)[0])[];
+    const escape = (val: unknown) => {
+      const s = String(val ?? '');
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csvLines = [
+      headers.join(','),
+      ...rows.map((row) => headers.map((h) => escape(row[h])).join(',')),
+    ];
+    // BOM ensures Excel opens UTF-8 correctly
+    const blob = new Blob(['\uFEFF' + csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `applications-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    a.download = `applications-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
