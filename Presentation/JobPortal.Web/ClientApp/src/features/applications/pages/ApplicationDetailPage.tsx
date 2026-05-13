@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, BookmarkPlus } from 'lucide-react';
+import { ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, BookmarkPlus } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
+import { DocumentPreviewModal } from '../../../components/ui/DocumentPreviewModal';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import { downloadWithAuth } from '../../../lib/download';
@@ -60,6 +61,14 @@ const MIME_LABELS: Record<string, string> = {
   'image/jpeg': 'JPEG',
   'image/png': 'PNG',
 };
+
+const MIME_PREVIEW_TYPE: Record<string, true> = {
+  'application/pdf': true,
+  'image/jpeg': true,
+  'image/png': true,
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': true,
+};
+
 function friendlyFileType(mime: string) {
   return MIME_LABELS[mime] ?? mime.split('/').pop()?.toUpperCase() ?? mime;
 }
@@ -84,6 +93,7 @@ export function ApplicationDetailPage() {
   const [localNote, setLocalNote] = useState('');
   const [poolNotes, setPoolNotes] = useState('');
   const [addedToPool, setAddedToPool] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{ id: number; fileType: string; fileName: string } | null>(null);
 
   useEffect(() => {
     if (application) {
@@ -443,14 +453,26 @@ export function ApplicationDetailPage() {
                     </td>
                     <td className="py-2 pr-4 text-gray-500">{formatDate(doc.createdAt)}</td>
                     <td className="py-2 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                        onClick={() => downloadWithAuth(`/api/documents/${doc.id}/download`, token, doc.originalFileName)}
-                      >
-                        <Download className="h-3.5 w-3.5" /> Download
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {MIME_PREVIEW_TYPE[doc.fileType] && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-[var(--primary)] hover:bg-blue-50"
+                            onClick={() => setPreviewDoc({ id: doc.id, fileType: doc.fileType, fileName: doc.originalFileName ?? doc.documentType })}
+                          >
+                            <Eye className="h-3.5 w-3.5" /> Preview
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                          onClick={() => downloadWithAuth(`/api/documents/${doc.id}/download`, token, doc.originalFileName)}
+                        >
+                          <Download className="h-3.5 w-3.5" /> Download
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -510,6 +532,15 @@ export function ApplicationDetailPage() {
       )}
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      <DocumentPreviewModal
+        open={previewDoc !== null}
+        onClose={() => setPreviewDoc(null)}
+        documentId={previewDoc?.id ?? 0}
+        fileType={previewDoc?.fileType ?? ''}
+        fileName={previewDoc?.fileName ?? ''}
+        token={token}
+      />
     </div>
   );
 }
