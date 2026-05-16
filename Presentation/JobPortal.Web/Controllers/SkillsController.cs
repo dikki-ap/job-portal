@@ -54,7 +54,7 @@ public class SkillsController(IMediator mediator, ILogger<SkillsController> logg
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateSkillCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Create: request received with name={Name}", command.Name);
@@ -72,7 +72,7 @@ public class SkillsController(IMediator mediator, ILogger<SkillsController> logg
     }
 
     [HttpPut("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateSkillCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Update: request received for id={Id} new name={Name}", id, command.Name);
@@ -95,7 +95,7 @@ public class SkillsController(IMediator mediator, ILogger<SkillsController> logg
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("Delete: request received for id={Id}", id);

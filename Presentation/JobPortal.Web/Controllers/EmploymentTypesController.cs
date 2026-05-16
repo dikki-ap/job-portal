@@ -54,7 +54,7 @@ public class EmploymentTypesController(IMediator mediator, ILogger<EmploymentTyp
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateEmploymentTypeCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Create: request received with name={Name}", command.Name);
@@ -72,7 +72,7 @@ public class EmploymentTypesController(IMediator mediator, ILogger<EmploymentTyp
     }
 
     [HttpPut("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEmploymentTypeCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Update: request received for id={Id} new name={Name}", id, command.Name);
@@ -95,7 +95,7 @@ public class EmploymentTypesController(IMediator mediator, ILogger<EmploymentTyp
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("Delete: request received for id={Id}", id);
