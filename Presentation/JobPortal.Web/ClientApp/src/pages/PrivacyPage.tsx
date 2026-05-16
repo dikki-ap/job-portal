@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Building2 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { useBranding } from '../contexts/BrandingContext';
 import { useGetLegalPageQuery } from '../features/legalPages/api/legalPagesApi';
 import { Spinner } from '../components/ui/Spinner';
@@ -38,7 +39,7 @@ export function PrivacyPage() {
         ) : data?.content ? (
           <div
             className="prose prose-sm prose-gray max-w-none bg-white rounded-xl border border-gray-200 p-6 sm:p-8"
-            dangerouslySetInnerHTML={{ __html: data.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.content) }}
           />
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">

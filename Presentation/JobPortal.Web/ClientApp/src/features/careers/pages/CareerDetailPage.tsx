@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from 'dompurify';
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -306,7 +307,7 @@ export function CareerDetailPage() {
         </h2>
         <div
           className="prose"
-          dangerouslySetInnerHTML={{ __html: job.description }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description) }}
         />
       </div>
 

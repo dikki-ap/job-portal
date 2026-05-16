@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DOMPurify from 'dompurify';
 import {
   ArrowLeft, MapPin, Clock, Briefcase, GraduationCap, Tag,
   CheckCircle, XCircle, Users, BarChart2, Layers,
@@ -169,7 +170,7 @@ export function JobPostApprovalReviewPage() {
           {/* Description */}
           <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-3">
             <h2 className="text-base font-semibold text-gray-900">Job Description</h2>
-            <div className="prose prose-sm max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: job.description }} />
+            <div className="prose prose-sm max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description) }} />
           </div>
 
           {/* Hiring process */}
