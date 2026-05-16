@@ -214,9 +214,9 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/departments` | – | List all |
-| POST | `/departments` | HR | Create |
-| PUT | `/departments/{id}` | HR | Update |
-| DELETE | `/departments/{id}` | HR | Delete |
+| POST | `/departments` | A | Create |
+| PUT | `/departments/{id}` | A | Update |
+| DELETE | `/departments/{id}` | A | Delete |
 | _(same pattern)_ | `/skills` | | |
 | _(same pattern)_ | `/work-modes` | | |
 | _(same pattern)_ | `/employment-types` | | |
@@ -326,9 +326,14 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/app-settings/branding` | – | Branding config (colors, company info) |
+| POST | `/app-settings/branding/logo` | A | Upload company logo (SVG / PNG, max 2 MB) |
+| PUT | `/app-settings/branding` | A | Update branding settings |
+| GET | `/app-settings/branding/logo` | – | Serve current logo file |
 | GET | `/app-settings/require-privacy-consent` | – | Whether privacy consent is required |
 | PUT | `/app-settings/require-privacy-consent` | A | Toggle privacy consent |
-| GET | `/app-settings/smtp` | ✓ | SMTP config (no password) |
+| GET | `/app-settings/legal/{type}` | – | Get privacy or terms page content (`type`: `privacy` \| `terms`) |
+| PUT | `/app-settings/legal/{type}` | A | Update privacy or terms page content |
+| GET | `/app-settings/smtp` | A | SMTP config (no password) |
 | PUT | `/app-settings/smtp` | A | Update SMTP config (non-secret fields) |
 
 ### Privacy Consent
@@ -368,8 +373,8 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/department-applications` | ✓ | Applications from all departments assigned to the current manager |
-| GET | `/department-applications/{id}` | ✓ | Application detail (returns 403 if application is outside manager's departments) |
+| GET | `/department-applications` | HR | Applications from all departments assigned to the current manager |
+| GET | `/department-applications/{id}` | HR | Application detail (returns 403 if application is outside manager's departments) |
 
 ---
 
@@ -739,3 +744,4 @@ Migrations live in `Infrastructure/JobPortal.Persistence/Migrations/`.
 | 23 | `AddDepartmentManagers` | `DepartmentManagers` table with unique email index |
 | 24 | `FixDepartmentManagerSnapshot` | EF Core model snapshot reconciliation (no schema change) |
 | 25 | `AddDepartmentManagerDepartments` | `DepartmentManagerDepartments` junction table; drop old `DepartmentId` column from `DepartmentManagers` |
+| 26 | `AddJobPostStatusIndex` | Index on `JobPosts.Status` column for published job listing queries |
