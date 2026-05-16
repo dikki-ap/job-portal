@@ -19,7 +19,7 @@ public class GetPrivacyConsentSettingQueryHandler(
 
         var value = await appSettingRepository.GetValueAsync("RequirePrivacyConsent", cancellationToken);
         var result = new PrivacyConsentSettingDto(value == "true");
-        cache.Set(CacheKeys.PrivacyConsentSetting, result, TimeSpan.FromDays(1));
+        cache.Set(CacheKeys.PrivacyConsentSetting, result, CacheEntry.Default(TimeSpan.FromDays(1)));
         return result;
     }
 }

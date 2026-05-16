@@ -66,7 +66,7 @@ public class ApproveJobPostStepCommandHandler(
                 job.UpdatedAt = now;
                 job.UpdatedByUserId = currentUserService.GetCurrentUserId();
                 await jobPostRepository.UpdateAsync(job, cancellationToken);
-                InvalidateJobsCache();
+                InvalidateJobsCache(job.Slug);
             }
 
             await approvalRepository.SaveChangesAsync(cancellationToken);
@@ -83,11 +83,11 @@ public class ApproveJobPostStepCommandHandler(
         }
     }
 
-    private void InvalidateJobsCache()
+    private void InvalidateJobsCache(string slug)
     {
         var version = cache.Get<long>(CacheKeys.PublishedJobsVersion);
-        cache.Set(CacheKeys.PublishedJobsVersion, version + 1,
-            new MemoryCacheEntryOptions { Priority = CacheItemPriority.NeverRemove });
+        cache.Set(CacheKeys.PublishedJobsVersion, version + 1, CacheEntry.Permanent());
         cache.Remove(CacheKeys.PublishedCountries);
+        cache.Remove(CacheKeys.JobSlug(slug));
     }
 }

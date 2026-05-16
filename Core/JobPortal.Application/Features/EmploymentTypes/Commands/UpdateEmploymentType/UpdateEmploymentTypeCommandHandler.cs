@@ -1,7 +1,9 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.EmploymentTypes.Commands.UpdateEmploymentType;
@@ -9,6 +11,7 @@ namespace JobPortal.Application.Features.EmploymentTypes.Commands.UpdateEmployme
 public class UpdateEmploymentTypeCommandHandler(
     IEmploymentTypeRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateEmploymentTypeCommandHandler> logger)
     : IRequestHandler<UpdateEmploymentTypeCommand, EmploymentTypeDto>
 {
@@ -24,6 +27,7 @@ public class UpdateEmploymentTypeCommandHandler(
             employmentType.UpdatedByUserId = currentUserService.GetCurrentUserId();
             await repository.UpdateAsync(employmentType, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.EmploymentTypes);
 
             return new EmploymentTypeDto(
                 employmentType.Id, employmentType.Name, employmentType.CreatedAt, employmentType.CreatedByUserId,

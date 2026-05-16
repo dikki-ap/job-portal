@@ -1,7 +1,9 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.Departments.Commands.UpdateDepartment;
@@ -9,6 +11,7 @@ namespace JobPortal.Application.Features.Departments.Commands.UpdateDepartment;
 public class UpdateDepartmentCommandHandler(
     IDepartmentRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateDepartmentCommandHandler> logger)
     : IRequestHandler<UpdateDepartmentCommand, DepartmentDto>
 {
@@ -24,20 +27,13 @@ public class UpdateDepartmentCommandHandler(
             department.UpdatedByUserId = currentUserService.GetCurrentUserId();
             await repository.UpdateAsync(department, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
-
-            var updatedByName = department.UpdatedByUser is { } u
-                ? $"{u.FirstName} {u.LastName}".Trim()
-                : null;
+            cache.Remove(CacheKeys.Departments);
 
             return new DepartmentDto(
-                department.Id,
-                department.Name,
-                department.CreatedAt,
-                department.CreatedByUserId,
+                department.Id, department.Name, department.CreatedAt, department.CreatedByUserId,
                 department.CreatedByUser is { } cb ? $"{cb.FirstName} {cb.LastName}".Trim() : null,
-                department.UpdatedAt,
-                department.UpdatedByUserId,
-                updatedByName);
+                department.UpdatedAt, department.UpdatedByUserId,
+                department.UpdatedByUser is { } ub ? $"{ub.FirstName} {ub.LastName}".Trim() : null);
         }
         catch (Exception ex)
         {

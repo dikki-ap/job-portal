@@ -1,7 +1,9 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.JobLevels.Commands.UpdateJobLevel;
@@ -9,6 +11,7 @@ namespace JobPortal.Application.Features.JobLevels.Commands.UpdateJobLevel;
 public class UpdateJobLevelCommandHandler(
     IJobLevelRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateJobLevelCommandHandler> logger)
     : IRequestHandler<UpdateJobLevelCommand, JobLevelDto>
 {
@@ -24,6 +27,7 @@ public class UpdateJobLevelCommandHandler(
             jobLevel.UpdatedByUserId = currentUserService.GetCurrentUserId();
             await repository.UpdateAsync(jobLevel, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.JobLevels);
 
             return new JobLevelDto(
                 jobLevel.Id, jobLevel.Name, jobLevel.CreatedAt, jobLevel.CreatedByUserId,

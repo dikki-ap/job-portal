@@ -1,7 +1,9 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.WorkModes.Commands.UpdateWorkMode;
@@ -9,6 +11,7 @@ namespace JobPortal.Application.Features.WorkModes.Commands.UpdateWorkMode;
 public class UpdateWorkModeCommandHandler(
     IWorkModeRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateWorkModeCommandHandler> logger)
     : IRequestHandler<UpdateWorkModeCommand, WorkModeDto>
 {
@@ -24,6 +27,7 @@ public class UpdateWorkModeCommandHandler(
             workMode.UpdatedByUserId = currentUserService.GetCurrentUserId();
             await repository.UpdateAsync(workMode, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.WorkModes);
 
             return new WorkModeDto(
                 workMode.Id, workMode.Name, workMode.CreatedAt, workMode.CreatedByUserId,
