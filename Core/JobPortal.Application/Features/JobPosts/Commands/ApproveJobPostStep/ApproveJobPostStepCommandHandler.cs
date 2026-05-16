@@ -1,4 +1,5 @@
 using JobPortal.Application.Common;
+using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
@@ -17,6 +18,18 @@ public class ApproveJobPostStepCommandHandler(
     ILogger<ApproveJobPostStepCommandHandler> logger)
     : IRequestHandler<ApproveJobPostStepCommand, Unit>
 {
+    private async Task<(string PrimaryColor, string CompanyName)> GetBrandingAsync(CancellationToken cancellationToken)
+    {
+        if (cache.TryGetValue(CacheKeys.Branding, out BrandingSettingDto? branding) && branding is not null)
+            return (branding.PrimaryColor, branding.CompanyName);
+
+        var values = await appSettingRepository.GetManyAsync(
+            ["BrandPrimaryColor", "BrandCompanyName"], cancellationToken);
+        return (
+            values.GetValueOrDefault("BrandPrimaryColor") ?? "#004181",
+            values.GetValueOrDefault("BrandCompanyName")  ?? "JobPortal");
+    }
+
     public async Task<Unit> Handle(ApproveJobPostStepCommand request, CancellationToken cancellationToken)
     {
         try
@@ -49,8 +62,7 @@ public class ApproveJobPostStepCommandHandler(
             {
                 instance.CurrentStepOrder = nextStep.StepOrder;
 
-                var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
-                var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
+                var (primaryColor, companyName) = await GetBrandingAsync(cancellationToken);
                 ApprovalEmailHelper.FireAndForgetApprovalEmail(emailService, baseUrl, logger, instance, nextStep, primaryColor, companyName);
             }
             else
