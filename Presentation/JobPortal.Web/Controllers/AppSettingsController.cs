@@ -37,7 +37,7 @@ public class AppSettingsController(
         => Ok(await mediator.Send(new GetBrandingSettingQuery(), ct));
 
     [HttpPost("branding/logo")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> UploadBrandingLogo(IFormFile file, CancellationToken ct)
     {
@@ -86,7 +86,7 @@ public class AppSettingsController(
     }
 
     [HttpPut("branding")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> UpdateBranding(
         [FromBody] UpdateBrandingSettingRequest req, CancellationToken ct)
@@ -110,7 +110,7 @@ public class AppSettingsController(
         => Ok(await mediator.Send(new GetPrivacyConsentSettingQuery(), ct));
 
     [HttpPut("require-privacy-consent")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> UpdateRequirePrivacyConsent(
         [FromBody] UpdatePrivacyConsentSettingRequest req, CancellationToken ct)
     {
@@ -131,7 +131,7 @@ public class AppSettingsController(
     }
 
     [HttpPut("legal/{type}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> UpdateLegalPage(
         string type, [FromBody] UpdateLegalPageRequest req, CancellationToken ct)
@@ -145,12 +145,12 @@ public class AppSettingsController(
     public record UpdateLegalPageRequest(string Content);
 
     [HttpGet("smtp")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> GetSmtpSetting(CancellationToken ct)
         => Ok(await mediator.Send(new GetSmtpSettingQuery(), ct));
 
     [HttpPut("smtp")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> UpdateSmtpSetting(
         [FromBody] UpdateSmtpSettingRequest req, CancellationToken ct)
     {
