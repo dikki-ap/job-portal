@@ -86,8 +86,15 @@ internal static class StepEmailHelper
 
         _ = Task.Run(async () =>
         {
-            foreach (var (app, step, passed) in list)
-                await SendStepEmailAsync(emailService, logger, app, step, passed, primaryColor, companyName);
+            try
+            {
+                foreach (var (app, step, passed) in list)
+                    await SendStepEmailAsync(emailService, logger, app, step, passed, primaryColor, companyName);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "FireAndForgetBulkEmails: unexpected error processing step emails");
+            }
         });
     }
 }
