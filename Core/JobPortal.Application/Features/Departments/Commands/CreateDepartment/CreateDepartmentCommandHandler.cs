@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.Departments.Commands.CreateDepartment;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.Departments.Commands.CreateDepartment;
 public class CreateDepartmentCommandHandler(
     IDepartmentRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<CreateDepartmentCommandHandler> logger)
     : IRequestHandler<CreateDepartmentCommand, DepartmentDto>
 {
@@ -25,15 +28,8 @@ public class CreateDepartmentCommandHandler(
             };
             await repository.AddAsync(department, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
-            return new DepartmentDto(
-                department.Id,
-                department.Name,
-                department.CreatedAt,
-                department.CreatedByUserId,
-                null,
-                null,
-                null,
-                null);
+            cache.Remove(CacheKeys.Departments);
+            return new DepartmentDto(department.Id, department.Name, department.CreatedAt, department.CreatedByUserId, null, null, null, null);
         }
         catch (Exception ex)
         {

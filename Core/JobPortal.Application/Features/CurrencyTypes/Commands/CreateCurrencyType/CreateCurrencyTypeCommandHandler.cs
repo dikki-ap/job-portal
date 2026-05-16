@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.CurrencyTypes.Commands.CreateCurrencyType;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.CurrencyTypes.Commands.CreateCurrencyTy
 public class CreateCurrencyTypeCommandHandler(
     ICurrencyTypeRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<CreateCurrencyTypeCommandHandler> logger)
     : IRequestHandler<CreateCurrencyTypeCommand, CurrencyTypeDto>
 {
@@ -26,6 +29,7 @@ public class CreateCurrencyTypeCommandHandler(
             };
             await repository.AddAsync(currencyType, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.CurrencyTypes);
 
             return new CurrencyTypeDto(
                 currencyType.Id, currencyType.Name, currencyType.Prefix,

@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.EducationMajors.Commands.CreateEducationMajor;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.EducationMajors.Commands.CreateEducatio
 public class CreateEducationMajorCommandHandler(
     IEducationMajorRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<CreateEducationMajorCommandHandler> logger)
     : IRequestHandler<CreateEducationMajorCommand, EducationMajorDto>
 {
@@ -25,6 +28,7 @@ public class CreateEducationMajorCommandHandler(
             };
             await repository.AddAsync(educationMajor, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.EducationMajors);
 
             return new EducationMajorDto(
                 educationMajor.Id, educationMajor.Name,

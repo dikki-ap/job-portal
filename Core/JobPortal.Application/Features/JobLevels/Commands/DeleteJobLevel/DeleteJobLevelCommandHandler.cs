@@ -1,10 +1,15 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.Interfaces.Repositories;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.JobLevels.Commands.DeleteJobLevel;
 
-public class DeleteJobLevelCommandHandler(IJobLevelRepository repository, ILogger<DeleteJobLevelCommandHandler> logger)
+public class DeleteJobLevelCommandHandler(
+    IJobLevelRepository repository,
+    IMemoryCache cache,
+    ILogger<DeleteJobLevelCommandHandler> logger)
     : IRequestHandler<DeleteJobLevelCommand, Unit>
 {
     public async Task<Unit> Handle(DeleteJobLevelCommand request, CancellationToken cancellationToken)
@@ -15,6 +20,7 @@ public class DeleteJobLevelCommandHandler(IJobLevelRepository repository, ILogge
                 ?? throw new KeyNotFoundException($"Job level with ID {request.Id} not found.");
             await repository.DeleteAsync(jobLevel, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.JobLevels);
             return Unit.Value;
         }
         catch (Exception ex)

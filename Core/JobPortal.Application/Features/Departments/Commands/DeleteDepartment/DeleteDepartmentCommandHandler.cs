@@ -1,10 +1,15 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.Interfaces.Repositories;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.Departments.Commands.DeleteDepartment;
 
-public class DeleteDepartmentCommandHandler(IDepartmentRepository repository, ILogger<DeleteDepartmentCommandHandler> logger)
+public class DeleteDepartmentCommandHandler(
+    IDepartmentRepository repository,
+    IMemoryCache cache,
+    ILogger<DeleteDepartmentCommandHandler> logger)
     : IRequestHandler<DeleteDepartmentCommand, Unit>
 {
     public async Task<Unit> Handle(DeleteDepartmentCommand request, CancellationToken cancellationToken)
@@ -16,6 +21,7 @@ public class DeleteDepartmentCommandHandler(IDepartmentRepository repository, IL
 
             await repository.DeleteAsync(department, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.Departments);
             return Unit.Value;
         }
         catch (Exception ex)

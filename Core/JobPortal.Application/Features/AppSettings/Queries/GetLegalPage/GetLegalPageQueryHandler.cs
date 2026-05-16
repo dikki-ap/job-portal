@@ -22,7 +22,7 @@ public class GetLegalPageQueryHandler(
         var content = await appSettingRepository.GetValueAsync(settingKey, cancellationToken) ?? "";
 
         var result = new LegalPageDto(content);
-        cache.Set(cacheKey, result, TimeSpan.FromDays(30));
+        cache.Set(cacheKey, result, CacheEntry.Default(TimeSpan.FromDays(30)));
         return result;
     }
 }

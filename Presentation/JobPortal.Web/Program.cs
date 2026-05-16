@@ -34,7 +34,13 @@ builder.Host.UseSerilog((context, services, config) =>
         .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning);
 });
 
-builder.Services.AddMemoryCache();
+builder.Services.AddMemoryCache(options =>
+{
+    // Each cache entry calls SetSize(1); version counters call SetSize(0).
+    // 1000 units covers all static entries + versioned job pages + slug cache with headroom.
+    options.SizeLimit = 1000;
+    options.CompactionPercentage = 0.25;
+});
 
 // Forward X-Forwarded-For / X-Forwarded-Proto from a trusted reverse proxy (nginx, Traefik, etc.)
 // so the real client IP reaches rate limiting, logging, and HttpsRedirection.

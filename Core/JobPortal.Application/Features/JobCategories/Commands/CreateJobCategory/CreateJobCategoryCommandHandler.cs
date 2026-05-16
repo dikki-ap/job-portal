@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.JobCategories.Commands.CreateJobCategory;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.JobCategories.Commands.CreateJobCategor
 public class CreateJobCategoryCommandHandler(
     IJobCategoryRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<CreateJobCategoryCommandHandler> logger)
     : IRequestHandler<CreateJobCategoryCommand, JobCategoryDto>
 {
@@ -25,6 +28,7 @@ public class CreateJobCategoryCommandHandler(
             };
             await repository.AddAsync(jobCategory, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.JobCategories);
             return new JobCategoryDto(jobCategory.Id, jobCategory.Name, jobCategory.CreatedAt, jobCategory.CreatedByUserId, null, null, null, null);
         }
         catch (Exception ex)

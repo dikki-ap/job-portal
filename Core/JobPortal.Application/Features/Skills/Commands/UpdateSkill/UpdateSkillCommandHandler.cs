@@ -1,7 +1,9 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.Skills.Commands.UpdateSkill;
@@ -9,6 +11,7 @@ namespace JobPortal.Application.Features.Skills.Commands.UpdateSkill;
 public class UpdateSkillCommandHandler(
     ISkillRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateSkillCommandHandler> logger)
     : IRequestHandler<UpdateSkillCommand, SkillDto>
 {
@@ -24,6 +27,7 @@ public class UpdateSkillCommandHandler(
             skill.UpdatedByUserId = currentUserService.GetCurrentUserId();
             await repository.UpdateAsync(skill, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.Skills);
 
             return new SkillDto(
                 skill.Id, skill.Name, skill.CreatedAt, skill.CreatedByUserId,

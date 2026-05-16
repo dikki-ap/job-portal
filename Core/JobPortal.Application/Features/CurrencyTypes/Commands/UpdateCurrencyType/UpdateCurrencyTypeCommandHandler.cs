@@ -1,7 +1,9 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.CurrencyTypes.Commands.UpdateCurrencyType;
@@ -9,6 +11,7 @@ namespace JobPortal.Application.Features.CurrencyTypes.Commands.UpdateCurrencyTy
 public class UpdateCurrencyTypeCommandHandler(
     ICurrencyTypeRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateCurrencyTypeCommandHandler> logger)
     : IRequestHandler<UpdateCurrencyTypeCommand, CurrencyTypeDto>
 {
@@ -25,6 +28,7 @@ public class UpdateCurrencyTypeCommandHandler(
             currencyType.UpdatedByUserId = currentUserService.GetCurrentUserId();
             await repository.UpdateAsync(currencyType, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.CurrencyTypes);
 
             return new CurrencyTypeDto(
                 currencyType.Id, currencyType.Name, currencyType.Prefix,

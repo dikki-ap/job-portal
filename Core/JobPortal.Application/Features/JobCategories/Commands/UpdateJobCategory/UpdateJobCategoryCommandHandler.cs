@@ -1,7 +1,9 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.JobCategories.Commands.UpdateJobCategory;
@@ -9,6 +11,7 @@ namespace JobPortal.Application.Features.JobCategories.Commands.UpdateJobCategor
 public class UpdateJobCategoryCommandHandler(
     IJobCategoryRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateJobCategoryCommandHandler> logger)
     : IRequestHandler<UpdateJobCategoryCommand, JobCategoryDto>
 {
@@ -24,6 +27,7 @@ public class UpdateJobCategoryCommandHandler(
             jobCategory.UpdatedByUserId = currentUserService.GetCurrentUserId();
             await repository.UpdateAsync(jobCategory, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.JobCategories);
 
             return new JobCategoryDto(
                 jobCategory.Id, jobCategory.Name, jobCategory.CreatedAt, jobCategory.CreatedByUserId,

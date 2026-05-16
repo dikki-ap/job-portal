@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.JobLevels.Commands.CreateJobLevel;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.JobLevels.Commands.CreateJobLevel;
 public class CreateJobLevelCommandHandler(
     IJobLevelRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<CreateJobLevelCommandHandler> logger)
     : IRequestHandler<CreateJobLevelCommand, JobLevelDto>
 {
@@ -25,6 +28,7 @@ public class CreateJobLevelCommandHandler(
             };
             await repository.AddAsync(jobLevel, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.JobLevels);
             return new JobLevelDto(jobLevel.Id, jobLevel.Name, jobLevel.CreatedAt, jobLevel.CreatedByUserId, null, null, null, null);
         }
         catch (Exception ex)

@@ -10,6 +10,16 @@ public class AppSettingRepository(ApplicationDbContext context) : IAppSettingRep
     public async Task<string?> GetValueAsync(string key, CancellationToken cancellationToken = default)
         => (await context.AppSettings.FirstOrDefaultAsync(s => s.Key == key, cancellationToken))?.Value;
 
+    public async Task<Dictionary<string, string?>> GetManyAsync(
+        IEnumerable<string> keys, CancellationToken cancellationToken = default)
+    {
+        var keyList = keys.ToList();
+        var settings = await context.AppSettings
+            .Where(s => keyList.Contains(s.Key))
+            .ToListAsync(cancellationToken);
+        return keyList.ToDictionary(k => k, k => settings.FirstOrDefault(s => s.Key == k)?.Value);
+    }
+
     public async Task SetValueAsync(string key, string value, int? updatedByUserId, CancellationToken cancellationToken = default)
     {
         var setting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == key, cancellationToken);

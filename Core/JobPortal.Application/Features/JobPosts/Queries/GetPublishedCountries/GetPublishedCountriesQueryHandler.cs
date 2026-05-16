@@ -20,7 +20,7 @@ public class GetPublishedCountriesQueryHandler(
         try
         {
             var result = await repository.GetPublishedCountriesAsync(cancellationToken);
-            cache.Set(CacheKeys.PublishedCountries, result, TimeSpan.FromDays(1));
+            cache.Set(CacheKeys.PublishedCountries, result, CacheEntry.Default(TimeSpan.FromDays(1)));
             return result;
         }
         catch (Exception ex)

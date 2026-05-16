@@ -31,7 +31,7 @@ public class GetAllDocumentTypesQueryHandler(
                 d.UpdatedByUser is { } ub ? $"{ub.FirstName} {ub.LastName}".Trim() : null))
                 .ToList();
 
-            cache.Set(CacheKeys.DocumentTypes, (IEnumerable<DocumentTypeDto>)result, TimeSpan.FromDays(1));
+            cache.Set(CacheKeys.DocumentTypes, (IEnumerable<DocumentTypeDto>)result, CacheEntry.Default(TimeSpan.FromDays(1)));
             return result;
         }
         catch (Exception ex)

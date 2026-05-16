@@ -20,6 +20,7 @@ public class GetPublishedJobPostsQueryHandler(
         var version = cache.GetOrCreate(CacheKeys.PublishedJobsVersion, e =>
         {
             e.SetPriority(CacheItemPriority.NeverRemove);
+            e.SetSize(0);
             return 0L;
         });
 
@@ -43,7 +44,7 @@ public class GetPublishedJobPostsQueryHandler(
             var dtos = items.Select(j => GetAllJobPostsQueryHandler.MapToDto(j, globalRequired)).ToList();
 
             var result = new PagedResult<JobPostDto>(dtos, totalCount, request.Page, request.PageSize, totalPages);
-            cache.Set(cacheKey, result, TimeSpan.FromDays(1));
+            cache.Set(cacheKey, result, CacheEntry.Default(TimeSpan.FromDays(1)));
             return result;
         }
         catch (Exception ex)

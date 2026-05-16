@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.Skills.Commands.CreateSkill;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.Skills.Commands.CreateSkill;
 public class CreateSkillCommandHandler(
     ISkillRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<CreateSkillCommandHandler> logger)
     : IRequestHandler<CreateSkillCommand, SkillDto>
 {
@@ -25,6 +28,7 @@ public class CreateSkillCommandHandler(
             };
             await repository.AddAsync(skill, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+            cache.Remove(CacheKeys.Skills);
             return new SkillDto(skill.Id, skill.Name, skill.CreatedAt, skill.CreatedByUserId, null, null, null, null);
         }
         catch (Exception ex)

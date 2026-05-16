@@ -36,7 +36,7 @@ public class PublishJobPostCommandHandler(
 
             await repository.UpdateAsync(jobPost, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
-            InvalidateJobsCache();
+            InvalidateJobsCache(jobPost.Slug);
             return Unit.Value;
         }
         catch (Exception ex)
@@ -46,11 +46,11 @@ public class PublishJobPostCommandHandler(
         }
     }
 
-    private void InvalidateJobsCache()
+    private void InvalidateJobsCache(string slug)
     {
         var version = cache.Get<long>(CacheKeys.PublishedJobsVersion);
-        cache.Set(CacheKeys.PublishedJobsVersion, version + 1,
-            new MemoryCacheEntryOptions { Priority = CacheItemPriority.NeverRemove });
+        cache.Set(CacheKeys.PublishedJobsVersion, version + 1, CacheEntry.Permanent());
         cache.Remove(CacheKeys.PublishedCountries);
+        cache.Remove(CacheKeys.JobSlug(slug));
     }
 }
