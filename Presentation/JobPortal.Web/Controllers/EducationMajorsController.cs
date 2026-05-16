@@ -53,7 +53,7 @@ public class EducationMajorsController(IMediator mediator, ILogger<EducationMajo
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateEducationMajorCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Create: request received with name={Name}", command.Name);
@@ -71,7 +71,7 @@ public class EducationMajorsController(IMediator mediator, ILogger<EducationMajo
     }
 
     [HttpPut("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEducationMajorCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Update: request received for id={Id}", id);
@@ -90,7 +90,7 @@ public class EducationMajorsController(IMediator mediator, ILogger<EducationMajo
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("Delete: request received for id={Id}", id);

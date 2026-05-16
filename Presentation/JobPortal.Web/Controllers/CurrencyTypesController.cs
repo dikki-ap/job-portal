@@ -53,7 +53,7 @@ public class CurrencyTypesController(IMediator mediator, ILogger<CurrencyTypesCo
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateCurrencyTypeCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Create: request received with name={Name} prefix={Prefix}", command.Name, command.Prefix);
@@ -71,7 +71,7 @@ public class CurrencyTypesController(IMediator mediator, ILogger<CurrencyTypesCo
     }
 
     [HttpPut("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCurrencyTypeCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Update: request received for id={Id}", id);
@@ -90,7 +90,7 @@ public class CurrencyTypesController(IMediator mediator, ILogger<CurrencyTypesCo
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("Delete: request received for id={Id}", id);

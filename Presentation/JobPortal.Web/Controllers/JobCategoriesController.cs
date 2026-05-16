@@ -54,7 +54,7 @@ public class JobCategoriesController(IMediator mediator, ILogger<JobCategoriesCo
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateJobCategoryCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Create: request received with name={Name}", command.Name);
@@ -72,7 +72,7 @@ public class JobCategoriesController(IMediator mediator, ILogger<JobCategoriesCo
     }
 
     [HttpPut("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateJobCategoryCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Update: request received for id={Id} new name={Name}", id, command.Name);
@@ -95,7 +95,7 @@ public class JobCategoriesController(IMediator mediator, ILogger<JobCategoriesCo
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("Delete: request received for id={Id}", id);
