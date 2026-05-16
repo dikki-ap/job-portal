@@ -35,6 +35,10 @@ public class UserSyncMiddleware(RequestDelegate next, ILogger<UserSyncMiddleware
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "UserSync: failed to sync user ExternalId={ExternalId}", externalId);
+                    // Do not continue — request must not proceed with an unresolved identity.
+                    // An unset CurrentUserId would cause silent null writes or confusing 403s downstream.
+                    // The global exception handler will return HTTP 500 to the client.
+                    throw;
                 }
             }
             else
