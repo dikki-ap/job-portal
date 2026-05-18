@@ -15,6 +15,7 @@ import { useGetMyApplicationsQuery } from '../../myApplications/api/myApplicatio
 import { useAuth } from '../../../contexts/AuthContext';
 import { useBranding } from '../../../contexts/BrandingContext';
 import { stats } from '../../../content/companyProfile';
+import { AnimatedStat } from '../../../components/AnimatedStat';
 import type { JobPostDto } from '../../../types/api';
 
 const PAGE_SIZE = 9;
@@ -183,7 +184,7 @@ function StatsBar() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
           {stats.map((stat) => (
             <div key={stat.label} className="flex flex-col items-center gap-1 text-center">
-              <span className="text-4xl font-bold text-white">{stat.value}</span>
+              <AnimatedStat value={stat.value} className="text-4xl font-bold text-white" />
               <span className="text-xs font-medium text-white/60 uppercase tracking-wide">
                 {stat.label}
               </span>
