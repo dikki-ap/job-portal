@@ -124,7 +124,7 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const { isAdmin, isCandidate, isAuthenticated } = useAuth();
   const { companyName, logoUrl } = useBranding();
-  const { data: isApprover } = useIsApproverQuery(undefined, { skip: isCandidate });
+  const { data: isApprover } = useIsApproverQuery(undefined, { skip: !isAuthenticated });
   const { data: dmInfo } = useGetIsDepartmentManagerQuery(undefined, { skip: !isAuthenticated || !isCandidate });
   const isDepartmentManager = dmInfo?.isDepartmentManager ?? false;
 
@@ -194,6 +194,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             label: 'Department',
             items: [
               { label: 'Applications', to: '/department-applications', icon: <FileText className="h-5 w-5" /> },
+            ],
+          },
+        ]
+      : []),
+    ...(isApprover
+      ? [
+          {
+            label: 'Recruitment',
+            items: [
+              { label: 'Approvals', to: '/approvals', icon: <ClipboardCheck className="h-5 w-5" /> },
             ],
           },
         ]

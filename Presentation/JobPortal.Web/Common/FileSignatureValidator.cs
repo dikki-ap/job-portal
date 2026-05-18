@@ -7,13 +7,14 @@ namespace JobPortal.Web.Common;
 /// </summary>
 internal static class FileSignatureValidator
 {
-    // Each entry maps a MIME type to one or more valid magic-byte sequences.
+    // PDF: signature may appear within the first 1024 bytes (PDF spec §7.5.2 allows
+    // arbitrary bytes before %PDF, and some tools prepend a UTF-8 BOM or comments).
+    private static readonly byte[] PdfSignature = [0x25, 0x50, 0x44, 0x46]; // %PDF
+    private const int PdfScanDepth = 1024;
+
+    // Each entry maps a MIME type to one or more valid magic-byte sequences checked at byte 0.
     private static readonly Dictionary<string, byte[][]> Signatures = new()
     {
-        ["application/pdf"] =
-        [
-            [0x25, 0x50, 0x44, 0x46], // %PDF
-        ],
         ["image/png"] =
         [
             [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A],
@@ -52,6 +53,16 @@ internal static class FileSignatureValidator
             return true; // Can't validate non-seekable streams; let other checks handle it.
 
         stream.Position = 0;
+
+        // PDF header (%PDF) may appear within the first 1024 bytes.
+        if (mimeType == "application/pdf")
+        {
+            var scanLen = (int)Math.Min(PdfScanDepth, stream.Length);
+            var buf = new byte[scanLen];
+            _ = stream.Read(buf, 0, scanLen);
+            stream.Position = 0;
+            return buf.AsSpan().IndexOf(PdfSignature) >= 0;
+        }
 
         // SVG is XML text — no binary magic bytes, validate by XML/SVG opening tag.
         if (mimeType == "image/svg+xml")
