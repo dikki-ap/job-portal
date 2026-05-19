@@ -1,22 +1,17 @@
-using JobPortal.Application.Features.JobPosts.Commands.ApproveJobPostStep;
 using JobPortal.Application.Features.JobPosts.Commands.CancelJobPostApproval;
 using JobPortal.Application.Features.JobPosts.Commands.CloseJobPost;
 using JobPortal.Application.Features.JobPosts.Commands.CreateJobPost;
 using JobPortal.Application.Features.JobPosts.Commands.DeleteJobPost;
 using JobPortal.Application.Features.JobPosts.Commands.PublishJobPost;
-using JobPortal.Application.Features.JobPosts.Commands.RejectJobPostStep;
 using JobPortal.Application.Features.JobPosts.Commands.SubmitJobPostForApproval;
 using JobPortal.Application.Features.JobPosts.Commands.UpdateJobPost;
 using JobPortal.Application.Features.JobPosts.Queries.GetAllJobPosts;
-using JobPortal.Application.Features.JobPosts.Queries.GetJobApprovalStatus;
 using JobPortal.Application.Features.JobPosts.Queries.GetJobPostById;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobPortal.Web.Controllers;
-
-public record ApprovalActionRequest(string? Comment);
 
 [ApiController]
 [Route("api/job-posts")]
@@ -148,36 +143,6 @@ public class JobPostsController(IMediator mediator, ILogger<JobPostsController> 
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
     }
 
-    [HttpPost("{id:int}/approve")]
-    [Authorize]
-    public async Task<IActionResult> Approve(int id, [FromBody] ApprovalActionRequest? body, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await mediator.Send(new ApproveJobPostStepCommand(id, body?.Comment), cancellationToken);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
-        catch (UnauthorizedAccessException) { return Forbid(); }
-    }
-
-    [HttpPost("{id:int}/reject")]
-    [Authorize]
-    public async Task<IActionResult> Reject(int id, [FromBody] ApprovalActionRequest body, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(body?.Comment))
-            return BadRequest(new { error = "Comment is required when rejecting." });
-        try
-        {
-            await mediator.Send(new RejectJobPostStepCommand(id, body.Comment), cancellationToken);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
-        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
-        catch (UnauthorizedAccessException) { return Forbid(); }
-    }
-
     [HttpPost("{id:int}/cancel-approval")]
     [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> CancelApproval(int id, CancellationToken cancellationToken)
@@ -189,15 +154,6 @@ public class JobPostsController(IMediator mediator, ILogger<JobPostsController> 
         }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
-    }
-
-    [HttpGet("{id:int}/approval-status")]
-    [Authorize(Policy = "HrOrAdmin")]
-    public async Task<IActionResult> GetApprovalStatus(int id, CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(new GetJobApprovalStatusQuery(id), cancellationToken);
-        if (result is null) return NotFound();
-        return Ok(result);
     }
 
     [HttpPost("{id:int}/close")]

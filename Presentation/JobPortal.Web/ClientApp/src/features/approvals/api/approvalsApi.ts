@@ -25,7 +25,7 @@ export const approvalsApi = createApi({
       query: () => '/approvals/is-approver',
     }),
     getApprovalStatus: builder.query<ApprovalStatusDto | null, number>({
-      query: (jobPostId) => `/job-posts/${jobPostId}/approval-status`,
+      query: (jobPostId) => `/approvals/${jobPostId}/approval-status`,
       providesTags: (_result, _err, id) => [{ type: 'ApprovalStatus', id }],
     }),
     getApprovalJobPost: builder.query<JobPostDto, number>({
@@ -41,7 +41,7 @@ export const approvalsApi = createApi({
     }),
     approveJobPost: builder.mutation<void, { jobPostId: number; comment?: string }>({
       query: ({ jobPostId, comment }) => ({
-        url: `/job-posts/${jobPostId}/approve`,
+        url: `/approvals/${jobPostId}/approve`,
         method: 'POST',
         body: { comment: comment ?? null },
       }),
@@ -53,7 +53,7 @@ export const approvalsApi = createApi({
     }),
     rejectJobPost: builder.mutation<void, { jobPostId: number; comment: string }>({
       query: ({ jobPostId, comment }) => ({
-        url: `/job-posts/${jobPostId}/reject`,
+        url: `/approvals/${jobPostId}/reject`,
         method: 'POST',
         body: { comment },
       }),
