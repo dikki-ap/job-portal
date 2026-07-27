@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, XCircle, Clock, Download, MapPin, Briefcase, Building2, ExternalLink, BarChart2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Clock, Download, MapPin, Briefcase, Building2, ExternalLink, BarChart2, CalendarClock } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Button } from '../../../components/ui/Button';
 import { useGetMyApplicationByCodeQuery } from '../api/myApplicationsApi';
@@ -182,8 +182,29 @@ export function MyApplicationDetailPage() {
                     {step.completedAt && (
                       <p className="text-xs text-gray-400">{formatDateTime(step.completedAt)}</p>
                     )}
-                    {step.status === 'Pending' && (
+                    {step.status === 'Pending' && !step.scheduledAt && (
                       <p className="text-xs text-gray-400 italic">Awaiting review</p>
+                    )}
+                    {step.scheduledAt && step.status === 'Pending' && (
+                      <div className="mt-1.5 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 flex flex-col gap-0.5">
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
+                          <CalendarClock className="h-3.5 w-3.5 shrink-0" />{formatDateTime(step.scheduledAt)}
+                        </span>
+                        {step.scheduledLocation && (
+                          <span className="flex items-center gap-1.5 text-xs text-blue-600">
+                            <MapPin className="h-3 w-3 shrink-0" />{step.scheduledLocation}
+                          </span>
+                        )}
+                        {step.scheduledNote && (
+                          <p className="text-xs text-blue-600 mt-0.5">{step.scheduledNote}</p>
+                        )}
+                      </div>
+                    )}
+                    {step.scheduledAt && step.status !== 'Pending' && (
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-400">
+                        <span className="flex items-center gap-1"><CalendarClock className="h-3 w-3" />{formatDateTime(step.scheduledAt)}</span>
+                        {step.scheduledLocation && <span>· {step.scheduledLocation}</span>}
+                      </div>
                     )}
                   </div>
                 </div>

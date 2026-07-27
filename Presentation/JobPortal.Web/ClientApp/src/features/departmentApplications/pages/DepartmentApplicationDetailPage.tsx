@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase,
-  Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, FolderOpen, Plus,
+  Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, FolderOpen, Plus, CalendarClock,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { DocumentPreviewModal } from '../../../components/ui/DocumentPreviewModal';
 import { UploadCompanyDocumentModal } from '../../../components/ui/UploadCompanyDocumentModal';
+import { ScheduleInterviewModal } from '../../../components/ui/ScheduleInterviewModal';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import { downloadWithAuth } from '../../../lib/download';
@@ -22,6 +23,7 @@ import {
   useAcceptApplicationMutation,
   useRejectApplicationMutation,
   useRateDepartmentApplicationMutation,
+  useScheduleStepMutation,
 } from '../api/departmentApplicationsApi';
 import { useUploadCompanyDocumentMutation } from '../../applications/api/applicationsApi';
 import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
@@ -83,6 +85,10 @@ export function DepartmentApplicationDetailPage() {
   const { toasts, addToast, dismissToast } = useToast();
   const [previewDoc, setPreviewDoc] = useState<{ id: number; fileType: string; fileName: string } | null>(null);
   const [companyDocModal, setCompanyDocModal] = useState(false);
+  const [scheduleModal, setScheduleModal] = useState<{
+    stepId: number; stepName: string;
+    existing: { scheduledAt: string | null; scheduledLocation: string | null; scheduledNote: string | null } | null;
+  } | null>(null);
 
   const [localDmRating, setLocalDmRating] = useState<number | null>(null);
   const [localDmNote, setLocalDmNote] = useState('');
@@ -98,6 +104,7 @@ export function DepartmentApplicationDetailPage() {
   const [rejectApplication, { isLoading: rejecting }] = useRejectApplicationMutation();
   const [rateDmApplication, { isLoading: ratingDm }] = useRateDepartmentApplicationMutation();
   const [uploadCompanyDocument, { isLoading: uploadingCompanyDoc }] = useUploadCompanyDocumentMutation();
+  const [scheduleStep, { isLoading: scheduling }] = useScheduleStepMutation();
 
   useEffect(() => {
     if (application) {
@@ -155,6 +162,18 @@ export function DepartmentApplicationDetailPage() {
     } catch (err: unknown) {
       const data = (err as { data?: { error?: string } })?.data;
       addToast(data?.error ?? 'Failed to upload document.', 'error');
+    }
+  };
+
+  const handleScheduleStep = async (data: { scheduledAt: string | null; scheduledLocation: string | null; scheduledNote: string | null }) => {
+    if (!scheduleModal) return;
+    try {
+      await scheduleStep({ applicationId: appId, stepId: scheduleModal.stepId, ...data }).unwrap();
+      setScheduleModal(null);
+      addToast('Schedule saved.', 'success');
+    } catch (err: unknown) {
+      const d = (err as { data?: { error?: string } })?.data;
+      addToast(d?.error ?? 'Failed to save schedule.', 'error');
     }
   };
 
@@ -396,8 +415,8 @@ export function DepartmentApplicationDetailPage() {
             {application.steps.map((step) => {
               const canAct = step.status === 'Pending' && !isFinalized && canActOnStep(step, application.steps);
               return (
-                <div key={step.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 flex-wrap sm:flex-nowrap">
-                  <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold flex items-center justify-center shrink-0">
+                <div key={step.id} className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:gap-3">
+                  <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold flex items-center justify-center shrink-0 self-start sm:self-center">
                     {step.stepOrder}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -416,34 +435,53 @@ export function DepartmentApplicationDetailPage() {
                         {step.completedByName && <span className="ml-1">· by {step.completedByName}</span>}
                       </p>
                     )}
-                  </div>
-                  {step.status === 'Pending' && !isFinalized && (
-                    canAct ? (
-                      <div className="flex gap-2 shrink-0 w-full sm:w-auto">
-                        <Button
-                          size="sm"
-                          className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white gap-1.5"
-                          onClick={() => handlePassStep(step)}
-                          loading={passingStep}
-                          disabled={failingStep}
-                        >
-                          <CheckCircle className="h-3.5 w-3.5" /> Pass
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          className="flex-1 sm:flex-none gap-1.5"
-                          onClick={() => handleFailStep(step)}
-                          loading={failingStep}
-                          disabled={passingStep}
-                        >
-                          <XCircle className="h-3.5 w-3.5" /> Fail
-                        </Button>
+                    {step.scheduledAt && (
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-blue-600">
+                        <span className="flex items-center gap-1"><CalendarClock className="h-3 w-3" />{formatDateTime(step.scheduledAt)}</span>
+                        {step.scheduledLocation && <span className="text-blue-500">· {step.scheduledLocation}</span>}
                       </div>
-                    ) : (
-                      <span className="text-xs text-gray-400 italic shrink-0">Waiting previous step</span>
-                    )
-                  )}
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    {step.status === 'Pending' && !isFinalized && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-1.5 text-blue-600 hover:bg-blue-50"
+                        onClick={() => setScheduleModal({ stepId: step.id, stepName: step.stepName, existing: { scheduledAt: step.scheduledAt, scheduledLocation: step.scheduledLocation, scheduledNote: step.scheduledNote } })}
+                        disabled={scheduling}
+                      >
+                        <CalendarClock className="h-3.5 w-3.5" /> {step.scheduledAt ? 'Edit Schedule' : 'Schedule'}
+                      </Button>
+                    )}
+                    {step.status === 'Pending' && !isFinalized && (
+                      canAct ? (
+                        <>
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white gap-1.5"
+                            onClick={() => handlePassStep(step)}
+                            loading={passingStep}
+                            disabled={failingStep}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" /> Pass
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            className="gap-1.5"
+                            onClick={() => handleFailStep(step)}
+                            loading={failingStep}
+                            disabled={passingStep}
+                          >
+                            <XCircle className="h-3.5 w-3.5" /> Fail
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic self-center">Waiting previous step</span>
+                      )
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -622,6 +660,15 @@ export function DepartmentApplicationDetailPage() {
         onClose={() => setCompanyDocModal(false)}
         onUpload={handleUploadCompanyDoc}
         isUploading={uploadingCompanyDoc}
+      />
+
+      <ScheduleInterviewModal
+        open={scheduleModal !== null}
+        onClose={() => setScheduleModal(null)}
+        stepName={scheduleModal?.stepName ?? ''}
+        existing={scheduleModal?.existing ?? null}
+        onSave={handleScheduleStep}
+        isSaving={scheduling}
       />
     </div>
   );

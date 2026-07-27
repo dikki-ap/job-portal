@@ -6,6 +6,7 @@ using JobPortal.Application.Features.Applications.Commands.BulkRejectDepartmentA
 using JobPortal.Application.Features.Applications.Commands.BulkUpdateDepartmentApplicationStep;
 using JobPortal.Application.Features.Applications.Commands.RateDepartmentApplication;
 using JobPortal.Application.Features.Applications.Commands.RejectApplication;
+using JobPortal.Application.Features.Applications.Commands.ScheduleApplicationStep;
 using JobPortal.Application.Features.Applications.Commands.UpdateApplicationStep;
 using JobPortal.Application.Features.DepartmentApplications.Queries.GetDepartmentApplicationById;
 using JobPortal.Application.Features.DepartmentApplications.Queries.GetDepartmentApplications;
@@ -132,6 +133,28 @@ public class DepartmentApplicationsController(IMediator mediator, ILogger<Depart
         try
         {
             var result = await mediator.Send(new RejectApplicationCommand(id), cancellationToken);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    public record ScheduleStepRequest(DateTime? ScheduledAt, string? ScheduledLocation, string? ScheduledNote);
+
+    [HttpPost("{id:int}/steps/{stepId:int}/schedule")]
+    public async Task<IActionResult> ScheduleStep(int id, int stepId, [FromBody] ScheduleStepRequest req, CancellationToken cancellationToken)
+    {
+        var (dmInfo, error) = await GetDmOrForbidAsync(cancellationToken);
+        if (error is not null) return error;
+
+        if (!await IsInScopeAsync(id, dmInfo!.DepartmentIds, cancellationToken))
+            return Forbid();
+
+        try
+        {
+            var result = await mediator.Send(
+                new ScheduleApplicationStepCommand(id, stepId, req.ScheduledAt, req.ScheduledLocation, req.ScheduledNote),
+                cancellationToken);
             return Ok(result);
         }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }

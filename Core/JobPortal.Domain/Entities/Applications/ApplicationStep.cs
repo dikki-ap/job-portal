@@ -14,6 +14,10 @@ public class ApplicationStep : BaseEntity
     public int? CompletedByUserId { get; set; }
     public string? CompletedByName { get; set; }
 
+    public DateTime? ScheduledAt { get; set; }
+    public string? ScheduledLocation { get; set; }
+    public string? ScheduledNote { get; set; }
+
     public Application Application { get; set; } = null!;
     public JobStep JobStep { get; set; } = null!;
 }

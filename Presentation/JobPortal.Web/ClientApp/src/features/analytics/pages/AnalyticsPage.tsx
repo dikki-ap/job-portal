@@ -201,6 +201,33 @@ export function AnalyticsPage() {
       .slice(0, 10);
   }, [filtered]);
 
+  const bySource = useMemo(() => {
+    const counts = new Map<string, number>();
+    filtered.forEach((a) => {
+      if (!a.source) return;
+      counts.set(a.source, (counts.get(a.source) ?? 0) + 1);
+    });
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filtered]);
+
+  const stepDropout = useMemo(() => {
+    const map = new Map<string, { order: number; passed: number; failed: number; pending: number }>();
+    filtered.forEach((a) => {
+      a.steps.forEach((s) => {
+        if (!map.has(s.stepName)) map.set(s.stepName, { order: s.stepOrder, passed: 0, failed: 0, pending: 0 });
+        const entry = map.get(s.stepName)!;
+        if (s.status === 'Passed') entry.passed++;
+        else if (s.status === 'Failed') entry.failed++;
+        else entry.pending++;
+      });
+    });
+    return [...map.entries()]
+      .map(([name, d]) => ({ name, ...d }))
+      .sort((a, b) => a.order - b.order);
+  }, [filtered]);
+
   const byStatus = useMemo(() => {
     const counts: Record<string, number> = { Pending: 0, InReview: 0, Accepted: 0, Rejected: 0 };
     filtered.forEach((a) => { const s = deriveStatus(a); if (s in counts) counts[s]++; });
@@ -363,6 +390,47 @@ export function AnalyticsPage() {
                   <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={(v) => [v, 'Applications']} />
                   <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Source Breakdown */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Applications by Source</h2>
+            <p className="text-xs text-gray-400 mb-4">Where candidates found this job.</p>
+            {bySource.length === 0 ? (
+              <p className="text-sm text-gray-400 py-10 text-center">No source data yet.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={Math.max(160, bySource.length * 36)}>
+                <BarChart data={bySource} layout="vertical" margin={{ left: 0, right: 16 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v) => [v, 'Applications']} />
+                  <Bar dataKey="count" fill="#0891b2" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Step Dropout */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Step Dropout Analysis</h2>
+            <p className="text-xs text-gray-400 mb-4">Passed, failed, and pending count per hiring step.</p>
+            {stepDropout.length === 0 ? (
+              <p className="text-sm text-gray-400 py-10 text-center">No step data yet.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={Math.max(220, stepDropout.length * 60)}>
+                <BarChart data={stepDropout} margin={{ left: 0, right: 16, bottom: 24 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" />
+                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                  <Tooltip />
+                  <Legend verticalAlign="top" height={28} />
+                  <Bar dataKey="passed" name="Passed" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="failed" name="Failed" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="pending" name="Pending" fill="#9ca3af" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

@@ -110,6 +110,17 @@ export const applicationsApi = createApi({
         'Application',
       ],
     }),
+    scheduleStep: builder.mutation<ApplicationDto, {
+      applicationId: number; stepId: number;
+      scheduledAt: string | null; scheduledLocation: string | null; scheduledNote: string | null;
+    }>({
+      query: ({ applicationId, stepId, scheduledAt, scheduledLocation, scheduledNote }) => ({
+        url: `/${applicationId}/steps/${stepId}/schedule`,
+        method: 'POST',
+        body: { scheduledAt, scheduledLocation, scheduledNote },
+      }),
+      invalidatesTags: (_r, _e, { applicationId }) => [{ type: 'Application', id: applicationId }, 'Application'],
+    }),
     uploadCompanyDocument: builder.mutation<
       ApplicationDocumentDto,
       { code: string; name: string; file: File }
@@ -137,5 +148,6 @@ export const {
   useBulkAcceptMutation,
   useBulkRejectMutation,
   useRateApplicationMutation,
+  useScheduleStepMutation,
   useUploadCompanyDocumentMutation,
 } = applicationsApi;

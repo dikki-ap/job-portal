@@ -241,6 +241,9 @@ export interface ApplicationStepDto {
   completedAt: string | null;
   completedByUserId: number | null;
   completedByName: string | null;
+  scheduledAt: string | null;
+  scheduledLocation: string | null;
+  scheduledNote: string | null;
 }
 
 export interface ApplicationDocumentDto {

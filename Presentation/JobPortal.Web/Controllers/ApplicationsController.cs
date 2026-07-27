@@ -5,6 +5,7 @@ using JobPortal.Application.Features.Applications.Commands.BulkRejectApplication
 using JobPortal.Application.Features.Applications.Commands.BulkUpdateApplicationStep;
 using JobPortal.Application.Features.Applications.Commands.RateApplication;
 using JobPortal.Application.Features.Applications.Commands.RejectApplication;
+using JobPortal.Application.Features.Applications.Commands.ScheduleApplicationStep;
 using JobPortal.Application.Features.Applications.Commands.UpdateApplicationStep;
 using JobPortal.Application.Features.Applications.Queries.GetAllApplications;
 using JobPortal.Application.Features.Applications.Queries.GetApplicationByCode;
@@ -93,6 +94,22 @@ public class ApplicationsController(IMediator mediator, ILogger<ApplicationsCont
         try
         {
             var result = await mediator.Send(new RejectApplicationCommand(id), cancellationToken);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    public record ScheduleStepRequest(DateTime? ScheduledAt, string? ScheduledLocation, string? ScheduledNote);
+
+    [HttpPost("{id:int}/steps/{stepId:int}/schedule")]
+    public async Task<IActionResult> ScheduleStep(int id, int stepId, [FromBody] ScheduleStepRequest req, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await mediator.Send(
+                new ScheduleApplicationStepCommand(id, stepId, req.ScheduledAt, req.ScheduledLocation, req.ScheduledNote),
+                cancellationToken);
             return Ok(result);
         }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }

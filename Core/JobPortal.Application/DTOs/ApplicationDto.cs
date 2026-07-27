@@ -9,7 +9,10 @@ public record ApplicationStepItemDto(
     string Status,
     DateTime? CompletedAt,
     int? CompletedByUserId,
-    string? CompletedByName);
+    string? CompletedByName,
+    DateTime? ScheduledAt,
+    string? ScheduledLocation,
+    string? ScheduledNote);
 
 public record ApplicationDocumentDto(
     int Id,

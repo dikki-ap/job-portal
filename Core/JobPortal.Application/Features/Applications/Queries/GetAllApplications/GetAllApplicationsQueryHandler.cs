@@ -54,7 +54,8 @@ public class GetAllApplicationsQueryHandler(
         a.Steps.OrderBy(s => s.StepOrder).Select(s => new ApplicationStepItemDto(
             s.Id, s.JobStepId, s.StepName, s.StepOrder,
             s.JobStep?.IsRequired ?? true, s.Status, s.CompletedAt,
-            s.CompletedByUserId, s.CompletedByName)),
+            s.CompletedByUserId, s.CompletedByName,
+            s.ScheduledAt, s.ScheduledLocation, s.ScheduledNote)),
         a.Documents
             .Where(d => !excludeCompanyDocuments || !d.IsCompanyDocument)
             .Select(d => new ApplicationDocumentDto(

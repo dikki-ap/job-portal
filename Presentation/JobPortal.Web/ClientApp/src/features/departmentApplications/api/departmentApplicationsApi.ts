@@ -79,6 +79,20 @@ export const departmentApplicationsApi = createApi({
         { type: 'DepartmentApplication', id: applicationId },
       ],
     }),
+    scheduleStep: builder.mutation<ApplicationDto, {
+      applicationId: number; stepId: number;
+      scheduledAt: string | null; scheduledLocation: string | null; scheduledNote: string | null;
+    }>({
+      query: ({ applicationId, stepId, scheduledAt, scheduledLocation, scheduledNote }) => ({
+        url: `/${applicationId}/steps/${stepId}/schedule`,
+        method: 'POST',
+        body: { scheduledAt, scheduledLocation, scheduledNote },
+      }),
+      invalidatesTags: (_r, _e, { applicationId }) => [
+        'DepartmentApplication',
+        { type: 'DepartmentApplication', id: applicationId },
+      ],
+    }),
     bulkUpdateStep: builder.mutation<
       BulkOperationResult,
       { applicationIds: number[]; action: 'Passed' | 'Failed' }
@@ -105,6 +119,7 @@ export const {
   useAcceptApplicationMutation,
   useRejectApplicationMutation,
   useRateDepartmentApplicationMutation,
+  useScheduleStepMutation,
   useBulkUpdateStepMutation,
   useBulkAcceptMutation,
   useBulkRejectMutation,
