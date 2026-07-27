@@ -266,6 +266,7 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | POST | `/applications/{id}/accept` | HR | Directly accept |
 | POST | `/applications/{id}/reject` | HR | Directly reject |
 | POST | `/applications/{id}/rate` | HR | Set rating (1–10) and note |
+| POST | `/applications/{id}/steps/{stepId}/schedule` | HR | Set/clear interview schedule (date, location, note) on a step |
 | POST | `/applications/bulk-step` | HR | Bulk pass/fail current step |
 | POST | `/applications/bulk-accept` | HR | Bulk accept |
 | POST | `/applications/bulk-reject` | HR | Bulk reject |
@@ -710,6 +711,7 @@ volumes:
 | `Smtp__FromName` | `"Job Portal"` | Sender display name |
 | `ASPNETCORE_URLS` | `http://+:8080` | Listening address inside container |
 | `ASPNETCORE_ENVIRONMENT` | `Development` | Set to `Production` in production |
+| `ApplicationSources__0` … `ApplicationSources__N` | `Direct`, `LinkedIn`, … | Dropdown options shown on the Apply page ("How did you hear about us?"). Default list: `Direct`, `LinkedIn`, `JobStreet`, `Kalibrr`, `Glints`, `Referral`, `Instagram`, `TikTok`, `Other`. Override individual items via indexed env vars (`ApplicationSources__0=Direct`, `ApplicationSources__1=LinkedIn`, …), or omit entirely to use the defaults baked into `appsettings.json`. Exposed to the frontend via `GET /api/config/application-sources`. |
 
 ---
 

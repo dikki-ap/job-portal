@@ -38,6 +38,17 @@ COPY --from=build /app/publish .
 USER appuser
 
 ENV ASPNETCORE_URLS=http://+:8080
+# Application source options shown in the "How did you hear about us?" dropdown on the apply page.
+# Defaults are baked into appsettings.json. Override per item via env vars:
+#   ApplicationSources__0=Direct
+#   ApplicationSources__1=LinkedIn
+#   ApplicationSources__2=JobStreet
+#   ApplicationSources__3=Kalibrr
+#   ApplicationSources__4=Glints
+#   ApplicationSources__5=Referral
+#   ApplicationSources__6=Instagram
+#   ApplicationSources__7=TikTok
+#   ApplicationSources__8=Other
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "JobPortal.Web.dll"]
