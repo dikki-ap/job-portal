@@ -24,7 +24,9 @@ public class GetAllApplicationsQueryHandler(
         }
     }
 
-    internal static ApplicationDto MapToDto(Domain.Entities.Applications.Application a) => new(
+    internal static ApplicationDto MapToDto(
+        Domain.Entities.Applications.Application a,
+        bool excludeCompanyDocuments = false) => new(
         a.Id,
         a.Code,
         a.JobPostId,
@@ -52,13 +54,15 @@ public class GetAllApplicationsQueryHandler(
         a.Steps.OrderBy(s => s.StepOrder).Select(s => new ApplicationStepItemDto(
             s.Id, s.JobStepId, s.StepName, s.StepOrder,
             s.JobStep?.IsRequired ?? true, s.Status, s.CompletedAt)),
-        a.Documents.Select(d => new ApplicationDocumentDto(
-            d.Id, d.DocumentType,
-            d.Document?.OriginalFileName ?? string.Empty,
-            d.Document?.FilePath ?? string.Empty,
-            d.Document?.FileType ?? string.Empty,
-            d.CreatedAt,
-            d.IsCompanyDocument)),
+        a.Documents
+            .Where(d => !excludeCompanyDocuments || !d.IsCompanyDocument)
+            .Select(d => new ApplicationDocumentDto(
+                d.Id, d.DocumentType,
+                d.Document?.OriginalFileName ?? string.Empty,
+                d.Document?.FilePath ?? string.Empty,
+                d.Document?.FileType ?? string.Empty,
+                d.CreatedAt,
+                d.IsCompanyDocument)),
         a.Rating,
         a.RatingNote,
         a.RatedAt,

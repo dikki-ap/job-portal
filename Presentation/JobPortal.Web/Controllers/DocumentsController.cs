@@ -91,20 +91,39 @@ public class DocumentsController(
             return NotFound();
         }
 
-        // HR/Admin can access any document; candidates can access their own;
-        // Department Managers can access documents for applications in their department.
         var isHrOrAdmin = User.IsInRole("Admin") || User.IsInRole("HR");
-        if (!isHrOrAdmin && appDoc.Application.UserId != currentUserService.GetCurrentUserId())
-        {
-            var email = currentUserService.GetCurrentUserEmail()?.Trim().ToLowerInvariant();
-            var dm = string.IsNullOrEmpty(email)
-                ? null
-                : await context.DepartmentManagers
-                    .Include(m => m.Departments)
-                    .FirstOrDefaultAsync(m => m.Email.ToLower() == email, cancellationToken);
 
-            if (dm is null || !dm.Departments.Any(d => d.DepartmentId == appDoc.Application.JobPost?.DepartmentId))
-                return Forbid();
+        if (appDoc.IsCompanyDocument)
+        {
+            // Company documents are confidential — HR/Admin always allowed; DM if in-scope; candidates never.
+            if (!isHrOrAdmin)
+            {
+                var email = currentUserService.GetCurrentUserEmail()?.Trim().ToLowerInvariant();
+                var dm = string.IsNullOrEmpty(email)
+                    ? null
+                    : await context.DepartmentManagers
+                        .Include(m => m.Departments)
+                        .FirstOrDefaultAsync(m => m.Email.ToLower() == email, cancellationToken);
+
+                if (dm is null || !dm.Departments.Any(d => d.DepartmentId == appDoc.Application.JobPost?.DepartmentId))
+                    return Forbid();
+            }
+        }
+        else
+        {
+            // Candidate documents: HR/Admin always allowed; candidates can access their own; DM if in-scope.
+            if (!isHrOrAdmin && appDoc.Application.UserId != currentUserService.GetCurrentUserId())
+            {
+                var email = currentUserService.GetCurrentUserEmail()?.Trim().ToLowerInvariant();
+                var dm = string.IsNullOrEmpty(email)
+                    ? null
+                    : await context.DepartmentManagers
+                        .Include(m => m.Departments)
+                        .FirstOrDefaultAsync(m => m.Email.ToLower() == email, cancellationToken);
+
+                if (dm is null || !dm.Departments.Any(d => d.DepartmentId == appDoc.Application.JobPost?.DepartmentId))
+                    return Forbid();
+            }
         }
 
         var (stream, contentType) = await storageService.DownloadAsync(appDoc.Document.FilePath, cancellationToken);

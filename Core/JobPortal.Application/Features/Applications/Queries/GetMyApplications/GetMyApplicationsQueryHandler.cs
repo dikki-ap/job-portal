@@ -21,7 +21,7 @@ public class GetMyApplicationsQueryHandler(
         try
         {
             var items = await repository.GetByUserIdAsync(userId, cancellationToken);
-            return items.Select(GetAllApplicationsQueryHandler.MapToDto);
+            return items.Select(a => GetAllApplicationsQueryHandler.MapToDto(a, excludeCompanyDocuments: true));
         }
         catch (Exception ex) when (ex is not UnauthorizedAccessException)
         {

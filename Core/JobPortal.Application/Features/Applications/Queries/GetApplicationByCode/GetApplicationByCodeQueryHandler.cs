@@ -16,7 +16,9 @@ public class GetApplicationByCodeQueryHandler(
         try
         {
             var application = await repository.GetByCodeAsync(request.Code, cancellationToken);
-            return application is null ? null : GetAllApplicationsQueryHandler.MapToDto(application);
+            return application is null
+                ? null
+                : GetAllApplicationsQueryHandler.MapToDto(application, request.ExcludeCompanyDocuments);
         }
         catch (Exception ex)
         {

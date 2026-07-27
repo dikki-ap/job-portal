@@ -206,11 +206,11 @@ export function MyApplicationDetailPage() {
       )}
 
       {/* Submitted Documents */}
-      {application.documents.length > 0 && (
+      {application.documents.filter(d => !d.isCompanyDocument).length > 0 && (
         <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
           <h2 className="text-base font-semibold text-gray-900">Submitted Documents</h2>
           <div className="flex flex-col divide-y divide-gray-100">
-            {application.documents.map((doc) => (
+            {application.documents.filter(d => !d.isCompanyDocument).map((doc) => (
               <div key={doc.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-medium text-gray-900">

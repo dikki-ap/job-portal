@@ -26,7 +26,7 @@ public class MyApplicationsController(IMediator mediator, ICurrentUserService cu
     [HttpGet("{code}")]
     public async Task<IActionResult> GetByCode(string code, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetApplicationByCodeQuery(code), cancellationToken);
+        var result = await mediator.Send(new GetApplicationByCodeQuery(code, ExcludeCompanyDocuments: true), cancellationToken);
         if (result is null) return NotFound();
 
         var currentUserId = currentUserService.GetCurrentUserId();
