@@ -7,7 +7,9 @@ public record ApplicationStepItemDto(
     int StepOrder,
     bool IsRequired,
     string Status,
-    DateTime? CompletedAt);
+    DateTime? CompletedAt,
+    int? CompletedByUserId,
+    string? CompletedByName);
 
 public record ApplicationDocumentDto(
     int Id,
@@ -50,4 +52,5 @@ public record ApplicationDto(
     DateTime? RatedAt,
     int? DmRating,
     string? DmRatingNote,
-    DateTime? DmRatedAt);
+    DateTime? DmRatedAt,
+    string? Source);

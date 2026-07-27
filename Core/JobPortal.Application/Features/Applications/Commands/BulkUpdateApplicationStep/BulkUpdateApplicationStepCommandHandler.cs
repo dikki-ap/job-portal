@@ -11,6 +11,7 @@ namespace JobPortal.Application.Features.Applications.Commands.BulkUpdateApplica
 
 public class BulkUpdateApplicationStepCommandHandler(
     IApplicationRepository repository,
+    ICurrentUserService currentUserService,
     IEmailService emailService,
     IAppSettingRepository appSettingRepository,
     ILogger<BulkUpdateApplicationStepCommandHandler> logger)
@@ -19,6 +20,8 @@ public class BulkUpdateApplicationStepCommandHandler(
     public async Task<BulkOperationResultDto> Handle(BulkUpdateApplicationStepCommand request, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
+        var completedByUserId = currentUserService.GetCurrentUserId();
+        var completedByName = currentUserService.GetCurrentUserFullName();
         var ids = request.ApplicationIds.Distinct().ToList();
 
         // ONE query for all applications with their steps
@@ -77,9 +80,9 @@ public class BulkUpdateApplicationStepCommandHandler(
         await repository.ExecuteInTransactionAsync(async () =>
         {
             if (stepIdsToPass.Count > 0)
-                await repository.BulkPassStepsAsync(stepIdsToPass, now, cancellationToken);
+                await repository.BulkPassStepsAsync(stepIdsToPass, now, completedByUserId, completedByName, cancellationToken);
             if (stepIdsToFail.Count > 0)
-                await repository.BulkFailStepsAsync(stepIdsToFail, now, cancellationToken);
+                await repository.BulkFailStepsAsync(stepIdsToFail, now, completedByUserId, completedByName, cancellationToken);
             if (appIdsToAccept.Count > 0)
                 await repository.BulkAcceptAsync(appIdsToAccept, now, cancellationToken);
             if (appIdsToReject.Count > 0)

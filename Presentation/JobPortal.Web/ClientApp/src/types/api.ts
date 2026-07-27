@@ -239,6 +239,8 @@ export interface ApplicationStepDto {
   isRequired: boolean;
   status: string;
   completedAt: string | null;
+  completedByUserId: number | null;
+  completedByName: string | null;
 }
 
 export interface ApplicationDocumentDto {
@@ -284,6 +286,7 @@ export interface ApplicationDto {
   dmRating: number | null;
   dmRatingNote: string | null;
   dmRatedAt: string | null;
+  source: string | null;
 }
 
 export interface EducationMajorDto {

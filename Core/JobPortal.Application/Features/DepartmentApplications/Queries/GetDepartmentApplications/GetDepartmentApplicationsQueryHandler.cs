@@ -16,7 +16,7 @@ public class GetDepartmentApplicationsQueryHandler(
         try
         {
             var items = await repository.GetAllByDepartmentAsync(request.DepartmentIds, cancellationToken);
-            return items.Select(GetAllApplicationsQueryHandler.MapToDto);
+            return items.Select(a => GetAllApplicationsQueryHandler.MapToDto(a));
         }
         catch (Exception ex)
         {

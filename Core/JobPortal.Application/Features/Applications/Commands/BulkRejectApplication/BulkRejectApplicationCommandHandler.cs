@@ -11,6 +11,7 @@ namespace JobPortal.Application.Features.Applications.Commands.BulkRejectApplica
 
 public class BulkRejectApplicationCommandHandler(
     IApplicationRepository repository,
+    ICurrentUserService currentUserService,
     IEmailService emailService,
     IAppSettingRepository appSettingRepository,
     ILogger<BulkRejectApplicationCommandHandler> logger)
@@ -20,6 +21,8 @@ public class BulkRejectApplicationCommandHandler(
     {
         var ids = request.ApplicationIds.Distinct().ToList();
         var now = DateTime.UtcNow;
+        var completedByUserId = currentUserService.GetCurrentUserId();
+        var completedByName = currentUserService.GetCurrentUserFullName();
 
         var applications = await repository.GetByIdsAsync(ids, cancellationToken);
 
@@ -66,7 +69,7 @@ public class BulkRejectApplicationCommandHandler(
             await repository.ExecuteInTransactionAsync(async () =>
             {
                 if (stepIdsToFail.Count > 0)
-                    await repository.BulkFailStepsAsync(stepIdsToFail, now, cancellationToken);
+                    await repository.BulkFailStepsAsync(stepIdsToFail, now, completedByUserId, completedByName, cancellationToken);
                 await repository.BulkRejectAsync(appIdsToReject, now, cancellationToken);
             }, cancellationToken);
         }

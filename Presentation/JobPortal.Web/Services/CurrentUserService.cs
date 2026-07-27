@@ -18,6 +18,9 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor, IConfi
     public string? GetCurrentUserEmail()
         => httpContextAccessor.HttpContext?.User.FindFirstValue("email");
 
+    public string? GetCurrentUserFullName()
+        => httpContextAccessor.HttpContext?.User.FindFirstValue("name");
+
     public string GetBaseUrl()
     {
         var configured = configuration["App:BaseUrl"];

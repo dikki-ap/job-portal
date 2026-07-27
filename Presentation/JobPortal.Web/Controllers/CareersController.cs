@@ -67,7 +67,7 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
             var documents = request.Documents?
                 .Select(d => new DocumentInput(d.DocumentId, d.DocumentTypeName))
                 .ToList() ?? [];
-            var result = await mediator.Send(new CreateApplicationCommand(id, documents), cancellationToken);
+            var result = await mediator.Send(new CreateApplicationCommand(id, documents, request.Source), cancellationToken);
             return Ok(result);
         }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
@@ -76,5 +76,5 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
     }
 
     public record DocumentRequest(int DocumentId, string DocumentTypeName);
-    public record ApplyRequest(IReadOnlyList<DocumentRequest>? Documents);
+    public record ApplyRequest(IReadOnlyList<DocumentRequest>? Documents, string? Source);
 }

@@ -26,6 +26,8 @@ public class Application : BaseEntity
     public DateTime? DmRatedAt { get; set; }
     public int? DmRatedByUserId { get; set; }
 
+    public string? Source { get; set; }
+
     public JobPost JobPost { get; set; } = null!;
     public User User { get; set; } = null!;
     public ICollection<ApplicationDocument> Documents { get; set; } = [];

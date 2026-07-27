@@ -15,7 +15,7 @@ public class GetAllApplicationsQueryHandler(
         try
         {
             var items = await repository.GetAllAsync(request.JobPostId, request.Status, cancellationToken);
-            return items.Select(MapToDto);
+            return items.Select(a => MapToDto(a));
         }
         catch (Exception ex)
         {
@@ -53,7 +53,8 @@ public class GetAllApplicationsQueryHandler(
         a.UpdatedAt,
         a.Steps.OrderBy(s => s.StepOrder).Select(s => new ApplicationStepItemDto(
             s.Id, s.JobStepId, s.StepName, s.StepOrder,
-            s.JobStep?.IsRequired ?? true, s.Status, s.CompletedAt)),
+            s.JobStep?.IsRequired ?? true, s.Status, s.CompletedAt,
+            s.CompletedByUserId, s.CompletedByName)),
         a.Documents
             .Where(d => !excludeCompanyDocuments || !d.IsCompanyDocument)
             .Select(d => new ApplicationDocumentDto(
@@ -68,5 +69,6 @@ public class GetAllApplicationsQueryHandler(
         a.RatedAt,
         a.DmRating,
         a.DmRatingNote,
-        a.DmRatedAt);
+        a.DmRatedAt,
+        a.Source);
 }

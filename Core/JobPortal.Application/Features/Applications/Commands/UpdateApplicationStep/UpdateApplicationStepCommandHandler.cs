@@ -10,6 +10,7 @@ namespace JobPortal.Application.Features.Applications.Commands.UpdateApplication
 
 public class UpdateApplicationStepCommandHandler(
     IApplicationRepository repository,
+    ICurrentUserService currentUserService,
     IEmailService emailService,
     IAppSettingRepository appSettingRepository,
     ILogger<UpdateApplicationStepCommandHandler> logger)
@@ -43,6 +44,8 @@ public class UpdateApplicationStepCommandHandler(
             var now = DateTime.UtcNow;
             step.Status = request.StepStatus;
             step.CompletedAt = now;
+            step.CompletedByUserId = currentUserService.GetCurrentUserId();
+            step.CompletedByName = currentUserService.GetCurrentUserFullName();
             application.UpdatedAt = now;
 
             if (request.StepStatus == ApplicationStepStatus.Failed)

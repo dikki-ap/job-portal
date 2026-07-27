@@ -145,25 +145,29 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
                 cancellationToken);
     }
 
-    public async Task BulkPassStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, CancellationToken cancellationToken = default)
+    public async Task BulkPassStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, int? completedByUserId, string? completedByName, CancellationToken cancellationToken = default)
     {
         var ids = stepIds.ToList();
         await context.ApplicationSteps
             .Where(s => ids.Contains(s.Id))
             .ExecuteUpdateAsync(s => s
                 .SetProperty(x => x.Status, ApplicationStepStatus.Passed)
-                .SetProperty(x => x.CompletedAt, completedAt),
+                .SetProperty(x => x.CompletedAt, completedAt)
+                .SetProperty(x => x.CompletedByUserId, completedByUserId)
+                .SetProperty(x => x.CompletedByName, completedByName),
                 cancellationToken);
     }
 
-    public async Task BulkFailStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, CancellationToken cancellationToken = default)
+    public async Task BulkFailStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, int? completedByUserId, string? completedByName, CancellationToken cancellationToken = default)
     {
         var ids = stepIds.ToList();
         await context.ApplicationSteps
             .Where(s => ids.Contains(s.Id))
             .ExecuteUpdateAsync(s => s
                 .SetProperty(x => x.Status, ApplicationStepStatus.Failed)
-                .SetProperty(x => x.CompletedAt, completedAt),
+                .SetProperty(x => x.CompletedAt, completedAt)
+                .SetProperty(x => x.CompletedByUserId, completedByUserId)
+                .SetProperty(x => x.CompletedByName, completedByName),
                 cancellationToken);
     }
 

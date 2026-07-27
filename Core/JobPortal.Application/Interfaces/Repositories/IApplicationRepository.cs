@@ -20,7 +20,7 @@ public interface IApplicationRepository
     Task<int> BulkRejectAsync(IEnumerable<int> appIds, DateTime updatedAt, CancellationToken cancellationToken = default);
     Task<int> BulkAcceptAsync(IEnumerable<int> appIds, DateTime updatedAt, CancellationToken cancellationToken = default);
     Task BulkSetInReviewAsync(IEnumerable<int> appIds, DateTime updatedAt, CancellationToken cancellationToken = default);
-    Task BulkPassStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, CancellationToken cancellationToken = default);
-    Task BulkFailStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, CancellationToken cancellationToken = default);
+    Task BulkPassStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, int? completedByUserId, string? completedByName, CancellationToken cancellationToken = default);
+    Task BulkFailStepsAsync(IEnumerable<int> stepIds, DateTime completedAt, int? completedByUserId, string? completedByName, CancellationToken cancellationToken = default);
     Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default);
 }

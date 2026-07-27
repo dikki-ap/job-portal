@@ -11,6 +11,8 @@ public class ApplicationStep : BaseEntity
     public int StepOrder { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateTime? CompletedAt { get; set; }
+    public int? CompletedByUserId { get; set; }
+    public string? CompletedByName { get; set; }
 
     public Application Application { get; set; } = null!;
     public JobStep JobStep { get; set; } = null!;

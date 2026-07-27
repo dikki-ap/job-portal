@@ -50,6 +50,7 @@ public class CreateApplicationCommandHandler(
             Status = ApplicationStatus.Pending,
             AppliedAt = now,
             UpdatedAt = now,
+            Source = request.Source,
             Steps = jobPost.JobSteps
                 .OrderBy(s => s.StepOrder)
                 .Select(s => new ApplicationStep

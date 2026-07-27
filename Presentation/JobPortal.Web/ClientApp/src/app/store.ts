@@ -25,6 +25,7 @@ import { brandingSettingsApi } from '../features/brandingSettings/api/brandingSe
 import { legalPagesApi } from '../features/legalPages/api/legalPagesApi';
 import { departmentManagersApi } from '../features/departmentManagers/api/departmentManagersApi';
 import { departmentApplicationsApi } from '../features/departmentApplications/api/departmentApplicationsApi';
+import { configApi } from '../features/config/api/configApi';
 
 export const store = configureStore({
   reducer: {
@@ -54,6 +55,7 @@ export const store = configureStore({
     [legalPagesApi.reducerPath]: legalPagesApi.reducer,
     [departmentManagersApi.reducerPath]: departmentManagersApi.reducer,
     [departmentApplicationsApi.reducerPath]: departmentApplicationsApi.reducer,
+    [configApi.reducerPath]: configApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -82,7 +84,8 @@ export const store = configureStore({
       .concat(brandingSettingsApi.middleware)
       .concat(legalPagesApi.middleware)
       .concat(departmentManagersApi.middleware)
-      .concat(departmentApplicationsApi.middleware),
+      .concat(departmentApplicationsApi.middleware)
+      .concat(configApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -53,11 +53,11 @@ export const careersApi = createApi({
       query: (slug) => `/${slug}`,
       providesTags: (_result, _err, slug) => [{ type: 'Career', id: slug }],
     }),
-    applyToJob: builder.mutation<ApplicationDto, { jobPostId: number; documents: { documentId: number; documentTypeName: string }[] }>({
-      query: ({ jobPostId, documents }) => ({
+    applyToJob: builder.mutation<ApplicationDto, { jobPostId: number; documents: { documentId: number; documentTypeName: string }[]; source?: string | null }>({
+      query: ({ jobPostId, documents, source }) => ({
         url: `/${jobPostId}/apply`,
         method: 'POST',
-        body: { documents },
+        body: { documents, source },
       }),
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         await queryFulfilled;

@@ -229,6 +229,9 @@ export function DepartmentApplicationDetailPage() {
             </span>
           </div>
           <div><span className="text-gray-500 font-medium block">Applied</span><span className="text-gray-900">{formatDate(application.appliedAt)}</span></div>
+          {application.source && (
+            <div><span className="text-gray-500 font-medium block">Source</span><span className="text-gray-900">{application.source}</span></div>
+          )}
           {application.candidateDateOfBirth && (
             <div>
               <span className="text-gray-500 font-medium block">Age</span>
@@ -408,7 +411,10 @@ export function DepartmentApplicationDetailPage() {
                       </span>
                     </div>
                     {step.completedAt && (
-                      <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(step.completedAt)}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {formatDateTime(step.completedAt)}
+                        {step.completedByName && <span className="ml-1">· by {step.completedByName}</span>}
+                      </p>
                     )}
                   </div>
                   {step.status === 'Pending' && !isFinalized && (

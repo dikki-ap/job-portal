@@ -11,6 +11,7 @@ namespace JobPortal.Application.Features.Applications.Commands.BulkAcceptApplica
 
 public class BulkAcceptApplicationCommandHandler(
     IApplicationRepository repository,
+    ICurrentUserService currentUserService,
     IEmailService emailService,
     IAppSettingRepository appSettingRepository,
     ILogger<BulkAcceptApplicationCommandHandler> logger)
@@ -20,6 +21,8 @@ public class BulkAcceptApplicationCommandHandler(
     {
         var ids = request.ApplicationIds.Distinct().ToList();
         var now = DateTime.UtcNow;
+        var completedByUserId = currentUserService.GetCurrentUserId();
+        var completedByName = currentUserService.GetCurrentUserFullName();
 
         var applications = await repository.GetByIdsAsync(ids, cancellationToken);
 
@@ -55,7 +58,7 @@ public class BulkAcceptApplicationCommandHandler(
             await repository.ExecuteInTransactionAsync(async () =>
             {
                 if (stepIdsToPass.Count > 0)
-                    await repository.BulkPassStepsAsync(stepIdsToPass, now, cancellationToken);
+                    await repository.BulkPassStepsAsync(stepIdsToPass, now, completedByUserId, completedByName, cancellationToken);
                 await repository.BulkAcceptAsync(appIdsToAccept, now, cancellationToken);
             }, cancellationToken);
         }
