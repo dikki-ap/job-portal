@@ -8,6 +8,7 @@ public class ApplicationDocument : BaseEntity
     public int ApplicationId { get; set; }
     public int DocumentId { get; set; }
     public string DocumentType { get; set; } = string.Empty;
+    public bool IsCompanyDocument { get; set; }
     public DateTime CreatedAt { get; set; }
     public int CreatedByUserId { get; set; }
 

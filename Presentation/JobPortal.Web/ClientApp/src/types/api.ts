@@ -248,6 +248,7 @@ export interface ApplicationDocumentDto {
   filePath: string;
   fileType: string;
   createdAt: string;
+  isCompanyDocument: boolean;
 }
 
 export interface ApplicationDto {

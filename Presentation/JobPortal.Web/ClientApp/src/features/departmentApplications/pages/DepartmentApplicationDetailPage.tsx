@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase,
-  Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star,
+  Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, FolderOpen, Plus,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { DocumentPreviewModal } from '../../../components/ui/DocumentPreviewModal';
+import { UploadCompanyDocumentModal } from '../../../components/ui/UploadCompanyDocumentModal';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import { downloadWithAuth } from '../../../lib/download';
@@ -22,6 +23,7 @@ import {
   useRejectApplicationMutation,
   useRateDepartmentApplicationMutation,
 } from '../api/departmentApplicationsApi';
+import { useUploadCompanyDocumentMutation } from '../../applications/api/applicationsApi';
 import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
 import type { ApplicationStepDto } from '../../../types/api';
 
@@ -80,6 +82,7 @@ export function DepartmentApplicationDetailPage() {
   const { token } = useAuth();
   const { toasts, addToast, dismissToast } = useToast();
   const [previewDoc, setPreviewDoc] = useState<{ id: number; fileType: string; fileName: string } | null>(null);
+  const [companyDocModal, setCompanyDocModal] = useState(false);
 
   const [localDmRating, setLocalDmRating] = useState<number | null>(null);
   const [localDmNote, setLocalDmNote] = useState('');
@@ -94,6 +97,7 @@ export function DepartmentApplicationDetailPage() {
   const [acceptApplication, { isLoading: accepting }] = useAcceptApplicationMutation();
   const [rejectApplication, { isLoading: rejecting }] = useRejectApplicationMutation();
   const [rateDmApplication, { isLoading: ratingDm }] = useRateDepartmentApplicationMutation();
+  const [uploadCompanyDocument, { isLoading: uploadingCompanyDoc }] = useUploadCompanyDocumentMutation();
 
   useEffect(() => {
     if (application) {
@@ -139,6 +143,18 @@ export function DepartmentApplicationDetailPage() {
     } catch (err: unknown) {
       const data = (err as { data?: { error?: string } })?.data;
       addToast(data?.error ?? 'Failed to reject candidate.', 'error');
+    }
+  };
+
+  const handleUploadCompanyDoc = async (name: string, file: File) => {
+    if (!application) return;
+    try {
+      await uploadCompanyDocument({ code: application.code, name, file }).unwrap();
+      setCompanyDocModal(false);
+      addToast('Document uploaded successfully.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to upload document.', 'error');
     }
   };
 
@@ -429,10 +445,10 @@ export function DepartmentApplicationDetailPage() {
         )}
       </div>
 
-      {/* Card: Documents */}
+      {/* Card: Candidate Documents */}
       <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-4">
-        <h2 className="text-base font-semibold text-gray-900">Documents</h2>
-        {application.documents.length === 0 ? (
+        <h2 className="text-base font-semibold text-gray-900">Candidate Documents</h2>
+        {application.documents.filter(d => !d.isCompanyDocument).length === 0 ? (
           <p className="text-sm text-gray-400">No documents submitted.</p>
         ) : (
           <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -445,7 +461,77 @@ export function DepartmentApplicationDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {application.documents.map((doc) => (
+                {application.documents.filter(d => !d.isCompanyDocument).map((doc) => (
+                  <tr key={doc.id}>
+                    <td className="py-2 pr-4 pl-4 sm:pl-0 font-medium text-gray-900">
+                      {doc.documentType}{' '}
+                      <span className="font-normal text-gray-400">[{friendlyFileType(doc.fileType)}]</span>
+                      {doc.originalFileName && (
+                        <span className="font-normal text-gray-500 hidden sm:inline"> — {doc.originalFileName}</span>
+                      )}
+                    </td>
+                    <td className="py-2 pr-4 text-gray-500 hidden sm:table-cell">{formatDate(doc.createdAt)}</td>
+                    <td className="py-2 text-right pr-4 sm:pr-0">
+                      <div className="flex items-center justify-end gap-1">
+                        {MIME_PREVIEW_TYPE[doc.fileType] && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-[var(--primary)] hover:bg-blue-50"
+                            onClick={() => setPreviewDoc({ id: doc.id, fileType: doc.fileType, fileName: doc.originalFileName ?? doc.documentType })}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Preview</span>
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                          onClick={() => downloadWithAuth(`/api/documents/${doc.id}/download`, token, doc.originalFileName)}
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Download</span>
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Card: Additional Documents From Company */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <FolderOpen className="h-4 w-4 text-[var(--primary)]" />
+            <h2 className="text-base font-semibold text-gray-900">Additional Documents From Company</h2>
+          </div>
+          <Button
+            size="sm"
+            className="gap-1.5 shrink-0"
+            onClick={() => setCompanyDocModal(true)}
+          >
+            <Plus className="h-3.5 w-3.5" /> Add Document
+          </Button>
+        </div>
+        {application.documents.filter(d => d.isCompanyDocument).length === 0 ? (
+          <p className="text-sm text-gray-400">No additional documents uploaded yet.</p>
+        ) : (
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full text-sm min-w-[480px] px-4 sm:px-0">
+              <thead>
+                <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="pb-2 pr-4 pl-4 sm:pl-0">Document</th>
+                  <th className="pb-2 pr-4 hidden sm:table-cell">Uploaded At</th>
+                  <th className="pb-2 text-right pr-4 sm:pr-0">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {application.documents.filter(d => d.isCompanyDocument).map((doc) => (
                   <tr key={doc.id}>
                     <td className="py-2 pr-4 pl-4 sm:pl-0 font-medium text-gray-900">
                       {doc.documentType}{' '}
@@ -523,6 +609,13 @@ export function DepartmentApplicationDetailPage() {
         fileType={previewDoc?.fileType ?? ''}
         fileName={previewDoc?.fileName ?? ''}
         token={token}
+      />
+
+      <UploadCompanyDocumentModal
+        open={companyDocModal}
+        onClose={() => setCompanyDocModal(false)}
+        onUpload={handleUploadCompanyDoc}
+        isUploading={uploadingCompanyDoc}
       />
     </div>
   );

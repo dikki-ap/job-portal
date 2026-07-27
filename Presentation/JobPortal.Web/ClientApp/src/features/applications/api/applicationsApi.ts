@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import keycloak from '../../../lib/keycloak';
-import type { ApplicationDto } from '../../../types/api';
+import type { ApplicationDocumentDto, ApplicationDto } from '../../../types/api';
 
 interface GetApplicationsParams {
   jobPostId?: number;
@@ -110,6 +110,18 @@ export const applicationsApi = createApi({
         'Application',
       ],
     }),
+    uploadCompanyDocument: builder.mutation<
+      ApplicationDocumentDto,
+      { code: string; name: string; file: File }
+    >({
+      query: ({ code, name, file }) => {
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('file', file);
+        return { url: `/${code}/company-documents`, method: 'POST', body: formData };
+      },
+      invalidatesTags: (_r, _e, { code }) => [{ type: 'Application', id: code }],
+    }),
   }),
 });
 
@@ -125,4 +137,5 @@ export const {
   useBulkAcceptMutation,
   useBulkRejectMutation,
   useRateApplicationMutation,
+  useUploadCompanyDocumentMutation,
 } = applicationsApi;

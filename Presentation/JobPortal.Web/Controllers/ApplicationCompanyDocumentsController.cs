@@ -1,0 +1,134 @@
+using JobPortal.Application.DTOs;
+using JobPortal.Application.Features.DepartmentManagers.Queries.IsDepartmentManager;
+using JobPortal.Application.Interfaces.Services;
+using JobPortal.Domain.Entities.Applications;
+using JobPortal.Domain.Entities.Documents;
+using JobPortal.Persistence.Context;
+using JobPortal.Web.Common;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace JobPortal.Web.Controllers;
+
+[ApiController]
+[Route("api/applications/{code}/company-documents")]
+[Authorize]
+public class ApplicationCompanyDocumentsController(
+    ApplicationDbContext context,
+    IStorageService storageService,
+    ICurrentUserService currentUserService,
+    IMediator mediator,
+    ILogger<ApplicationCompanyDocumentsController> logger) : ControllerBase
+{
+    private static readonly HashSet<string> AllowedMimeTypes =
+    [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "image/jpeg",
+        "image/png",
+    ];
+
+    private const long MaxFileSizeBytes = 5L * 1024 * 1024; // 5 MB
+
+    [HttpPost]
+    public async Task<IActionResult> Upload(
+        string code,
+        [FromForm] string name,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return BadRequest(new { error = "Document name is required." });
+
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "No file provided." });
+
+        if (file.Length > MaxFileSizeBytes)
+            return BadRequest(new { error = "File exceeds the 5 MB limit." });
+
+        if (!AllowedMimeTypes.Contains(file.ContentType))
+            return BadRequest(new { error = $"File type '{file.ContentType}' is not allowed. Allowed: PDF, DOC, DOCX, JPEG, PNG." });
+
+        await using (var sigStream = file.OpenReadStream())
+        {
+            if (!FileSignatureValidator.IsValidSignature(sigStream, file.ContentType))
+                return BadRequest(new { error = "File content does not match the declared file type." });
+        }
+
+        var app = await context.Applications
+            .Include(a => a.JobPost)
+            .FirstOrDefaultAsync(a => a.Code == code, cancellationToken);
+
+        if (app is null)
+            return NotFound(new { error = "Application not found." });
+
+        var accessError = await CheckAccessAsync(app.JobPost?.DepartmentId, cancellationToken);
+        if (accessError is not null) return accessError;
+
+        var userId = currentUserService.GetCurrentUserId();
+        var externalId = currentUserService.GetCurrentUserExternalId();
+        if (userId is null || externalId is null)
+            return Unauthorized();
+
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        string storageKey;
+        await using (var stream = file.OpenReadStream())
+        {
+            storageKey = await storageService.UploadAsync(stream, extension, file.ContentType, externalId, cancellationToken);
+        }
+
+        var doc = new Document
+        {
+            FilePath = storageKey,
+            OriginalFileName = file.FileName,
+            FileType = file.ContentType,
+            CreatedAt = DateTime.UtcNow,
+            CreatedByUserId = userId.Value,
+        };
+        context.Documents.Add(doc);
+        await context.SaveChangesAsync(cancellationToken);
+
+        var appDoc = new ApplicationDocument
+        {
+            ApplicationId = app.Id,
+            DocumentId = doc.Id,
+            DocumentType = name.Trim(),
+            IsCompanyDocument = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedByUserId = userId.Value,
+        };
+        context.ApplicationDocuments.Add(appDoc);
+        await context.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "CompanyDocument: uploaded docId={DocId} appDoc={AppDocId} app={Code} by user={UserId}",
+            doc.Id, appDoc.Id, code, userId);
+
+        return Ok(new ApplicationDocumentDto(
+            appDoc.Id,
+            appDoc.DocumentType,
+            doc.OriginalFileName,
+            doc.FilePath,
+            doc.FileType,
+            appDoc.CreatedAt,
+            true));
+    }
+
+    private async Task<IActionResult?> CheckAccessAsync(int? departmentId, CancellationToken ct)
+    {
+        if (User.IsInRole("HR") || User.IsInRole("Admin"))
+            return null;
+
+        var dmInfo = await mediator.Send(new IsDepartmentManagerQuery(), ct);
+        if (!dmInfo.IsDepartmentManager || dmInfo.DepartmentIds.Count == 0)
+            return Forbid();
+
+        if (departmentId is null || !dmInfo.DepartmentIds.Contains(departmentId.Value))
+            return Forbid();
+
+        return null;
+    }
+}

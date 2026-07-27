@@ -15,7 +15,8 @@ public record ApplicationDocumentDto(
     string OriginalFileName,
     string FilePath,
     string FileType,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    bool IsCompanyDocument);
 
 public record ApplicationDto(
     int Id,
