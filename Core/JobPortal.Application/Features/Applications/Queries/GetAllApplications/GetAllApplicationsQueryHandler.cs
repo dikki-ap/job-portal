@@ -60,5 +60,8 @@ public class GetAllApplicationsQueryHandler(
             d.CreatedAt)),
         a.Rating,
         a.RatingNote,
-        a.RatedAt);
+        a.RatedAt,
+        a.DmRating,
+        a.DmRatingNote,
+        a.DmRatedAt);
 }

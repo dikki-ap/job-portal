@@ -1,12 +1,20 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, FileText } from 'lucide-react';
+import { Search, FileText, CheckCircle, XCircle, Ban, X, UserCheck } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { MultiSelectFilter } from '../../../components/ui/MultiSelectFilter';
-import { useGetDepartmentApplicationsQuery } from '../api/departmentApplicationsApi';
+import { ToastContainer } from '../../../components/ui/Toast';
+import { useToast } from '../../../hooks/useToast';
+import {
+  useGetDepartmentApplicationsQuery,
+  useBulkUpdateStepMutation,
+  useBulkAcceptMutation,
+  useBulkRejectMutation,
+} from '../api/departmentApplicationsApi';
 import { useGetIsDepartmentManagerQuery } from '../../departmentManagers/api/departmentManagersApi';
-import { deriveStatus } from '../../../lib/applicationStatus';
+import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
 import { useFormatter } from '../../../lib/useFormatter';
+import type { ApplicationDto, ApplicationStepDto } from '../../../types/api';
 
 const STATUS_OPTIONS = [
   { id: 'Pending', label: 'Pending' },
@@ -22,19 +30,40 @@ const APP_STATUS_BADGE: Record<string, string> = {
   Rejected: 'bg-red-50 text-red-600 ring-1 ring-inset ring-red-200',
 };
 
-const APP_STATUS_LABEL: Record<string, string> = {
-  InReview: 'In Review',
-};
+const APP_STATUS_LABEL: Record<string, string> = { InReview: 'In Review' };
+
+function isAtLastRequiredStep(app: ApplicationDto): boolean {
+  if (app.status === 'Accepted' || app.status === 'Rejected') return false;
+  const pendingSorted = app.steps
+    .filter((s) => s.status === 'Pending')
+    .sort((a, b) => a.stepOrder - b.stepOrder);
+  for (const step of pendingSorted) {
+    if (canActOnStep(step, app.steps)) {
+      return !app.steps.some((s: ApplicationStepDto) => s.stepOrder > step.stepOrder && s.isRequired);
+    }
+  }
+  return false;
+}
 
 export function DepartmentApplicationsPage() {
   const navigate = useNavigate();
   const { formatDate } = useFormatter();
+  const { toasts, addToast, dismissToast } = useToast();
+
   const [search, setSearch] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedDeptIds, setSelectedDeptIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
   const { data: dmInfo } = useGetIsDepartmentManagerQuery();
   const { data: applications = [], isLoading, isError } = useGetDepartmentApplicationsQuery({});
+
+  const [bulkUpdateStep, { isLoading: bulkStepLoading }] = useBulkUpdateStepMutation();
+  const [bulkAccept, { isLoading: bulkAcceptLoading }] = useBulkAcceptMutation();
+  const [bulkReject, { isLoading: bulkRejectLoading }] = useBulkRejectMutation();
+  const isBulkLoading = bulkStepLoading || bulkAcceptLoading || bulkRejectLoading;
 
   const isMultiDept = (dmInfo?.departmentIds?.length ?? 0) > 1;
 
@@ -42,36 +71,31 @@ export function DepartmentApplicationsPage() {
     (dmInfo?.departmentIds ?? []).map((id, i) => ({
       id,
       label: dmInfo?.departmentNames?.[i] ?? `Dept ${id}`,
-    })),
-    [dmInfo]
-  );
+    })), [dmInfo]);
 
   const selectedDeptNames = useMemo(() =>
     selectedDeptIds.map((id) => {
       const idx = (dmInfo?.departmentIds ?? []).indexOf(id);
       return idx >= 0 ? (dmInfo?.departmentNames?.[idx] ?? '') : '';
-    }).filter(Boolean),
-    [selectedDeptIds, dmInfo]
-  );
+    }).filter(Boolean), [selectedDeptIds, dmInfo]);
+
+  // Reset selection on filter change
+  useEffect(() => { setSelectedIds(new Set()); }, [search, selectedStatuses, selectedDeptIds]);
 
   const filtered = useMemo(() => {
     let result = applications;
-
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
         (a) => a.candidateName.toLowerCase().includes(q) || a.candidateEmail.toLowerCase().includes(q)
       );
     }
-
     if (selectedStatuses.length > 0) {
       result = result.filter((a) => selectedStatuses.includes(deriveStatus(a)));
     }
-
     if (isMultiDept && selectedDeptNames.length > 0) {
       result = result.filter((a) => selectedDeptNames.includes(a.jobPostDepartmentName ?? ''));
     }
-
     return result;
   }, [applications, search, selectedStatuses, selectedDeptNames, isMultiDept]);
 
@@ -84,6 +108,82 @@ export function DepartmentApplicationsPage() {
     return `Showing applications across your departments: ${listed}.`;
   }, [dmInfo]);
 
+  const selectedCount = selectedIds.size;
+
+  const hasActionableSelected = useMemo(() => {
+    if (selectedCount === 0) return false;
+    return filtered.some(
+      (a) => selectedIds.has(a.id) && a.status !== 'Accepted' && a.status !== 'Rejected'
+    );
+  }, [filtered, selectedIds, selectedCount]);
+
+  const allSelectedAtLastStep = useMemo(() => {
+    if (selectedCount === 0) return false;
+    const selectedApps = filtered.filter((a) => selectedIds.has(a.id));
+    return selectedApps.length === selectedCount && selectedApps.every(isAtLastRequiredStep);
+  }, [filtered, selectedIds, selectedCount]);
+
+  // Header checkbox indeterminate state
+  useEffect(() => {
+    if (!headerCheckboxRef.current) return;
+    const all = filtered.length > 0 && filtered.every((a) => selectedIds.has(a.id));
+    const some = filtered.some((a) => selectedIds.has(a.id));
+    headerCheckboxRef.current.checked = all;
+    headerCheckboxRef.current.indeterminate = some && !all;
+  }, [filtered, selectedIds]);
+
+  const toggleAll = () => {
+    if (filtered.every((a) => selectedIds.has(a.id))) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((a) => a.id)));
+    }
+  };
+
+  const toggleRow = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkStep = async (action: 'Passed' | 'Failed') => {
+    try {
+      const result = await bulkUpdateStep({ applicationIds: [...selectedIds], action }).unwrap();
+      addToast(
+        `${action === 'Passed' ? 'Passed' : 'Failed'}: ${result.succeeded} updated, ${result.skipped} skipped.`,
+        result.succeeded > 0 ? 'success' : 'error'
+      );
+      setSelectedIds(new Set());
+    } catch {
+      addToast('Bulk action failed. Please try again.', 'error');
+    }
+  };
+
+  const handleBulkAccept = async () => {
+    try {
+      const result = await bulkAccept({ applicationIds: [...selectedIds] }).unwrap();
+      addToast(`Accepted: ${result.succeeded} updated, ${result.skipped} skipped.`,
+        result.succeeded > 0 ? 'success' : 'error');
+      setSelectedIds(new Set());
+    } catch {
+      addToast('Bulk accept failed. Please try again.', 'error');
+    }
+  };
+
+  const handleBulkReject = async () => {
+    try {
+      const result = await bulkReject({ applicationIds: [...selectedIds] }).unwrap();
+      addToast(`Rejected: ${result.succeeded} updated, ${result.skipped} skipped.`,
+        result.succeeded > 0 ? 'success' : 'error');
+      setSelectedIds(new Set());
+    } catch {
+      addToast('Bulk reject failed. Please try again.', 'error');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
@@ -93,8 +193,8 @@ export function DepartmentApplicationsPage() {
         )}
       </div>
 
+      {/* Filter bar */}
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-        {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
@@ -106,7 +206,6 @@ export function DepartmentApplicationsPage() {
           />
         </div>
 
-        {/* Status multi-select — max 5 visible, show all available */}
         <MultiSelectFilter<string>
           label="Status"
           options={STATUS_OPTIONS}
@@ -116,7 +215,6 @@ export function DepartmentApplicationsPage() {
           maxVisible={5}
         />
 
-        {/* Department multi-select — only shown if manager has >1 dept, max 3 visible */}
         {isMultiDept && (
           <MultiSelectFilter<number>
             label="Department"
@@ -128,6 +226,62 @@ export function DepartmentApplicationsPage() {
           />
         )}
       </div>
+
+      {/* Bulk action bar */}
+      {selectedCount > 0 && (
+        <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 flex-wrap">
+          <span className="text-sm font-medium text-blue-900">
+            {selectedCount} selected
+          </span>
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleBulkStep('Passed')}
+              disabled={!hasActionableSelected || isBulkLoading}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <CheckCircle className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Pass Step</span>
+              <span className="sm:hidden">Pass</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkStep('Failed')}
+              disabled={!hasActionableSelected || isBulkLoading}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Fail Step</span>
+              <span className="sm:hidden">Fail</span>
+            </button>
+            <div className="h-6 w-px bg-blue-200" />
+            <button
+              type="button"
+              onClick={handleBulkAccept}
+              disabled={!allSelectedAtLastStep || isBulkLoading}
+              title={!allSelectedAtLastStep ? 'All selected must be at their last step' : 'Accept — final decision'}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--primary-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <UserCheck className="h-3.5 w-3.5" /> Accept
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkReject}
+              disabled={!hasActionableSelected || isBulkLoading}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-400 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <Ban className="h-3.5 w-3.5" /> Reject
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              className="inline-flex items-center gap-1 rounded-lg border border-blue-200 px-2 py-1.5 text-xs text-blue-700 hover:bg-blue-100 transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {isLoading && (
         <div className="flex justify-center py-16">
@@ -156,40 +310,83 @@ export function DepartmentApplicationsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <th className="px-6 py-3">Code</th>
-                  <th className="px-6 py-3">Candidate</th>
-                  <th className="px-6 py-3">Position</th>
-                  {isMultiDept && <th className="px-6 py-3">Department</th>}
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Applied</th>
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      ref={headerCheckboxRef}
+                      type="checkbox"
+                      onChange={toggleAll}
+                      className="rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
+                    />
+                  </th>
+                  <th className="px-4 py-3 hidden lg:table-cell">Code</th>
+                  <th className="px-4 py-3">Candidate</th>
+                  <th className="px-4 py-3 hidden md:table-cell">Position</th>
+                  {isMultiDept && <th className="px-4 py-3 hidden md:table-cell">Department</th>}
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 hidden lg:table-cell">Applied</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((app) => {
                   const status = deriveStatus(app);
+                  const isSelected = selectedIds.has(app.id);
                   return (
                     <tr
                       key={app.id}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/department-applications/${app.id}`)}
+                      className={`transition-colors ${isSelected ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'}`}
                     >
-                      <td className="px-6 py-4 font-mono text-xs text-gray-500">{app.code}</td>
-                      <td className="px-6 py-4">
+                      <td
+                        className="px-4 py-4 w-10"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleRow(app.id)}
+                          className="rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
+                        />
+                      </td>
+                      <td
+                        className="px-4 py-4 font-mono text-xs text-gray-500 hidden lg:table-cell cursor-pointer"
+                        onClick={() => navigate(`/department-applications/${app.id}`)}
+                      >
+                        {app.code}
+                      </td>
+                      <td
+                        className="px-4 py-4 cursor-pointer"
+                        onClick={() => navigate(`/department-applications/${app.id}`)}
+                      >
                         <div className="font-medium text-gray-900">{app.candidateName}</div>
                         <div className="text-xs text-gray-400">{app.candidateEmail}</div>
                       </td>
-                      <td className="px-6 py-4 text-gray-700">{app.jobPostTitle}</td>
+                      <td
+                        className="px-4 py-4 text-gray-700 hidden md:table-cell cursor-pointer"
+                        onClick={() => navigate(`/department-applications/${app.id}`)}
+                      >
+                        {app.jobPostTitle}
+                      </td>
                       {isMultiDept && (
-                        <td className="px-6 py-4 text-gray-600 text-xs">
+                        <td
+                          className="px-4 py-4 text-gray-600 text-xs hidden md:table-cell cursor-pointer"
+                          onClick={() => navigate(`/department-applications/${app.id}`)}
+                        >
                           {app.jobPostDepartmentName ?? '-'}
                         </td>
                       )}
-                      <td className="px-6 py-4">
+                      <td
+                        className="px-4 py-4 cursor-pointer"
+                        onClick={() => navigate(`/department-applications/${app.id}`)}
+                      >
                         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${APP_STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
                           {APP_STATUS_LABEL[status] ?? status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-500">{formatDate(app.appliedAt)}</td>
+                      <td
+                        className="px-4 py-4 text-gray-500 hidden lg:table-cell cursor-pointer"
+                        onClick={() => navigate(`/department-applications/${app.id}`)}
+                      >
+                        {formatDate(app.appliedAt)}
+                      </td>
                     </tr>
                   );
                 })}
@@ -198,6 +395,8 @@ export function DepartmentApplicationsPage() {
           )}
         </div>
       )}
+
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

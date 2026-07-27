@@ -280,6 +280,9 @@ export interface ApplicationDto {
   rating: number | null;
   ratingNote: string | null;
   ratedAt: string | null;
+  dmRating: number | null;
+  dmRatingNote: string | null;
+  dmRatedAt: string | null;
 }
 
 export interface EducationMajorDto {

@@ -46,4 +46,7 @@ public record ApplicationDto(
     IEnumerable<ApplicationDocumentDto> Documents,
     int? Rating,
     string? RatingNote,
-    DateTime? RatedAt);
+    DateTime? RatedAt,
+    int? DmRating,
+    string? DmRatingNote,
+    DateTime? DmRatedAt);

@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import keycloak from '../../../lib/keycloak';
 import type { ApplicationDto } from '../../../types/api';
+import type { BulkOperationResult } from '../../applications/api/applicationsApi';
 
 export const departmentApplicationsApi = createApi({
   reducerPath: 'departmentApplicationsApi',
@@ -29,10 +30,82 @@ export const departmentApplicationsApi = createApi({
       query: (id) => `/${id}`,
       providesTags: (_result, _err, id) => [{ type: 'DepartmentApplication', id }],
     }),
+
+    passStep: builder.mutation<ApplicationDto, { applicationId: number; stepId: number }>({
+      query: ({ applicationId, stepId }) => ({
+        url: `/${applicationId}/steps/${stepId}/pass`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, { applicationId }) => [
+        'DepartmentApplication',
+        { type: 'DepartmentApplication', id: applicationId },
+      ],
+    }),
+    failStep: builder.mutation<ApplicationDto, { applicationId: number; stepId: number }>({
+      query: ({ applicationId, stepId }) => ({
+        url: `/${applicationId}/steps/${stepId}/fail`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, { applicationId }) => [
+        'DepartmentApplication',
+        { type: 'DepartmentApplication', id: applicationId },
+      ],
+    }),
+    acceptApplication: builder.mutation<ApplicationDto, number>({
+      query: (id) => ({ url: `/${id}/accept`, method: 'POST' }),
+      invalidatesTags: (_r, _e, id) => [
+        'DepartmentApplication',
+        { type: 'DepartmentApplication', id },
+      ],
+    }),
+    rejectApplication: builder.mutation<ApplicationDto, number>({
+      query: (id) => ({ url: `/${id}/reject`, method: 'POST' }),
+      invalidatesTags: (_r, _e, id) => [
+        'DepartmentApplication',
+        { type: 'DepartmentApplication', id },
+      ],
+    }),
+    rateDepartmentApplication: builder.mutation<
+      ApplicationDto,
+      { applicationId: number; rating: number; note?: string }
+    >({
+      query: ({ applicationId, rating, note }) => ({
+        url: `/${applicationId}/rate`,
+        method: 'POST',
+        body: { rating, note },
+      }),
+      invalidatesTags: (_r, _e, { applicationId }) => [
+        'DepartmentApplication',
+        { type: 'DepartmentApplication', id: applicationId },
+      ],
+    }),
+    bulkUpdateStep: builder.mutation<
+      BulkOperationResult,
+      { applicationIds: number[]; action: 'Passed' | 'Failed' }
+    >({
+      query: (body) => ({ url: '/bulk-step', method: 'POST', body }),
+      invalidatesTags: ['DepartmentApplication'],
+    }),
+    bulkAccept: builder.mutation<BulkOperationResult, { applicationIds: number[] }>({
+      query: (body) => ({ url: '/bulk-accept', method: 'POST', body }),
+      invalidatesTags: ['DepartmentApplication'],
+    }),
+    bulkReject: builder.mutation<BulkOperationResult, { applicationIds: number[] }>({
+      query: (body) => ({ url: '/bulk-reject', method: 'POST', body }),
+      invalidatesTags: ['DepartmentApplication'],
+    }),
   }),
 });
 
 export const {
   useGetDepartmentApplicationsQuery,
   useGetDepartmentApplicationByIdQuery,
+  usePassStepMutation,
+  useFailStepMutation,
+  useAcceptApplicationMutation,
+  useRejectApplicationMutation,
+  useRateDepartmentApplicationMutation,
+  useBulkUpdateStepMutation,
+  useBulkAcceptMutation,
+  useBulkRejectMutation,
 } = departmentApplicationsApi;

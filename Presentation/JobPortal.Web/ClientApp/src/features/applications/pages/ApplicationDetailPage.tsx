@@ -297,6 +297,27 @@ export function ApplicationDetailPage() {
         </div>
       </div>
 
+      {/* DM Rating — read-only, shown only when a DM has rated */}
+      {application.dmRating != null && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-[var(--primary)]" />
+            <h2 className="text-base font-semibold text-gray-900">DM Rating</h2>
+            {application.dmRatedAt && (
+              <span className="text-xs text-gray-400 ml-auto">Rated: {formatDate(application.dmRatedAt)}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ring-1 ring-inset ${ratingColor(application.dmRating)}`}>
+              {application.dmRating} / 10
+            </span>
+            {application.dmRatingNote && (
+              <span className="text-sm text-gray-600 italic">"{application.dmRatingNote}"</span>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6">
         {/* Card 3: Job Post */}
 

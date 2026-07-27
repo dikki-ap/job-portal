@@ -1,7 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, Eye, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star } from 'lucide-react';
+import {
+  ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase,
+  Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star,
+} from 'lucide-react';
+import { Button } from '../../../components/ui/Button';
+import { Spinner } from '../../../components/ui/Spinner';
+import { ToastContainer } from '../../../components/ui/Toast';
 import { DocumentPreviewModal } from '../../../components/ui/DocumentPreviewModal';
+import { useToast } from '../../../hooks/useToast';
+import { useAuth } from '../../../contexts/AuthContext';
+import { downloadWithAuth } from '../../../lib/download';
+import { useFormatter } from '../../../lib/useFormatter';
+import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
+import { cn } from '../../../lib/utils';
+import {
+  useGetDepartmentApplicationByIdQuery,
+  usePassStepMutation,
+  useFailStepMutation,
+  useAcceptApplicationMutation,
+  useRejectApplicationMutation,
+  useRateDepartmentApplicationMutation,
+} from '../api/departmentApplicationsApi';
+import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
+import type { ApplicationStepDto } from '../../../types/api';
 
 function calculateAge(dateOfBirth: string): number {
   const today = new Date();
@@ -11,14 +33,12 @@ function calculateAge(dateOfBirth: string): number {
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
   return age;
 }
-import { Button } from '../../../components/ui/Button';
-import { Spinner } from '../../../components/ui/Spinner';
-import { useAuth } from '../../../contexts/AuthContext';
-import { downloadWithAuth } from '../../../lib/download';
-import { useFormatter } from '../../../lib/useFormatter';
-import { deriveStatus } from '../../../lib/applicationStatus';
-import { useGetDepartmentApplicationByIdQuery } from '../api/departmentApplicationsApi';
-import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
+
+function ratingColor(r: number) {
+  if (r <= 4) return 'bg-red-50 text-red-600 ring-red-200 border-red-200';
+  if (r <= 7) return 'bg-amber-50 text-amber-700 ring-amber-200 border-amber-200';
+  return 'bg-green-50 text-green-700 ring-green-200 border-green-200';
+}
 
 const APP_STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
@@ -27,9 +47,7 @@ const APP_STATUS_BADGE: Record<string, string> = {
   Rejected: 'bg-red-50 text-red-600 ring-1 ring-inset ring-red-200',
 };
 
-const APP_STATUS_LABEL: Record<string, string> = {
-  InReview: 'In Review',
-};
+const APP_STATUS_LABEL: Record<string, string> = { InReview: 'In Review' };
 
 const STEP_STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-gray-100 text-gray-600',
@@ -56,20 +74,88 @@ function friendlyFileType(mime: string) {
   return MIME_LABELS[mime] ?? mime.split('/').pop()?.toUpperCase() ?? mime;
 }
 
-function ratingColor(r: number) {
-  if (r <= 4) return 'bg-red-50 text-red-600 ring-red-200';
-  if (r <= 7) return 'bg-amber-50 text-amber-700 ring-amber-200';
-  return 'bg-green-50 text-green-700 ring-green-200';
-}
-
 export function DepartmentApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { formatDate, formatDateTime } = useFormatter();
   const { token } = useAuth();
+  const { toasts, addToast, dismissToast } = useToast();
   const [previewDoc, setPreviewDoc] = useState<{ id: number; fileType: string; fileName: string } | null>(null);
+
+  const [localDmRating, setLocalDmRating] = useState<number | null>(null);
+  const [localDmNote, setLocalDmNote] = useState('');
 
   const { data: application, isLoading, isError } = useGetDepartmentApplicationByIdQuery(Number(id));
   const { data: jobPost } = useGetJobPostByIdQuery(application?.jobPostId ?? 0, { skip: !application });
+
+  const appId = application?.id ?? 0;
+
+  const [passStep, { isLoading: passingStep }] = usePassStepMutation();
+  const [failStep, { isLoading: failingStep }] = useFailStepMutation();
+  const [acceptApplication, { isLoading: accepting }] = useAcceptApplicationMutation();
+  const [rejectApplication, { isLoading: rejecting }] = useRejectApplicationMutation();
+  const [rateDmApplication, { isLoading: ratingDm }] = useRateDepartmentApplicationMutation();
+
+  useEffect(() => {
+    if (application) {
+      setLocalDmRating(application.dmRating);
+      setLocalDmNote(application.dmRatingNote ?? '');
+    }
+  }, [application]);
+
+  const handlePassStep = async (step: ApplicationStepDto) => {
+    try {
+      await passStep({ applicationId: appId, stepId: step.id }).unwrap();
+      addToast(`Step "${step.stepName}" marked as Passed.`, 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to update step.', 'error');
+    }
+  };
+
+  const handleFailStep = async (step: ApplicationStepDto) => {
+    try {
+      await failStep({ applicationId: appId, stepId: step.id }).unwrap();
+      addToast(`Step "${step.stepName}" marked as Failed.`, 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to update step.', 'error');
+    }
+  };
+
+  const handleAccept = async () => {
+    try {
+      await acceptApplication(appId).unwrap();
+      addToast('Candidate accepted.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to accept candidate.', 'error');
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      await rejectApplication(appId).unwrap();
+      addToast('Candidate rejected.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to reject candidate.', 'error');
+    }
+  };
+
+  const handleDmRate = async () => {
+    if (!localDmRating) return;
+    try {
+      await rateDmApplication({
+        applicationId: appId,
+        rating: localDmRating,
+        note: localDmNote || undefined,
+      }).unwrap();
+      addToast('DM rating saved.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to save rating.', 'error');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -93,6 +179,9 @@ export function DepartmentApplicationDetailPage() {
   }
 
   const derivedStatus = deriveStatus(application);
+  const isFinalized = derivedStatus === 'Accepted' || derivedStatus === 'Rejected';
+  const canReject = !isFinalized;
+  const canAccept = derivedStatus === 'InReview';
 
   return (
     <div className="flex flex-col gap-6">
@@ -102,7 +191,7 @@ export function DepartmentApplicationDetailPage() {
 
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold text-gray-900">Application #{application.code}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Application #{application.code}</h1>
           <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-medium ${APP_STATUS_BADGE[derivedStatus] ?? 'bg-gray-100 text-gray-600'}`}>
             {APP_STATUS_LABEL[derivedStatus] ?? derivedStatus}
           </span>
@@ -110,11 +199,11 @@ export function DepartmentApplicationDetailPage() {
       </div>
 
       {/* Card: Candidate */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-4">
         <h2 className="text-base font-semibold text-gray-900">Candidate</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-3 text-sm">
           <div><span className="text-gray-500 font-medium block">Name</span><span className="text-gray-900">{application.candidateName || '—'}</span></div>
-          <div><span className="text-gray-500 font-medium block">Email</span><span className="text-gray-900">{application.candidateEmail}</span></div>
+          <div><span className="text-gray-500 font-medium block">Email</span><span className="text-gray-900 break-all">{application.candidateEmail}</span></div>
           <div>
             <span className="text-gray-500 font-medium block">Phone</span>
             <span className="flex items-center gap-1.5 text-gray-900">
@@ -151,17 +240,17 @@ export function DepartmentApplicationDetailPage() {
         )}
       </div>
 
-      {/* Card: HR Rating (read-only display) */}
+      {/* Card: HR Rating (read-only) */}
       {application.rating != null && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-3">
-          <div className="flex items-center gap-2">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <Star className="h-4 w-4 text-gray-400" />
             <h2 className="text-base font-semibold text-gray-900">HR Rating</h2>
             {application.ratedAt && (
-              <span className="text-xs text-gray-400 ml-auto">Last rated: {formatDate(application.ratedAt)}</span>
+              <span className="text-xs text-gray-400 ml-auto">Rated: {formatDate(application.ratedAt)}</span>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ring-1 ring-inset ${ratingColor(application.rating)}`}>
               {application.rating} / 10
             </span>
@@ -172,8 +261,61 @@ export function DepartmentApplicationDetailPage() {
         </div>
       )}
 
+      {/* Card: DM Rating (interactive) */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Star className="h-4 w-4 text-[var(--primary)]" />
+          <h2 className="text-base font-semibold text-gray-900">My Rating</h2>
+          {application.dmRatedAt && (
+            <span className="text-xs text-gray-400 ml-auto">Last rated: {formatDate(application.dmRatedAt)}</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-1.5">
+            {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setLocalDmRating(n)}
+                className={cn(
+                  'h-9 w-9 rounded-lg border text-sm font-semibold transition-all',
+                  localDmRating === n
+                    ? cn('ring-2 ring-offset-1', ratingColor(n))
+                    : 'border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700'
+                )}
+              >
+                {n}
+              </button>
+            ))}
+            {localDmRating && (
+              <span className={cn('ml-2 inline-flex items-center self-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset', ratingColor(localDmRating))}>
+                {localDmRating}/10
+              </span>
+            )}
+          </div>
+          <textarea
+            value={localDmNote}
+            onChange={(e) => setLocalDmNote(e.target.value)}
+            maxLength={500}
+            rows={2}
+            placeholder="Optional note about this candidate from your department's perspective..."
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 resize-none"
+          />
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={handleDmRate}
+              loading={ratingDm}
+              disabled={!localDmRating}
+            >
+              {application.dmRating ? 'Update My Rating' : 'Save My Rating'}
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Card: Job Post */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h2 className="text-base font-semibold text-gray-900">{application.jobPostTitle}</h2>
@@ -225,65 +367,95 @@ export function DepartmentApplicationDetailPage() {
         )}
       </div>
 
-      {/* Card: Hiring Steps (read-only) */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+      {/* Card: Hiring Steps (interactive) */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-4">
         <h2 className="text-base font-semibold text-gray-900">Hiring Steps</h2>
         {application.steps.length === 0 ? (
           <p className="text-sm text-gray-400">No steps defined for this job post.</p>
         ) : (
           <div className="flex flex-col divide-y divide-gray-100">
-            {application.steps.map((step) => (
-              <div key={step.id} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
-                <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold flex items-center justify-center shrink-0">
-                  {step.stepOrder}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-gray-900">{step.stepName}</span>
-                    {step.isRequired && (
-                      <span className="text-xs rounded bg-gray-100 px-1.5 py-0.5 text-gray-500 font-medium">Required</span>
+            {application.steps.map((step) => {
+              const canAct = step.status === 'Pending' && !isFinalized && canActOnStep(step, application.steps);
+              return (
+                <div key={step.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 flex-wrap sm:flex-nowrap">
+                  <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold flex items-center justify-center shrink-0">
+                    {step.stepOrder}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-gray-900">{step.stepName}</span>
+                      {step.isRequired && (
+                        <span className="text-xs rounded bg-gray-100 px-1.5 py-0.5 text-gray-500 font-medium">Required</span>
+                      )}
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${STEP_STATUS_BADGE[step.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                        {step.status}
+                      </span>
+                    </div>
+                    {step.completedAt && (
+                      <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(step.completedAt)}</p>
                     )}
-                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${STEP_STATUS_BADGE[step.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                      {step.status}
-                    </span>
                   </div>
-                  {step.completedAt && (
-                    <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(step.completedAt)}</p>
+                  {step.status === 'Pending' && !isFinalized && (
+                    canAct ? (
+                      <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                        <Button
+                          size="sm"
+                          className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white gap-1.5"
+                          onClick={() => handlePassStep(step)}
+                          loading={passingStep}
+                          disabled={failingStep}
+                        >
+                          <CheckCircle className="h-3.5 w-3.5" /> Pass
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          className="flex-1 sm:flex-none gap-1.5"
+                          onClick={() => handleFailStep(step)}
+                          loading={failingStep}
+                          disabled={passingStep}
+                        >
+                          <XCircle className="h-3.5 w-3.5" /> Fail
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic shrink-0">Waiting previous step</span>
+                    )
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Card: Documents */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 flex flex-col gap-4">
         <h2 className="text-base font-semibold text-gray-900">Documents</h2>
         {application.documents.length === 0 ? (
           <p className="text-sm text-gray-400">No documents submitted.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full text-sm min-w-[480px] px-4 sm:px-0">
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <th className="pb-2 pr-4">Document</th>
-                  <th className="pb-2 pr-4">Uploaded At</th>
-                  <th className="pb-2 text-right">Action</th>
+                  <th className="pb-2 pr-4 pl-4 sm:pl-0">Document</th>
+                  <th className="pb-2 pr-4 hidden sm:table-cell">Uploaded At</th>
+                  <th className="pb-2 text-right pr-4 sm:pr-0">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {application.documents.map((doc) => (
                   <tr key={doc.id}>
-                    <td className="py-2 pr-4 font-medium text-gray-900">
+                    <td className="py-2 pr-4 pl-4 sm:pl-0 font-medium text-gray-900">
                       {doc.documentType}{' '}
                       <span className="font-normal text-gray-400">[{friendlyFileType(doc.fileType)}]</span>
                       {doc.originalFileName && (
-                        <span className="font-normal text-gray-500"> — {doc.originalFileName}</span>
+                        <span className="font-normal text-gray-500 hidden sm:inline"> — {doc.originalFileName}</span>
                       )}
                     </td>
-                    <td className="py-2 pr-4 text-gray-500">{formatDate(doc.createdAt)}</td>
-                    <td className="py-2 text-right">
+                    <td className="py-2 pr-4 text-gray-500 hidden sm:table-cell">{formatDate(doc.createdAt)}</td>
+                    <td className="py-2 text-right pr-4 sm:pr-0">
                       <div className="flex items-center justify-end gap-1">
                         {MIME_PREVIEW_TYPE[doc.fileType] && (
                           <Button
@@ -292,7 +464,8 @@ export function DepartmentApplicationDetailPage() {
                             className="gap-1.5 text-[var(--primary)] hover:bg-blue-50"
                             onClick={() => setPreviewDoc({ id: doc.id, fileType: doc.fileType, fileName: doc.originalFileName ?? doc.documentType })}
                           >
-                            <Eye className="h-3.5 w-3.5" /> Preview
+                            <Eye className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Preview</span>
                           </Button>
                         )}
                         <Button
@@ -301,7 +474,8 @@ export function DepartmentApplicationDetailPage() {
                           className="gap-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                           onClick={() => downloadWithAuth(`/api/documents/${doc.id}/download`, token, doc.originalFileName)}
                         >
-                          <Download className="h-3.5 w-3.5" /> Download
+                          <Download className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Download</span>
                         </Button>
                       </div>
                     </td>
@@ -312,6 +486,35 @@ export function DepartmentApplicationDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Footer actions */}
+      {(canAccept || canReject) && (
+        <div className="flex flex-wrap justify-end gap-3 rounded-xl border border-gray-200 bg-white px-4 sm:px-6 py-4">
+          {canAccept && (
+            <Button
+              className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
+              onClick={handleAccept}
+              loading={accepting}
+              disabled={rejecting}
+            >
+              Accept Candidate
+            </Button>
+          )}
+          {canReject && (
+            <Button
+              variant="danger"
+              className="flex-1 sm:flex-none"
+              onClick={handleReject}
+              loading={rejecting}
+              disabled={accepting}
+            >
+              Reject Candidate
+            </Button>
+          )}
+        </div>
+      )}
+
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       <DocumentPreviewModal
         open={previewDoc !== null}
