@@ -31,7 +31,9 @@ A full-stack **Job Portal & Recruitment Management System** built for companies 
 | **Database** | MariaDB 10.6+ / MySQL 8.0+ |
 | **Auth** | Keycloak 26+ (OIDC / JWT Bearer + TOTP 2FA) |
 | **Storage** | MinIO / S3-compatible (AWS SDK) |
-| **Email** | MailKit (SMTP) |
+| **Email** | MailKit (SMTP) via Hangfire queue |
+| **Job Queue** | Hangfire 1.8 (MariaDB storage, retry, dashboard) |
+| **Export** | ClosedXML (.xlsx generation) |
 | **Logging** | Serilog (console + daily rolling file) |
 | **API Docs** | Swashbuckle (Swagger UI) |
 | **Frontend** | React 19 + TypeScript + Vite |
@@ -123,7 +125,9 @@ JWT Bearer (Keycloak) → Policy: HrOrAdmin | AdminOnly | Authorize | AllowAnony
 ### System
 - **Keycloak SSO** — OIDC with mandatory TOTP (2FA) on first login; role sync on every request
 - **Document Storage** — MinIO/S3; files streamed directly through the API (no presigned URL exposed to clients); per-user folder isolation; every download enforces JWT auth
-- **Email Notifications** — Application received, step pass/fail, direct reject, re-engage, approval; all wrapped in branded HTML container with company primary color
+- **Email Notifications** — Application received, step pass/fail, direct reject, re-engage, approval; all wrapped in branded HTML container with company primary color; sent asynchronously via Hangfire queue with automatic retry on failure
+- **Hangfire Dashboard** — `/hangfire` (Admin-only in production, open in development); shows queued/succeeded/failed email jobs; Hangfire auto-creates its own tables (`Hangfire_*`) on first startup — no EF migration needed
+- **Health Check** — `GET /health` returns JSON status for database (MariaDB via EF Core) and storage (MinIO); accessible without authentication
 - **Swagger UI (protected)** — Available in all environments; Basic Auth via `SWAGGER_USERNAME` / `SWAGGER_PASSWORD` ENV vars; returns 404 if not configured
 - **Audit Log** — Automatic change tracking on all `AuditableEntity` tables
 - **Structured Logging** — Serilog to console + daily rolling file (`logs/web-log-YYYYMMDD.log`, 7-day retention)
@@ -266,7 +270,9 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/applications` | HR | List all (`?jobPostId=&status=`) |
+| GET | `/applications` | HR | List all (`?jobPostId=&status=`) — used by analytics (all records) |
+| GET | `/applications/paged` | HR | Paginated list (`?jobPostId=&status=&search=&page=1&pageSize=20`) |
+| GET | `/applications/export` | HR | Download all matching applications as `.xlsx` (`?jobPostId=&status=`) |
 | GET | `/applications/{id}` | HR | Get by ID |
 | GET | `/applications/code/{code}` | HR | Get by application code |
 | POST | `/applications/{id}/steps/{stepId}/pass` | HR | Pass a step |
@@ -386,6 +392,8 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/department-applications` | DM | Applications from all departments assigned to the current manager |
+| GET | `/department-applications/paged` | DM | Paginated list (`?status=&search=&page=1&pageSize=20`) |
+| GET | `/department-applications/export` | DM | Download department applications as `.xlsx` (`?status=`) |
 | GET | `/department-applications/{id}` | DM | Application detail (403 if outside manager's departments) |
 | POST | `/department-applications/{id}/steps/{stepId}/pass` | DM | Pass a step |
 | POST | `/department-applications/{id}/steps/{stepId}/fail` | DM | Fail a step |
@@ -415,7 +423,7 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 - **FluentValidation** — validators in the same folder as the command/query
 - **Repository pattern** — interfaces in `Application`, implementations in `Persistence`
 - **No business logic in controllers** — controllers dispatch to MediatR and return results
-- **Fire-and-forget emails** — emails run in `Task.Run` and never block the HTTP response
+- **Background email queue** — emails are enqueued via Hangfire (`IEmailService → HangfireEmailService`); processed with automatic retry; no changes needed to command handlers
 - **`AuditableEntity`** — base class for entities needing `CreatedAt/By`, `UpdatedAt/By`
 - **`SoftDeletableEntity`** — extends `AuditableEntity` with `IsDeleted`, `DeletedAt/By`
 - **Naming** — PascalCase everywhere; `async`/`await` throughout; `cancellationToken` always passed
@@ -541,6 +549,8 @@ dotnet run --project Presentation/JobPortal.Web
 - **API:** `http://localhost:5067`
 - **Frontend (Vite dev server):** `http://localhost:5167`
 - **Swagger UI:** `http://localhost:5067/swagger` _(set `SWAGGER_USERNAME` + `SWAGGER_PASSWORD` env vars to enable)_
+- **Health check:** `http://localhost:5067/health` _(JSON status: database + storage)_
+- **Hangfire dashboard:** `http://localhost:5067/hangfire` _(open in development; Admin-only in production)_
 - **Mailpit inbox:** `http://localhost:8025`
 - **MinIO console:** `http://localhost:9001`
 

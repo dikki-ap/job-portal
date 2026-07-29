@@ -89,6 +89,51 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
 
+    public async Task<(IEnumerable<ApplicationEntity> Items, int TotalCount)> GetPagedAsync(
+        int? jobPostId, string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = context.Applications
+            .Include(a => a.User).ThenInclude(u => u.Profile)
+            .Include(a => a.JobPost).ThenInclude(j => j.Department)
+            .Include(a => a.Steps).ThenInclude(s => s.JobStep)
+            .Include(a => a.Documents).ThenInclude(d => d.Document)
+            .Where(a => !a.IsDeleted)
+            .Where(a => jobPostId == null || a.JobPostId == jobPostId)
+            .Where(a => status == null || a.Status == status)
+            .Where(a => search == null ||
+                (a.User.FirstName + " " + a.User.LastName).Contains(search) ||
+                a.User.Email.Contains(search))
+            .OrderByDescending(a => a.AppliedAt);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+        return (items, total);
+    }
+
+    public async Task<(IEnumerable<ApplicationEntity> Items, int TotalCount)> GetPagedByDepartmentAsync(
+        IReadOnlyList<int> departmentIds, int? jobPostId, string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = context.Applications
+            .Include(a => a.User).ThenInclude(u => u.Profile)
+            .Include(a => a.JobPost).ThenInclude(j => j.Department)
+            .Include(a => a.JobPost).ThenInclude(j => j.EmploymentType)
+            .Include(a => a.JobPost).ThenInclude(j => j.WorkMode)
+            .Include(a => a.JobPost).ThenInclude(j => j.JobLevel)
+            .Include(a => a.Steps).ThenInclude(s => s.JobStep)
+            .Include(a => a.Documents).ThenInclude(d => d.Document)
+            .Where(a => !a.IsDeleted && departmentIds.Contains(a.JobPost!.DepartmentId))
+            .Where(a => jobPostId == null || a.JobPostId == jobPostId)
+            .Where(a => status == null || a.Status == status)
+            .Where(a => search == null ||
+                (a.User.FirstName + " " + a.User.LastName).Contains(search) ||
+                a.User.Email.Contains(search))
+            .OrderByDescending(a => a.AppliedAt);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+        return (items, total);
+    }
+
     public async Task<bool> ExistsAsync(int userId, int jobPostId, CancellationToken cancellationToken = default)
         => await context.Applications.AnyAsync(
             a => !a.IsDeleted && a.UserId == userId && a.JobPostId == jobPostId,

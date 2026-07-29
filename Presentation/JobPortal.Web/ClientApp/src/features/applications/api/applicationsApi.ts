@@ -1,10 +1,18 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import keycloak from '../../../lib/keycloak';
-import type { ApplicationDocumentDto, ApplicationDto } from '../../../types/api';
+import type { ApplicationDocumentDto, ApplicationDto, PagedResult } from '../../../types/api';
 
 interface GetApplicationsParams {
   jobPostId?: number;
   status?: string;
+}
+
+interface GetApplicationsPagedParams {
+  jobPostId?: number;
+  status?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 interface UpdateStepParams {
@@ -48,6 +56,18 @@ export const applicationsApi = createApi({
         if (status) params.set('status', status);
         const qs = params.toString();
         return qs ? `?${qs}` : '';
+      },
+      providesTags: ['Application'],
+    }),
+    getApplicationsPaged: builder.query<PagedResult<ApplicationDto>, GetApplicationsPagedParams>({
+      query: ({ jobPostId, status, search, page = 1, pageSize = 20 } = {}) => {
+        const params = new URLSearchParams();
+        if (jobPostId != null) params.set('jobPostId', String(jobPostId));
+        if (status) params.set('status', status);
+        if (search) params.set('search', search);
+        params.set('page', String(page));
+        params.set('pageSize', String(pageSize));
+        return `/paged?${params.toString()}`;
       },
       providesTags: ['Application'],
     }),
@@ -138,6 +158,7 @@ export const applicationsApi = createApi({
 
 export const {
   useGetApplicationsQuery,
+  useGetApplicationsPagedQuery,
   useGetApplicationByIdQuery,
   useGetApplicationByCodeQuery,
   usePassStepMutation,

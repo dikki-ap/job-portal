@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, CheckCircle, XCircle, Ban, X, UserCheck } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Ban, X, UserCheck, Download } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Pagination } from '../../../components/ui/Pagination';
 import { MultiSelectFilter } from '../../../components/ui/MultiSelectFilter';
@@ -209,6 +209,14 @@ export function ApplicationsPage() {
             {totalItems} application{totalItems !== 1 ? 's' : ''}
           </p>
         )}
+
+        <a
+          href="/api/applications/export"
+          download
+          className="h-10 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          <Download className="h-4 w-4" /> Export
+        </a>
       </div>
 
       {/* Bulk action bar */}

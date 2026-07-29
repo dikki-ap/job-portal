@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, FileText, CheckCircle, XCircle, Ban, X, UserCheck } from 'lucide-react';
+import { Search, FileText, CheckCircle, XCircle, Ban, X, UserCheck, Download } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
+import { Pagination } from '../../../components/ui/Pagination';
 import { MultiSelectFilter } from '../../../components/ui/MultiSelectFilter';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { useToast } from '../../../hooks/useToast';
+import { usePagination } from '../../../hooks/usePagination';
 import {
   useGetDepartmentApplicationsQuery,
   useBulkUpdateStepMutation,
@@ -108,6 +110,9 @@ export function DepartmentApplicationsPage() {
     return `Showing applications across your departments: ${listed}.`;
   }, [dmInfo]);
 
+  const { paginated, currentPage, totalPages, totalItems, pageSize, from, to, goToPage, setPageSize } =
+    usePagination(filtered);
+
   const selectedCount = selectedIds.size;
 
   const hasActionableSelected = useMemo(() => {
@@ -123,20 +128,20 @@ export function DepartmentApplicationsPage() {
     return selectedApps.length === selectedCount && selectedApps.every(isAtLastRequiredStep);
   }, [filtered, selectedIds, selectedCount]);
 
-  // Header checkbox indeterminate state
+  // Header checkbox indeterminate state (scoped to visible page)
   useEffect(() => {
     if (!headerCheckboxRef.current) return;
-    const all = filtered.length > 0 && filtered.every((a) => selectedIds.has(a.id));
-    const some = filtered.some((a) => selectedIds.has(a.id));
+    const all = paginated.length > 0 && paginated.every((a) => selectedIds.has(a.id));
+    const some = paginated.some((a) => selectedIds.has(a.id));
     headerCheckboxRef.current.checked = all;
     headerCheckboxRef.current.indeterminate = some && !all;
-  }, [filtered, selectedIds]);
+  }, [paginated, selectedIds]);
 
   const toggleAll = () => {
-    if (filtered.every((a) => selectedIds.has(a.id))) {
+    if (paginated.every((a) => selectedIds.has(a.id))) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filtered.map((a) => a.id)));
+      setSelectedIds(new Set(paginated.map((a) => a.id)));
     }
   };
 
@@ -225,6 +230,14 @@ export function DepartmentApplicationsPage() {
             maxVisible={3}
           />
         )}
+
+        <a
+          href="/api/department-applications/export"
+          download
+          className="h-10 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          <Download className="h-4 w-4" /> Export
+        </a>
       </div>
 
       {/* Bulk action bar */}
@@ -327,7 +340,7 @@ export function DepartmentApplicationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((app) => {
+                {paginated.map((app) => {
                   const status = deriveStatus(app);
                   const isSelected = selectedIds.has(app.id);
                   return (
@@ -394,6 +407,19 @@ export function DepartmentApplicationsPage() {
             </table>
           )}
         </div>
+      )}
+
+      {!isLoading && !isError && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          from={from}
+          to={to}
+          pageSize={pageSize}
+          onPageChange={goToPage}
+          onPageSizeChange={setPageSize}
+        />
       )}
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

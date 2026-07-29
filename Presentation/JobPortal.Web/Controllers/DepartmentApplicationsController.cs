@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Features.Applications.Commands.AcceptApplication;
@@ -10,7 +11,9 @@ using JobPortal.Application.Features.Applications.Commands.ScheduleApplicationSt
 using JobPortal.Application.Features.Applications.Commands.UpdateApplicationStep;
 using JobPortal.Application.Features.DepartmentApplications.Queries.GetDepartmentApplicationById;
 using JobPortal.Application.Features.DepartmentApplications.Queries.GetDepartmentApplications;
+using JobPortal.Application.Features.DepartmentApplications.Queries.GetPagedDepartmentApplications;
 using JobPortal.Application.Features.DepartmentManagers.Queries.IsDepartmentManager;
+using JobPortal.Application.Interfaces.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +23,10 @@ namespace JobPortal.Web.Controllers;
 [ApiController]
 [Route("api/department-applications")]
 [Authorize]
-public class DepartmentApplicationsController(IMediator mediator, ILogger<DepartmentApplicationsController> logger) : ControllerBase
+public class DepartmentApplicationsController(
+    IMediator mediator,
+    IApplicationRepository repository,
+    ILogger<DepartmentApplicationsController> logger) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
@@ -233,6 +239,81 @@ public class DepartmentApplicationsController(IMediator mediator, ILogger<Depart
             new BulkRejectDepartmentApplicationCommand(req.ApplicationIds, dmInfo!.DepartmentIds),
             cancellationToken);
         return Ok(result);
+    }
+
+    [HttpGet("paged")]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] int? jobPostId,
+        [FromQuery] string? status,
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var (dmInfo, error) = await GetDmOrForbidAsync(cancellationToken);
+        if (error is not null) return error;
+
+        var result = await mediator.Send(
+            new GetPagedDepartmentApplicationsQuery(dmInfo!.DepartmentIds, jobPostId, status, search, page, pageSize),
+            cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("export")]
+    [Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]
+    public async Task<IActionResult> Export(
+        [FromQuery] int? jobPostId,
+        [FromQuery] string? status,
+        CancellationToken cancellationToken)
+    {
+        var (dmInfo, error) = await GetDmOrForbidAsync(cancellationToken);
+        if (error is not null) return error;
+
+        var applications = await repository.GetAllByDepartmentAsync(dmInfo!.DepartmentIds, cancellationToken);
+        var filtered = applications
+            .Where(a => jobPostId == null || a.JobPostId == jobPostId)
+            .Where(a => status == null || a.Status == status);
+
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add("Applications");
+
+        string[] headers = ["Code", "Candidate Name", "Email", "Phone", "Job Title", "Department",
+            "Status", "Source", "Applied At", "HR Rating", "HR Note", "DM Rating", "DM Note", "Current Step"];
+        for (int i = 0; i < headers.Length; i++)
+            sheet.Cell(1, i + 1).Value = headers[i];
+
+        int row = 2;
+        foreach (var a in filtered)
+        {
+            var currentStep = a.Steps?.OrderBy(s => s.StepOrder)
+                .FirstOrDefault(s => s.Status == ApplicationStepStatus.Pending)?.StepName
+                ?? a.Steps?.OrderByDescending(s => s.StepOrder).FirstOrDefault()?.StepName;
+
+            sheet.Cell(row, 1).Value = a.Code;
+            sheet.Cell(row, 2).Value = $"{a.User?.FirstName} {a.User?.LastName}".Trim();
+            sheet.Cell(row, 3).Value = a.User?.Email;
+            sheet.Cell(row, 4).Value = a.User?.Profile?.PhoneNumber;
+            sheet.Cell(row, 5).Value = a.JobPost?.Title;
+            sheet.Cell(row, 6).Value = a.JobPost?.Department?.Name;
+            sheet.Cell(row, 7).Value = a.Status;
+            sheet.Cell(row, 8).Value = a.Source;
+            sheet.Cell(row, 9).Value = a.AppliedAt.ToString("yyyy-MM-dd HH:mm");
+            sheet.Cell(row, 10).Value = a.Rating?.ToString() ?? "";
+            sheet.Cell(row, 11).Value = a.RatingNote;
+            sheet.Cell(row, 12).Value = a.DmRating?.ToString() ?? "";
+            sheet.Cell(row, 13).Value = a.DmRatingNote;
+            sheet.Cell(row, 14).Value = currentStep;
+            row++;
+        }
+
+        sheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+
+        return File(stream.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"applications-{DateTime.UtcNow:yyyyMMdd}.xlsx");
     }
 
     // Returns (dmInfo, null) on success; (null, ForbidResult) if user is not a DM.

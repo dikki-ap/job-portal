@@ -1,7 +1,14 @@
 using FluentValidation;
+using Hangfire;
+using Hangfire.MySql;
+using HealthChecks.UI.Client;
+using JobPortal.Infrastructure.HealthChecks;
+using JobPortal.Persistence.Context;
+using JobPortal.Web.Common;
 using JobPortal.Web.Extensions;
 using JobPortal.Web.Middleware;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 // ────────────────────────────────────────────────────────────────────────────────
 // Host & service registration
@@ -20,7 +27,18 @@ builder.Services
     .AddRateLimitingPolicies(builder.Configuration)
     .AddKeycloakAuthentication(builder.Configuration)
     .AddApplicationServices(builder.Configuration)
-    .AddHealthChecks();
+    .AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>("database")
+    .AddCheck<MinioHealthCheck>("storage");
+
+builder.Services.AddHangfire(cfg => cfg
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseStorage(new MySqlStorage(
+        builder.Configuration.GetConnectionString("DefaultConnection")!,
+        new MySqlStorageOptions { TablesPrefix = "Hangfire_" })));
+builder.Services.AddHangfireServer();
 
 // ────────────────────────────────────────────────────────────────────────────────
 // Middleware pipeline
@@ -127,7 +145,16 @@ app.UseAuthentication();
 app.UseMiddleware<UserSyncMiddleware>();
 app.UseAuthorization();
 
-app.MapHealthChecks("/health").AllowAnonymous();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+}).AllowAnonymous();
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new HangfireAdminAuthFilter(app.Environment)]
+});
+
 app.MapControllers();
 app.MapFallbackToFile("index.html"); // SPA client-side routing fallback
 

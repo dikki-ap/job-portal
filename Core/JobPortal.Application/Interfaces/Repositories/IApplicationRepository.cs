@@ -11,6 +11,10 @@ public interface IApplicationRepository
     Task<IEnumerable<ApplicationEntity>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ApplicationEntity>> GetByJobPostIdAsync(int jobPostId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ApplicationEntity>> GetAllByDepartmentAsync(IReadOnlyList<int> departmentIds, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<ApplicationEntity> Items, int TotalCount)> GetPagedAsync(
+        int? jobPostId, string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<ApplicationEntity> Items, int TotalCount)> GetPagedByDepartmentAsync(
+        IReadOnlyList<int> departmentIds, int? jobPostId, string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(int userId, int jobPostId, CancellationToken cancellationToken = default);
     Task AddAsync(ApplicationEntity application, CancellationToken cancellationToken = default);
     Task UpdateAsync(ApplicationEntity application, CancellationToken cancellationToken = default);

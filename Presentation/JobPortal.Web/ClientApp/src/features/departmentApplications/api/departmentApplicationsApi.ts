@@ -1,7 +1,14 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import keycloak from '../../../lib/keycloak';
-import type { ApplicationDto } from '../../../types/api';
+import type { ApplicationDto, PagedResult } from '../../../types/api';
 import type { BulkOperationResult } from '../../applications/api/applicationsApi';
+
+interface GetDepartmentApplicationsPagedParams {
+  status?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}
 
 export const departmentApplicationsApi = createApi({
   reducerPath: 'departmentApplicationsApi',
@@ -23,6 +30,17 @@ export const departmentApplicationsApi = createApi({
         if (status) params.set('status', status);
         const qs = params.toString();
         return qs ? `?${qs}` : '';
+      },
+      providesTags: ['DepartmentApplication'],
+    }),
+    getDepartmentApplicationsPaged: builder.query<PagedResult<ApplicationDto>, GetDepartmentApplicationsPagedParams>({
+      query: ({ status, search, page = 1, pageSize = 20 } = {}) => {
+        const params = new URLSearchParams();
+        if (status) params.set('status', status);
+        if (search) params.set('search', search);
+        params.set('page', String(page));
+        params.set('pageSize', String(pageSize));
+        return `/paged?${params.toString()}`;
       },
       providesTags: ['DepartmentApplication'],
     }),
@@ -113,6 +131,7 @@ export const departmentApplicationsApi = createApi({
 
 export const {
   useGetDepartmentApplicationsQuery,
+  useGetDepartmentApplicationsPagedQuery,
   useGetDepartmentApplicationByIdQuery,
   usePassStepMutation,
   useFailStepMutation,

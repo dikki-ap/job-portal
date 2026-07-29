@@ -1,4 +1,5 @@
 using JobPortal.Application.Interfaces.Services;
+using JobPortal.Infrastructure.HealthChecks;
 using JobPortal.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,7 +11,10 @@ public static class DependencyInjection
     {
         services.AddSingleton<IStorageService, MinioStorageService>();
         services.AddSingleton<ISmtpSettingsService, SmtpSettingsService>();
-        services.AddTransient<IEmailService, SmtpEmailService>();
+        services.AddTransient<SmtpEmailService>();
+        services.AddTransient<EmailBackgroundJob>();
+        services.AddTransient<IEmailService, HangfireEmailService>();
+        services.AddScoped<MinioHealthCheck>();
         return services;
     }
 }
