@@ -14,6 +14,7 @@ namespace JobPortal.Web.Controllers;
 public class JobCategoriesController(IMediator mediator, ILogger<JobCategoriesController> logger) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         logger.LogDebug("GetAll: fetching all job categories");
@@ -32,6 +33,7 @@ public class JobCategoriesController(IMediator mediator, ILogger<JobCategoriesCo
     }
 
     [HttpGet("{id:int}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("GetById: fetching job category id={Id}", id);

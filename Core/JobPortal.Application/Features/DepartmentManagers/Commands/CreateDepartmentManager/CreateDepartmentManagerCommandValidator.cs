@@ -26,12 +26,7 @@ public class CreateDepartmentManagerCommandValidator : AbstractValidator<CreateD
 
         RuleFor(x => x.DepartmentIds)
             .NotEmpty().WithMessage("At least one department is required.")
-            .MustAsync(async (ids, ct) =>
-            {
-                foreach (var id in ids)
-                    if (await departmentRepository.GetByIdAsync(id, ct) is null) return false;
-                return true;
-            })
+            .MustAsync(async (ids, ct) => await departmentRepository.AreAllIdsValidAsync(ids, ct))
             .WithMessage("One or more selected departments do not exist.");
     }
 }

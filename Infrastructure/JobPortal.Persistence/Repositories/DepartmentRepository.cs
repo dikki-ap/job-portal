@@ -25,6 +25,14 @@ public class DepartmentRepository(ApplicationDbContext context) : IDepartmentRep
             d => d.Name == name && (excludeId == null || d.Id != excludeId),
             cancellationToken);
 
+    public async Task<bool> AreAllIdsValidAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.Distinct().ToList();
+        var count = await context.Departments
+            .CountAsync(d => idList.Contains(d.Id), cancellationToken);
+        return count == idList.Count;
+    }
+
     public async Task AddAsync(Department department, CancellationToken cancellationToken = default)
         => await context.Departments.AddAsync(department, cancellationToken);
 

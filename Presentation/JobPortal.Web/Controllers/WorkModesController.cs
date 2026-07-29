@@ -14,6 +14,7 @@ namespace JobPortal.Web.Controllers;
 public class WorkModesController(IMediator mediator, ILogger<WorkModesController> logger) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         logger.LogDebug("GetAll: fetching all work modes");
@@ -32,6 +33,7 @@ public class WorkModesController(IMediator mediator, ILogger<WorkModesController
     }
 
     [HttpGet("{id:int}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("GetById: fetching work mode id={Id}", id);

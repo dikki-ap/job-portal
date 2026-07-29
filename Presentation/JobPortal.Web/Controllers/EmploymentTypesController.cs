@@ -14,6 +14,7 @@ namespace JobPortal.Web.Controllers;
 public class EmploymentTypesController(IMediator mediator, ILogger<EmploymentTypesController> logger) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         logger.LogDebug("GetAll: fetching all employment types");
@@ -32,6 +33,7 @@ public class EmploymentTypesController(IMediator mediator, ILogger<EmploymentTyp
     }
 
     [HttpGet("{id:int}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("GetById: fetching employment type id={Id}", id);

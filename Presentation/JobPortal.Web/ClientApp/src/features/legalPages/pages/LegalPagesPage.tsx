@@ -9,6 +9,7 @@ import {
 import { Button } from '../../../components/ui/Button';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { Spinner } from '../../../components/ui/Spinner';
+import { ErrorBanner } from '../../../components/ErrorBanner';
 import { useToast } from '../../../hooks/useToast';
 import { useGetLegalPageQuery, useUpdateLegalPageMutation } from '../api/legalPagesApi';
 import { cn } from '../../../lib/utils';
@@ -153,7 +154,7 @@ function EditorToolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
 
 function LegalEditor({ pageType }: { pageType: PageType }) {
   const { toasts, addToast, dismissToast } = useToast();
-  const { data, isLoading } = useGetLegalPageQuery(pageType);
+  const { data, isLoading, isError } = useGetLegalPageQuery(pageType);
   const [updateLegalPage, { isLoading: saving }] = useUpdateLegalPageMutation();
   const [dirty, setDirty] = useState(false);
   const [localContent, setLocalContent] = useState('');
@@ -192,6 +193,8 @@ function LegalEditor({ pageType }: { pageType: PageType }) {
       </div>
     );
   }
+
+  if (isError) return <ErrorBanner message="Failed to load legal page content." />;
 
   return (
     <div className="flex flex-col gap-4">

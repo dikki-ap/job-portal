@@ -11,6 +11,7 @@ namespace JobPortal.Web.Controllers;
 
 [ApiController]
 [Route("api/education-levels")]
+[Authorize]
 public class EducationLevelsController(IMediator mediator, ILogger<EducationLevelsController> logger) : ControllerBase
 {
     [HttpGet]

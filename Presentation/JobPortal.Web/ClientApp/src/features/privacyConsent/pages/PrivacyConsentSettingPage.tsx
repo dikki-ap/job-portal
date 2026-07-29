@@ -3,13 +3,14 @@ import { Shield, ExternalLink } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { Spinner } from '../../../components/ui/Spinner';
+import { ErrorBanner } from '../../../components/ErrorBanner';
 import { useToast } from '../../../hooks/useToast';
 import { useGetPrivacyConsentSettingQuery, useUpdatePrivacyConsentSettingMutation } from '../api/privacyConsentApi';
 import { cn } from '../../../lib/utils';
 
 export function PrivacyConsentSettingPage() {
   const { toasts, addToast, dismissToast } = useToast();
-  const { data: setting, isLoading } = useGetPrivacyConsentSettingQuery();
+  const { data: setting, isLoading, isError } = useGetPrivacyConsentSettingQuery();
   const [updateSetting, { isLoading: saving }] = useUpdatePrivacyConsentSettingMutation();
   const [requireConsent, setRequireConsent] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -43,6 +44,8 @@ export function PrivacyConsentSettingPage() {
       </div>
     );
   }
+
+  if (isError) return <ErrorBanner message="Failed to load privacy consent settings." />;
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">

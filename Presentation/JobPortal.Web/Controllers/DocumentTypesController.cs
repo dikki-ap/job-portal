@@ -14,6 +14,7 @@ namespace JobPortal.Web.Controllers;
 public class DocumentTypesController(IMediator mediator, ILogger<DocumentTypesController> logger) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         logger.LogDebug("GetAll: fetching all document types");
@@ -32,6 +33,7 @@ public class DocumentTypesController(IMediator mediator, ILogger<DocumentTypesCo
     }
 
     [HttpGet("{id:int}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("GetById: fetching document type id={Id}", id);

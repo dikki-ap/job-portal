@@ -11,6 +11,7 @@ namespace JobPortal.Web.Controllers;
 
 [ApiController]
 [Route("api/job-levels")]
+[Authorize]
 public class JobLevelsController(IMediator mediator, ILogger<JobLevelsController> logger) : ControllerBase
 {
     [HttpGet]

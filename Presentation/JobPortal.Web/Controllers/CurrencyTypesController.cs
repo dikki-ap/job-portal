@@ -11,6 +11,7 @@ namespace JobPortal.Web.Controllers;
 
 [ApiController]
 [Route("api/currency-types")]
+[Authorize]
 public class CurrencyTypesController(IMediator mediator, ILogger<CurrencyTypesController> logger) : ControllerBase
 {
     [HttpGet]

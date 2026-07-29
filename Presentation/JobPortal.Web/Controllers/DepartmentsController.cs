@@ -11,6 +11,7 @@ namespace JobPortal.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class DepartmentsController(IMediator mediator, ILogger<DepartmentsController> logger) : ControllerBase
 {
     [HttpGet]

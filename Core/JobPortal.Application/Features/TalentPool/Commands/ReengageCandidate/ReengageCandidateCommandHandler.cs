@@ -73,7 +73,7 @@ public class ReengageCandidateCommandHandler(
         var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", ct)  ?? "JobPortal";
 
         var full = await applicationRepository.GetByIdAsync(application.Id, ct);
-        _ = ApplicationEmailHelper.SendReengageAsync(emailService, logger, full!, primaryColor, companyName, CancellationToken.None);
+        await ApplicationEmailHelper.SendReengageAsync(emailService, logger, full!, primaryColor, companyName, CancellationToken.None);
         return GetAllApplicationsQueryHandler.MapToDto(full!);
     }
 }
