@@ -13,6 +13,9 @@ public static class CacheKeys
     public const string PublishedCountries   = "cache:published-countries";
     public static string JobSlug(string slug) => $"cache:job-slug:{slug}";
 
+    // Per-user identity
+    public static string DmIdentity(string email) => $"cache:dm-identity:{email}";
+
     // Master data
     public const string DocumentTypes    = "cache:document-types";
     public const string Departments      = "cache:departments";

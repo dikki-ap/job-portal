@@ -14,7 +14,7 @@ export const STATUS_LABEL: Record<string, string> = {
 };
 
 /** Compute the displayed status from step progression rather than the stored field alone. */
-export function deriveStatus(app: Pick<ApplicationDto, 'status' | 'steps'>): DerivedStatus {
+export function deriveStatus(app: { status: string; steps: { status: string }[] }): DerivedStatus {
   if (app.status === 'Accepted') return 'Accepted';
   if (app.status === 'Rejected') return 'Rejected';
   if (app.status === 'InReview') return 'InReview';

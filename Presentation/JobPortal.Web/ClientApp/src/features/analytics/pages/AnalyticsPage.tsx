@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Download, Briefcase, FileText, Clock, Timer } from 'lucide-react';
+import { Briefcase, FileText, Clock, Timer } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -9,10 +8,9 @@ import {
 import { Spinner } from '../../../components/ui/Spinner';
 import { cn } from '../../../lib/utils';
 import { deriveStatus, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
-import { useFormatter } from '../../../lib/useFormatter';
-import { useGetApplicationsQuery } from '../../applications/api/applicationsApi';
+import { useGetApplicationsForAnalyticsQuery } from '../api/analyticsApi';
 import { useGetJobPostsQuery } from '../../jobPosts/api/jobPostsApi';
-import type { ApplicationDto, JobPostDto } from '../../../types/api';
+import type { ApplicationAnalyticsDto } from '../../../types/api';
 
 const STATUS_COLORS: Record<string, string> = {
   Pending: '#f59e0b',
@@ -33,7 +31,7 @@ const DATE_RANGE_OPTIONS: { id: DateRange; label: string }[] = [
   { id: 'all', label: 'All time' },
 ];
 
-function filterByDateRange(applications: ApplicationDto[], range: DateRange): ApplicationDto[] {
+function filterByDateRange(applications: ApplicationAnalyticsDto[], range: DateRange): ApplicationAnalyticsDto[] {
   if (range === 'all') return applications;
   const cutoff = new Date();
   if (range === '30d') cutoff.setDate(cutoff.getDate() - 30);
@@ -98,39 +96,21 @@ function HiringFunnel({ data }: { data: { stage: string; count: number; pct: num
   );
 }
 
-function buildExcelRows(applications: ApplicationDto[], jobPosts: JobPostDto[], formatDate: (iso: string) => string) {
-  const jpMap = new Map(jobPosts.map((jp) => [jp.id, jp]));
-  return applications.map((a) => {
-    const jp = jpMap.get(a.jobPostId);
-    const steps = [...a.steps]
-      .sort((x, y) => x.stepOrder - y.stepOrder)
-      .map((s) => `${s.stepName}: ${s.status}`)
-      .join(' | ');
-    return {
-      'Application Code': a.code,
-      'Candidate Name': a.candidateName || '—',
-      'Email': a.candidateEmail,
-      'Phone': a.candidatePhone ?? '—',
-      'Job Post': a.jobPostTitle,
-      'Department': jp?.departmentName ?? '—',
-      'Applied Date': formatDate(a.appliedAt),
-      'Status': deriveStatus(a),
-      'Days to Hire': deriveStatus(a) === 'Accepted' ? Math.round(daysBetween(a.appliedAt, a.updatedAt)) : '—',
-      'Rating': a.rating ?? '—',
-      'Rating Note': a.ratingNote ?? '—',
-      'Steps': steps || '—',
-    };
-  });
-}
-
 export function AnalyticsPage() {
-  const navigate = useNavigate();
-  const { formatDate } = useFormatter();
   const [dateRange, setDateRange] = useState<DateRange>('all');
 
-  const { data: applications = [], isLoading: appsLoading } = useGetApplicationsQuery({});
-  const { data: jobPosts = [], isLoading: jobsLoading } = useGetJobPostsQuery();
+  const {
+    data: applications = [],
+    isLoading: appsLoading,
+    isError: appsError,
+  } = useGetApplicationsForAnalyticsQuery();
+  const {
+    data: jobPosts = [],
+    isLoading: jobsLoading,
+    isError: jobsError,
+  } = useGetJobPostsQuery();
   const loading = appsLoading || jobsLoading;
+  const hasError = appsError || jobsError;
 
   const filtered = useMemo(
     () => filterByDateRange(applications, dateRange),
@@ -141,7 +121,6 @@ export function AnalyticsPage() {
     const openPositions = jobPosts.filter((jp) => jp.status === 'Published').length;
     const total = filtered.length;
     const pending = filtered.filter((a) => deriveStatus(a) === 'Pending').length;
-    const inReview = filtered.filter((a) => deriveStatus(a) === 'InReview').length;
     const accepted = filtered.filter((a) => deriveStatus(a) === 'Accepted').length;
 
     const hiredApps = filtered.filter((a) => deriveStatus(a) === 'Accepted');
@@ -149,7 +128,7 @@ export function AnalyticsPage() {
       ? Math.round(hiredApps.reduce((sum, a) => sum + daysBetween(a.appliedAt, a.updatedAt), 0) / hiredApps.length)
       : null;
 
-    return { openPositions, total, pending, inReview, accepted, avgTimeToHire };
+    return { openPositions, total, pending, accepted, avgTimeToHire };
   }, [filtered, jobPosts]);
 
   const funnelData = useMemo(() => {
@@ -259,38 +238,13 @@ export function AnalyticsPage() {
     return months;
   }, [filtered, monthWindowSize]);
 
-  const recentApplications = useMemo(
-    () =>
-      [...applications]
-        .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
-        .slice(0, 10),
-    [applications],
-  );
-
-  const handleExport = () => {
-    const rows = buildExcelRows(filtered, jobPosts, formatDate);
-    if (rows.length === 0) return;
-
-    const headers = Object.keys(rows[0]) as (keyof (typeof rows)[0])[];
-    const escape = (val: unknown) => {
-      const s = String(val ?? '');
-      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-    const csvLines = [
-      headers.join(','),
-      ...rows.map((row) => headers.map((h) => escape(row[h])).join(',')),
-    ];
-    // BOM ensures Excel opens UTF-8 correctly
-    const blob = new Blob(['\uFEFF' + csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `applications-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 100);
-  };
+  if (hasError)
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 text-center">
+        <p className="text-lg font-semibold text-red-600">Failed to load analytics data.</p>
+        <p className="text-sm text-gray-500">Please refresh the page or try again later.</p>
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-6">
@@ -300,33 +254,22 @@ export function AnalyticsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
           <p className="text-sm text-gray-500">Recruitment pipeline overview.</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
-            {DATE_RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setDateRange(opt.id)}
-                className={cn(
-                  'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  dateRange === opt.id
-                    ? 'bg-[var(--primary)] text-white'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={loading || filtered.length === 0}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Download className="h-4 w-4" />
-            Download Excel
-          </button>
+        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
+          {DATE_RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setDateRange(opt.id)}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                dateRange === opt.id
+                  ? 'bg-[var(--primary)] text-white'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -501,51 +444,6 @@ export function AnalyticsPage() {
                 <Area type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={2} fill="url(#areaGrad)" dot={{ r: 4, fill: 'var(--primary)' }} />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
-
-          {/* Recent Applications */}
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900">Recent Applications</h2>
-            </div>
-            {recentApplications.length === 0 ? (
-              <p className="px-6 py-10 text-center text-sm text-gray-400">No applications yet.</p>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    <th className="px-6 py-3">Candidate</th>
-                    <th className="px-6 py-3 hidden md:table-cell">Job Post</th>
-                    <th className="px-6 py-3 hidden lg:table-cell">Applied</th>
-                    <th className="px-6 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {recentApplications.map((app) => {
-                    const status = deriveStatus(app);
-                    return (
-                      <tr
-                        key={app.id}
-                        onClick={() => navigate(`/applications/${app.code}`)}
-                        className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      >
-                        <td className="px-6 py-3">
-                          <div className="font-medium text-gray-900">{app.candidateName || '—'}</div>
-                          <div className="text-xs text-gray-400">{app.candidateEmail}</div>
-                        </td>
-                        <td className="px-6 py-3 text-gray-500 hidden md:table-cell">{app.jobPostTitle}</td>
-                        <td className="px-6 py-3 text-gray-500 hidden lg:table-cell">{formatDate(app.appliedAt)}</td>
-                        <td className="px-6 py-3">
-                          <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
-                            {STATUS_LABEL[status] ?? status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
           </div>
         </>
       )}

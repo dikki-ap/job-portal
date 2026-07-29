@@ -1,6 +1,7 @@
 using ClosedXML.Excel;
 using JobPortal.Application.Common;
 using JobPortal.Application.Features.Applications.Commands.AcceptApplication;
+using Microsoft.AspNetCore.RateLimiting;
 using JobPortal.Application.Features.Applications.Commands.BulkAcceptApplication;
 using JobPortal.Application.Features.Applications.Commands.BulkRejectApplication;
 using JobPortal.Application.Features.Applications.Commands.BulkUpdateApplicationStep;
@@ -143,6 +144,8 @@ public class ApplicationsController(
     {
         if (command.ApplicationIds is null || command.ApplicationIds.Count == 0)
             return BadRequest(new { error = "No application IDs provided." });
+        if (command.ApplicationIds.Count > 500)
+            return BadRequest(new { error = "Cannot process more than 500 applications at once." });
         if (command.Action is not (ApplicationStepStatus.Passed or ApplicationStepStatus.Failed))
             return BadRequest(new { error = "Action must be 'Passed' or 'Failed'." });
 
@@ -157,6 +160,8 @@ public class ApplicationsController(
     {
         if (command.ApplicationIds is null || command.ApplicationIds.Count == 0)
             return BadRequest(new { error = "No application IDs provided." });
+        if (command.ApplicationIds.Count > 500)
+            return BadRequest(new { error = "Cannot process more than 500 applications at once." });
 
         var result = await mediator.Send(command, cancellationToken);
         return Ok(result);
@@ -169,6 +174,8 @@ public class ApplicationsController(
     {
         if (command.ApplicationIds is null || command.ApplicationIds.Count == 0)
             return BadRequest(new { error = "No application IDs provided." });
+        if (command.ApplicationIds.Count > 500)
+            return BadRequest(new { error = "Cannot process more than 500 applications at once." });
 
         var result = await mediator.Send(command, cancellationToken);
         return Ok(result);
@@ -183,6 +190,7 @@ public class ApplicationsController(
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
+        pageSize = Math.Clamp(pageSize, 1, 200);
         var result = await mediator.Send(
             new GetPagedApplicationsQuery(jobPostId, status, search, page, pageSize),
             cancellationToken);
@@ -191,6 +199,7 @@ public class ApplicationsController(
 
     [HttpGet("export")]
     [Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]
+    [EnableRateLimiting("download")]
     public async Task<IActionResult> Export(
         [FromQuery] int? jobPostId,
         [FromQuery] string? status,
@@ -232,11 +241,11 @@ public class ApplicationsController(
 
         sheet.Columns().AdjustToContents();
 
-        using var stream = new MemoryStream();
+        var stream = new MemoryStream();
         workbook.SaveAs(stream);
         stream.Position = 0;
 
-        return File(stream.ToArray(),
+        return File(stream,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"applications-{DateTime.UtcNow:yyyyMMdd}.xlsx");
     }

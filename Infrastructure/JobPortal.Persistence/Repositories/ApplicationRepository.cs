@@ -1,4 +1,5 @@
 using JobPortal.Application.Common;
+using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
@@ -67,7 +68,7 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .ToListAsync(cancellationToken);
 
     public async Task<IEnumerable<ApplicationEntity>> GetAllByDepartmentAsync(
-        IReadOnlyList<int> departmentIds, CancellationToken cancellationToken = default)
+        IReadOnlyList<int> departmentIds, int? jobPostId = null, string? status = null, CancellationToken cancellationToken = default)
         => await context.Applications
             .Include(a => a.User).ThenInclude(u => u.Profile)
             .Include(a => a.JobPost).ThenInclude(j => j.Department)
@@ -77,6 +78,8 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
             .Include(a => a.Documents).ThenInclude(d => d.Document)
             .Where(a => !a.IsDeleted && departmentIds.Contains(a.JobPost!.DepartmentId))
+            .Where(a => jobPostId == null || a.JobPostId == jobPostId)
+            .Where(a => status == null || a.Status == status)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
 
@@ -230,4 +233,24 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             throw;
         }
     }
+
+    public async Task<IEnumerable<ApplicationAnalyticsDto>> GetForAnalyticsAsync(CancellationToken ct = default)
+        => await context.Applications
+            .Where(a => !a.IsDeleted)
+            .Select(a => new ApplicationAnalyticsDto(
+                a.AppliedAt.ToString("o"),
+                a.UpdatedAt.ToString("o"),
+                a.Status,
+                a.Source,
+                a.JobPost!.Title,
+                a.Steps.Select(s => new StepAnalyticsDto(s.StepName, s.StepOrder, s.Status)).ToList()
+            ))
+            .ToListAsync(ct);
+
+    public async Task<bool> IsInDepartmentScopeAsync(
+        int applicationId, IReadOnlyList<int> departmentIds, CancellationToken ct = default)
+        => await context.Applications
+            .Where(a => a.Id == applicationId && !a.IsDeleted)
+            .Where(a => departmentIds.Contains(a.JobPost!.DepartmentId))
+            .AnyAsync(ct);
 }

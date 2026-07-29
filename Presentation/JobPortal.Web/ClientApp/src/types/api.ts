@@ -359,3 +359,18 @@ export interface IsDepartmentManagerDto {
   departmentIds: number[];
   departmentNames: string[];
 }
+
+export interface StepAnalyticsDto {
+  stepName: string;
+  stepOrder: number;
+  status: string;
+}
+
+export interface ApplicationAnalyticsDto {
+  appliedAt: string;
+  updatedAt: string;
+  status: string;
+  source: string | null;
+  jobPostTitle: string;
+  steps: StepAnalyticsDto[];
+}

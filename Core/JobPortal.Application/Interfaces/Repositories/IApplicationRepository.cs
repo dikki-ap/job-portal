@@ -1,3 +1,4 @@
+using JobPortal.Application.DTOs;
 using ApplicationEntity = JobPortal.Domain.Entities.Applications.Application;
 
 namespace JobPortal.Application.Interfaces.Repositories;
@@ -10,7 +11,7 @@ public interface IApplicationRepository
     Task<List<ApplicationEntity>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<IEnumerable<ApplicationEntity>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ApplicationEntity>> GetByJobPostIdAsync(int jobPostId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<ApplicationEntity>> GetAllByDepartmentAsync(IReadOnlyList<int> departmentIds, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ApplicationEntity>> GetAllByDepartmentAsync(IReadOnlyList<int> departmentIds, int? jobPostId = null, string? status = null, CancellationToken cancellationToken = default);
     Task<(IEnumerable<ApplicationEntity> Items, int TotalCount)> GetPagedAsync(
         int? jobPostId, string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<(IEnumerable<ApplicationEntity> Items, int TotalCount)> GetPagedByDepartmentAsync(
@@ -19,6 +20,12 @@ public interface IApplicationRepository
     Task AddAsync(ApplicationEntity application, CancellationToken cancellationToken = default);
     Task UpdateAsync(ApplicationEntity application, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    // Analytics
+    Task<IEnumerable<ApplicationAnalyticsDto>> GetForAnalyticsAsync(CancellationToken ct = default);
+
+    // Scope check (lightweight)
+    Task<bool> IsInDepartmentScopeAsync(int applicationId, IReadOnlyList<int> departmentIds, CancellationToken ct = default);
 
     // Bulk operations
     Task<int> BulkRejectAsync(IEnumerable<int> appIds, DateTime updatedAt, CancellationToken cancellationToken = default);

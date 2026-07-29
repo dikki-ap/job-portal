@@ -1,5 +1,8 @@
 using ClosedXML.Excel;
 using JobPortal.Application.Common;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Caching.Memory;
+using System.Security.Claims;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Features.Applications.Commands.AcceptApplication;
 using JobPortal.Application.Features.Applications.Commands.BulkAcceptDepartmentApplication;
@@ -26,6 +29,7 @@ namespace JobPortal.Web.Controllers;
 public class DepartmentApplicationsController(
     IMediator mediator,
     IApplicationRepository repository,
+    IMemoryCache cache,
     ILogger<DepartmentApplicationsController> logger) : ControllerBase
 {
     [HttpGet]
@@ -197,6 +201,8 @@ public class DepartmentApplicationsController(
     {
         if (req.ApplicationIds is null || req.ApplicationIds.Count == 0)
             return BadRequest(new { error = "No application IDs provided." });
+        if (req.ApplicationIds.Count > 500)
+            return BadRequest(new { error = "Cannot process more than 500 applications at once." });
         if (req.Action is not (ApplicationStepStatus.Passed or ApplicationStepStatus.Failed))
             return BadRequest(new { error = "Action must be 'Passed' or 'Failed'." });
 
@@ -215,6 +221,8 @@ public class DepartmentApplicationsController(
     {
         if (req.ApplicationIds is null || req.ApplicationIds.Count == 0)
             return BadRequest(new { error = "No application IDs provided." });
+        if (req.ApplicationIds.Count > 500)
+            return BadRequest(new { error = "Cannot process more than 500 applications at once." });
 
         var (dmInfo, error) = await GetDmOrForbidAsync(cancellationToken);
         if (error is not null) return error;
@@ -231,6 +239,8 @@ public class DepartmentApplicationsController(
     {
         if (req.ApplicationIds is null || req.ApplicationIds.Count == 0)
             return BadRequest(new { error = "No application IDs provided." });
+        if (req.ApplicationIds.Count > 500)
+            return BadRequest(new { error = "Cannot process more than 500 applications at once." });
 
         var (dmInfo, error) = await GetDmOrForbidAsync(cancellationToken);
         if (error is not null) return error;
@@ -250,6 +260,7 @@ public class DepartmentApplicationsController(
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
+        pageSize = Math.Clamp(pageSize, 1, 200);
         var (dmInfo, error) = await GetDmOrForbidAsync(cancellationToken);
         if (error is not null) return error;
 
@@ -261,6 +272,7 @@ public class DepartmentApplicationsController(
 
     [HttpGet("export")]
     [Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]
+    [EnableRateLimiting("download")]
     public async Task<IActionResult> Export(
         [FromQuery] int? jobPostId,
         [FromQuery] string? status,
@@ -269,10 +281,7 @@ public class DepartmentApplicationsController(
         var (dmInfo, error) = await GetDmOrForbidAsync(cancellationToken);
         if (error is not null) return error;
 
-        var applications = await repository.GetAllByDepartmentAsync(dmInfo!.DepartmentIds, cancellationToken);
-        var filtered = applications
-            .Where(a => jobPostId == null || a.JobPostId == jobPostId)
-            .Where(a => status == null || a.Status == status);
+        var filtered = await repository.GetAllByDepartmentAsync(dmInfo!.DepartmentIds, jobPostId, status, cancellationToken);
 
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("Applications");
@@ -308,10 +317,11 @@ public class DepartmentApplicationsController(
 
         sheet.Columns().AdjustToContents();
 
-        using var stream = new MemoryStream();
+        var stream = new MemoryStream();
         workbook.SaveAs(stream);
+        stream.Position = 0;
 
-        return File(stream.ToArray(),
+        return File(stream,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"applications-{DateTime.UtcNow:yyyyMMdd}.xlsx");
     }
@@ -319,8 +329,18 @@ public class DepartmentApplicationsController(
     // Returns (dmInfo, null) on success; (null, ForbidResult) if user is not a DM.
     private async Task<(IsDepartmentManagerDto? dmInfo, IActionResult? error)> GetDmOrForbidAsync(CancellationToken ct)
     {
-        var dmInfo = await mediator.Send(new IsDepartmentManagerQuery(), ct);
-        if (!dmInfo.IsDepartmentManager || dmInfo.DepartmentIds.Count == 0)
+        var email = User.FindFirstValue(ClaimTypes.Email)
+                 ?? User.FindFirstValue("email")
+                 ?? string.Empty;
+
+        if (!cache.TryGetValue(CacheKeys.DmIdentity(email), out IsDepartmentManagerDto? dmInfo))
+        {
+            dmInfo = await mediator.Send(new IsDepartmentManagerQuery(), ct);
+            if (dmInfo.IsDepartmentManager && dmInfo.DepartmentIds.Count > 0)
+                cache.Set(CacheKeys.DmIdentity(email), dmInfo, CacheEntry.Default(TimeSpan.FromMinutes(5)));
+        }
+
+        if (dmInfo is null || !dmInfo.IsDepartmentManager || dmInfo.DepartmentIds.Count == 0)
         {
             logger.LogInformation("Access denied — user is not a department manager");
             return (null, Forbid());
@@ -329,16 +349,6 @@ public class DepartmentApplicationsController(
     }
 
     // Validates the application is within the DM's department scope.
-    private async Task<bool> IsInScopeAsync(int applicationId, IReadOnlyList<int> departmentIds, CancellationToken ct)
-    {
-        try
-        {
-            var result = await mediator.Send(new GetDepartmentApplicationByIdQuery(applicationId, departmentIds), ct);
-            return result is not null;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
-    }
+    private Task<bool> IsInScopeAsync(int applicationId, IReadOnlyList<int> departmentIds, CancellationToken ct)
+        => repository.IsInDepartmentScopeAsync(applicationId, departmentIds, ct);
 }
