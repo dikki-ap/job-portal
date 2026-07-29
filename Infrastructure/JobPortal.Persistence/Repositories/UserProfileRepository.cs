@@ -170,6 +170,11 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
             .ToListAsync(cancellationToken);
     }
 
+    public Task<UserProfile?> GetProfileWithCvAsync(int userId, CancellationToken ct = default)
+        => context.UserProfiles
+            .Include(p => p.CvDocument)
+            .FirstOrDefaultAsync(p => p.UserId == userId, ct);
+
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => await context.SaveChangesAsync(cancellationToken);
 }

@@ -72,7 +72,7 @@ public class UpdateApplicationStepCommandHandler(
             var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
 
             var passed = request.StepStatus == ApplicationStepStatus.Passed;
-            _ = StepEmailHelper.SendStepEmailAsync(emailService, logger, application, step, passed, primaryColor, companyName, CancellationToken.None);
+            await StepEmailHelper.SendStepEmailAsync(emailService, logger, application, step, passed, primaryColor, companyName, CancellationToken.None);
 
             return GetAllApplicationsQueryHandler.MapToDto(application);
         }

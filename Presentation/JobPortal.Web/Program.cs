@@ -138,7 +138,8 @@ app.UseResponseCompression();   // must be early — compresses everything after
 app.UseHttpsRedirection();
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
-app.UseCors();
+if (app.Environment.IsDevelopment())
+    app.UseCors();
 app.UseStaticFiles();           // serves the React SPA build output
 app.UseRateLimiter();
 app.UseAuthentication();

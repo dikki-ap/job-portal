@@ -43,7 +43,7 @@ public class RejectApplicationCommandHandler(
 
             var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
             var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
-            _ = ApplicationEmailHelper.SendRejectedAsync(emailService, logger, application, primaryColor, companyName, CancellationToken.None);
+            await ApplicationEmailHelper.SendRejectedAsync(emailService, logger, application, primaryColor, companyName, CancellationToken.None);
 
             return GetAllApplicationsQueryHandler.MapToDto(application);
         }

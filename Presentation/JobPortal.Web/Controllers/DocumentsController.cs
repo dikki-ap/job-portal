@@ -1,15 +1,14 @@
 using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Features.DepartmentManagers.Queries.IsDepartmentManager;
+using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Documents;
-using JobPortal.Persistence.Context;
 using JobPortal.Web.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
 
@@ -19,7 +18,8 @@ namespace JobPortal.Web.Controllers;
 [Route("api/documents")]
 [Authorize]
 public class DocumentsController(
-    ApplicationDbContext context,
+    IDocumentRepository documentRepository,
+    IDocumentTypeRepository documentTypeRepository,
     IStorageService storageService,
     ICurrentUserService currentUserService,
     IMediator mediator,
@@ -41,9 +41,7 @@ public class DocumentsController(
         if (userId is null || externalId is null)
             return Unauthorized();
 
-        var docType = await context.DocumentTypes
-            .Include(dt => dt.MimeTypes)
-            .FirstOrDefaultAsync(dt => dt.Id == documentTypeId, cancellationToken);
+        var docType = await documentTypeRepository.GetByIdAsync(documentTypeId, cancellationToken);
 
         if (docType is null)
             return NotFound(new { error = "Document type not found." });
@@ -77,22 +75,17 @@ public class DocumentsController(
             CreatedAt = DateTime.UtcNow,
             CreatedByUserId = userId.Value,
         };
-        context.Documents.Add(doc);
-        await context.SaveChangesAsync(cancellationToken);
+        var docId = await documentRepository.AddAsync(doc, cancellationToken);
 
-        logger.LogInformation("Upload: document id={Id} key={Key} user={UserId}", doc.Id, storageKey, userId);
-        return Ok(new { id = doc.Id, originalFileName = doc.OriginalFileName });
+        logger.LogInformation("Upload: document id={Id} key={Key} user={UserId}", docId, storageKey, userId);
+        return Ok(new { id = docId, originalFileName = doc.OriginalFileName });
     }
 
     [HttpGet("{id:int}/download")]
     [EnableRateLimiting("download")]
     public async Task<IActionResult> Download(int id, CancellationToken cancellationToken)
     {
-        var appDoc = await context.ApplicationDocuments
-            .Include(ad => ad.Document)
-            .Include(ad => ad.Application)
-                .ThenInclude(a => a.JobPost)
-            .FirstOrDefaultAsync(ad => ad.Id == id, cancellationToken);
+        var appDoc = await documentRepository.GetApplicationDocumentForDownloadAsync(id, cancellationToken);
 
         if (appDoc?.Document is null)
         {

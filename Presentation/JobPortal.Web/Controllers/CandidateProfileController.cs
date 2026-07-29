@@ -92,22 +92,32 @@ public class CandidateProfileController(
         await using (var stream = file.OpenReadStream())
             storageKey = await storageService.UploadAsync(stream, extension, file.ContentType, externalId, cancellationToken);
 
-        var doc = new Document
+        await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
         {
-            FilePath = storageKey,
-            OriginalFileName = file.FileName,
-            FileType = file.ContentType,
-            CreatedAt = DateTime.UtcNow,
-            CreatedByUserId = userId.Value,
-        };
-        dbContext.Documents.Add(doc);
-        await dbContext.SaveChangesAsync(cancellationToken);
+            var doc = new Document
+            {
+                FilePath = storageKey,
+                OriginalFileName = file.FileName,
+                FileType = file.ContentType,
+                CreatedAt = DateTime.UtcNow,
+                CreatedByUserId = userId.Value,
+            };
+            dbContext.Documents.Add(doc);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
-        await profileRepository.LinkCvAsync(userId.Value, doc.Id, cancellationToken);
-        await profileRepository.SaveChangesAsync(cancellationToken);
+            await profileRepository.LinkCvAsync(userId.Value, doc.Id, cancellationToken);
+            await profileRepository.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation("CV uploaded: user={UserId} document={DocId}", userId, doc.Id);
-        return Ok(new { documentId = doc.Id, originalFileName = file.FileName });
+            await tx.CommitAsync(cancellationToken);
+            logger.LogInformation("CV uploaded: user={UserId} document={DocId}", userId, doc.Id);
+            return Ok(new { documentId = doc.Id, originalFileName = file.FileName });
+        }
+        catch
+        {
+            await tx.RollbackAsync(CancellationToken.None);
+            throw;
+        }
     }
 
     [HttpDelete("cv")]
@@ -127,9 +137,7 @@ public class CandidateProfileController(
         var userId = currentUserService.GetCurrentUserId();
         if (userId is null) return Unauthorized();
 
-        var profile = await dbContext.UserProfiles
-            .Include(p => p.CvDocument)
-            .FirstOrDefaultAsync(p => p.UserId == userId.Value, cancellationToken);
+        var profile = await profileRepository.GetProfileWithCvAsync(userId.Value, cancellationToken);
 
         if (profile?.CvDocument is null)
             return NotFound(new { error = "No CV uploaded to profile." });

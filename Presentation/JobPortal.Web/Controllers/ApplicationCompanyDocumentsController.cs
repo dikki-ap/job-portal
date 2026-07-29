@@ -84,40 +84,51 @@ public class ApplicationCompanyDocumentsController(
             storageKey = await storageService.UploadAsync(stream, extension, file.ContentType, externalId, cancellationToken);
         }
 
-        var doc = new Document
+        await using var tx = await context.Database.BeginTransactionAsync(cancellationToken);
+        try
         {
-            FilePath = storageKey,
-            OriginalFileName = file.FileName,
-            FileType = file.ContentType,
-            CreatedAt = DateTime.UtcNow,
-            CreatedByUserId = userId.Value,
-        };
-        context.Documents.Add(doc);
-        await context.SaveChangesAsync(cancellationToken);
+            var doc = new Document
+            {
+                FilePath = storageKey,
+                OriginalFileName = file.FileName,
+                FileType = file.ContentType,
+                CreatedAt = DateTime.UtcNow,
+                CreatedByUserId = userId.Value,
+            };
+            context.Documents.Add(doc);
+            await context.SaveChangesAsync(cancellationToken);
 
-        var appDoc = new ApplicationDocument
+            var appDoc = new ApplicationDocument
+            {
+                ApplicationId = app.Id,
+                DocumentId = doc.Id,
+                DocumentType = name.Trim(),
+                IsCompanyDocument = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedByUserId = userId.Value,
+            };
+            context.ApplicationDocuments.Add(appDoc);
+            await context.SaveChangesAsync(cancellationToken);
+
+            await tx.CommitAsync(cancellationToken);
+
+            logger.LogInformation(
+                "CompanyDocument: uploaded docId={DocId} appDoc={AppDocId} app={Code} by user={UserId}",
+                doc.Id, appDoc.Id, code, userId);
+
+            return Ok(new ApplicationDocumentDto(
+                appDoc.Id,
+                appDoc.DocumentType,
+                doc.OriginalFileName,
+                doc.FileType,
+                appDoc.CreatedAt,
+                true));
+        }
+        catch
         {
-            ApplicationId = app.Id,
-            DocumentId = doc.Id,
-            DocumentType = name.Trim(),
-            IsCompanyDocument = true,
-            CreatedAt = DateTime.UtcNow,
-            CreatedByUserId = userId.Value,
-        };
-        context.ApplicationDocuments.Add(appDoc);
-        await context.SaveChangesAsync(cancellationToken);
-
-        logger.LogInformation(
-            "CompanyDocument: uploaded docId={DocId} appDoc={AppDocId} app={Code} by user={UserId}",
-            doc.Id, appDoc.Id, code, userId);
-
-        return Ok(new ApplicationDocumentDto(
-            appDoc.Id,
-            appDoc.DocumentType,
-            doc.OriginalFileName,
-            doc.FileType,
-            appDoc.CreatedAt,
-            true));
+            await tx.RollbackAsync(CancellationToken.None);
+            throw;
+        }
     }
 
     private async Task<IActionResult?> CheckAccessAsync(int? departmentId, CancellationToken ct)

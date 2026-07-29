@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Spinner } from '../../../components/ui/Spinner';
+import { ErrorBanner } from '../../../components/ErrorBanner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { PhoneInput } from '../../../components/ui/PhoneInput';
 import { useToast } from '../../../hooks/useToast';
@@ -266,7 +267,7 @@ function InstitutionInput({
 export function CandidateProfilePage() {
   const { token } = useAuth();
   const { toasts, addToast, dismissToast } = useToast();
-  const { data: profile, isLoading: profileLoading } = useGetProfileQuery();
+  const { data: profile, isLoading: profileLoading, isError: profileError } = useGetProfileQuery();
   const { data: educationLevels = [] } = useGetEducationLevelsQuery();
   const { data: educationMajors = [] } = useGetEducationMajorsQuery();
   const [upsertProfile] = useUpsertProfileMutation();
@@ -387,6 +388,8 @@ export function CandidateProfilePage() {
       </div>
     );
   }
+
+  if (profileError) return <ErrorBanner message="Failed to load your profile." />;
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">

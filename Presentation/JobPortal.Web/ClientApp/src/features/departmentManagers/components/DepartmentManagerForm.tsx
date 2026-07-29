@@ -29,7 +29,7 @@ function DepartmentMultiSelect({
   disabled?: boolean;
   error?: string;
 }) {
-  const { data: departments = [] } = useGetDepartmentsQuery();
+  const { data: departments = [], isError: deptError } = useGetDepartmentsQuery();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [showAll, setShowAll] = useState(false);
@@ -64,6 +64,9 @@ function DepartmentMultiSelect({
   const selectedNames = departments
     .filter((d) => selectedIds.includes(d.id))
     .map((d) => d.name);
+
+  if (deptError)
+    return <p className="text-sm text-red-500 mt-1">Failed to load departments. Please refresh.</p>;
 
   return (
     <div className="flex flex-col gap-1.5" ref={containerRef}>

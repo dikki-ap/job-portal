@@ -4,6 +4,7 @@ import { BrandingGate } from '../components/BrandingGate';
 import { Button } from '../../../components/ui/Button';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { Spinner } from '../../../components/ui/Spinner';
+import { ErrorBanner } from '../../../components/ErrorBanner';
 import { useToast } from '../../../hooks/useToast';
 import {
   useGetBrandingSettingQuery,
@@ -94,7 +95,7 @@ type FormState = Omit<BrandingConfig, 'logoUrl'>;
 
 export function BrandingSettingsPage() {
   const { toasts, addToast, dismissToast } = useToast();
-  const { data, isLoading } = useGetBrandingSettingQuery();
+  const { data, isLoading, isError } = useGetBrandingSettingQuery();
   const [updateBrandingSetting, { isLoading: saving }] = useUpdateBrandingSettingMutation();
   const [uploadBrandingLogo, { isLoading: uploading }] = useUploadBrandingLogoMutation();
   const { updateBranding, logoUrl: currentLogoUrl } = useBranding();
@@ -170,6 +171,8 @@ export function BrandingSettingsPage() {
       </BrandingGate>
     );
   }
+
+  if (isError) return <ErrorBanner message="Failed to load branding settings." />;
 
   return (
     <BrandingGate>
