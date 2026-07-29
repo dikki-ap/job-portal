@@ -122,7 +122,7 @@ JWT Bearer (Keycloak) → Policy: HrOrAdmin | AdminOnly | Authorize | AllowAnony
 
 ### System
 - **Keycloak SSO** — OIDC with mandatory TOTP (2FA) on first login; role sync on every request
-- **Document Storage** — MinIO/S3 with presigned URLs (15-min expiry); per-user folder isolation
+- **Document Storage** — MinIO/S3; files streamed directly through the API (no presigned URL exposed to clients); per-user folder isolation; every download enforces JWT auth
 - **Email Notifications** — Application received, step pass/fail, direct reject, re-engage, approval; all wrapped in branded HTML container with company primary color
 - **Swagger UI (protected)** — Available in all environments; Basic Auth via `SWAGGER_USERNAME` / `SWAGGER_PASSWORD` ENV vars; returns 404 if not configured
 - **Audit Log** — Automatic change tracking on all `AuditableEntity` tables
@@ -286,7 +286,8 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 |--------|----------|------|-------------|
 | GET | `/approvals/pending` | ✓ | My pending approval items |
 | GET | `/approvals/is-approver` | ✓ | Check if current user is an approver |
-| GET | `/approvals/{jobPostId}/job-post` | ✓ | Full job data for review page |
+| GET | `/approvals/{jobPostId}/job-post` | HR | Full job data for review page |
+| GET | `/approvals/{jobPostId}/approval-status` | HR | Approval instance + step status |
 
 ### Talent Pool
 
@@ -303,7 +304,8 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 |--------|----------|------|-------------|
 | GET | `/careers` | – | Published jobs (search + filters + pagination) |
 | GET | `/careers/countries` | – | Distinct countries with open positions |
-| GET | `/careers/{slug}` | – | Job detail by slug |
+| GET | `/careers/{id:int}` | – | Published job detail by ID |
+| GET | `/careers/{slug}` | – | Published job detail by slug |
 | POST | `/careers/{id}/apply` | ✓ | Submit application with documents |
 
 ### My Applications (Candidate)
@@ -322,14 +324,14 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | GET | `/candidate-profile/institutions` | ✓ | Institution name autocomplete (`?q=keyword`) |
 | POST | `/candidate-profile/cv` | ✓ | Upload CV (PDF/DOC/DOCX, max 3 MB) |
 | DELETE | `/candidate-profile/cv` | ✓ | Remove CV |
-| GET | `/candidate-profile/cv/download` | ✓ | Download CV (presigned URL) |
+| GET | `/candidate-profile/cv/download` | ✓ | Download CV (streamed via API) |
 
 ### Documents
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | POST | `/documents/upload` | ✓ | Upload document file |
-| GET | `/documents/{id}/download` | ✓ | Download via presigned URL |
+| GET | `/documents/{id}/download` | ✓ | Download (streamed via API, with ownership/role check) |
 
 ### App Settings
 
@@ -597,6 +599,7 @@ The `Dockerfile` is a multi-stage build — the `build` stage compiles everythin
 |----------|---------|-------------|
 | `ConnectionStrings__DefaultConnection` | `Server=db;Port=3306;Database=JobPortal;User Id=...;Password=...;CharSet=utf8mb4;` | MariaDB connection string |
 | `Keycloak__Authority` | `https://auth.example.com/realms/job-portal` | Keycloak realm URL for JWT validation |
+| `Keycloak__ClientId` | `job-portal-web` | Enables JWT audience validation; if omitted, audience check is skipped |
 | `Storage__Endpoint` | `https://s3.example.com` | MinIO / S3 endpoint |
 | `Storage__AccessKey` | `AKIAIOSFODNN7EXAMPLE` | S3 access key |
 | `Storage__SecretKey` | `wJalrXUtnFEMI/...` | S3 secret key |
@@ -630,7 +633,8 @@ The `Dockerfile` is a multi-stage build — the `build` stage compiles everythin
 
 | Config key | Default | Description |
 |------------|---------|-------------|
-| `Storage__PresignExpireMinutes` | `15` | Presigned URL expiry |
+| `Storage__PresignExpireMinutes` | `15` | Presigned URL expiry (reserved for future use; downloads currently stream via API) |
+| `ReverseProxy__TrustedNetworks__0` | `172.16.0.0/12` | Trusted proxy CIDR range for X-Forwarded-For; add more entries with `__1`, `__2`, etc. |
 | `Smtp__Port` | `587` | SMTP port |
 | `Smtp__FromName` | `"Job Portal"` | Sender display name |
 | `ASPNETCORE_URLS` | `http://+:8080` | Listening address inside container |
