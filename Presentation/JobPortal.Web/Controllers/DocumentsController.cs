@@ -1,11 +1,17 @@
+using JobPortal.Application.Common;
+using JobPortal.Application.DTOs;
+using JobPortal.Application.Features.DepartmentManagers.Queries.IsDepartmentManager;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Documents;
 using JobPortal.Persistence.Context;
 using JobPortal.Web.Common;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using System.Security.Claims;
 
 namespace JobPortal.Web.Controllers;
 
@@ -16,6 +22,8 @@ public class DocumentsController(
     ApplicationDbContext context,
     IStorageService storageService,
     ICurrentUserService currentUserService,
+    IMediator mediator,
+    IMemoryCache cache,
     ILogger<DocumentsController> logger) : ControllerBase
 {
     [HttpPost("upload")]
@@ -99,14 +107,10 @@ public class DocumentsController(
             // Company documents are confidential — HR/Admin always allowed; DM if in-scope; candidates never.
             if (!isHrOrAdmin)
             {
-                var email = currentUserService.GetCurrentUserEmail()?.Trim().ToLowerInvariant();
-                var dm = string.IsNullOrEmpty(email)
-                    ? null
-                    : await context.DepartmentManagers
-                        .Include(m => m.Departments)
-                        .FirstOrDefaultAsync(m => m.Email.ToLower() == email, cancellationToken);
-
-                if (dm is null || !dm.Departments.Any(d => d.DepartmentId == appDoc.Application.JobPost?.DepartmentId))
+                var dmInfo = await GetDmInfoAsync(cancellationToken);
+                var appDeptId = appDoc.Application.JobPost?.DepartmentId;
+                if (dmInfo is null || !dmInfo.IsDepartmentManager
+                    || appDeptId is null || !dmInfo.DepartmentIds.Contains(appDeptId.Value))
                     return Forbid();
             }
         }
@@ -115,14 +119,10 @@ public class DocumentsController(
             // Candidate documents: HR/Admin always allowed; candidates can access their own; DM if in-scope.
             if (!isHrOrAdmin && appDoc.Application.UserId != currentUserService.GetCurrentUserId())
             {
-                var email = currentUserService.GetCurrentUserEmail()?.Trim().ToLowerInvariant();
-                var dm = string.IsNullOrEmpty(email)
-                    ? null
-                    : await context.DepartmentManagers
-                        .Include(m => m.Departments)
-                        .FirstOrDefaultAsync(m => m.Email.ToLower() == email, cancellationToken);
-
-                if (dm is null || !dm.Departments.Any(d => d.DepartmentId == appDoc.Application.JobPost?.DepartmentId))
+                var dmInfo = await GetDmInfoAsync(cancellationToken);
+                var appDeptId = appDoc.Application.JobPost?.DepartmentId;
+                if (dmInfo is null || !dmInfo.IsDepartmentManager
+                    || appDeptId is null || !dmInfo.DepartmentIds.Contains(appDeptId.Value))
                     return Forbid();
             }
         }
@@ -132,5 +132,17 @@ public class DocumentsController(
 
         logger.LogInformation("Download: streaming document id={Id}", id);
         return File(stream, contentType, fileName);
+    }
+
+    private async Task<IsDepartmentManagerDto?> GetDmInfoAsync(CancellationToken ct)
+    {
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email") ?? string.Empty;
+        if (!cache.TryGetValue(CacheKeys.DmIdentity(email), out IsDepartmentManagerDto? dmInfo))
+        {
+            dmInfo = await mediator.Send(new IsDepartmentManagerQuery(), ct);
+            if (dmInfo.IsDepartmentManager && dmInfo.DepartmentIds.Count > 0)
+                cache.Set(CacheKeys.DmIdentity(email), dmInfo, CacheEntry.Default(TimeSpan.FromMinutes(5)));
+        }
+        return dmInfo;
     }
 }

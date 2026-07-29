@@ -67,7 +67,7 @@ public class BulkAcceptApplicationCommandHandler(
 
         var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
         var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
-        StepEmailHelper.FireAndForgetBulkEmails(emailService, logger, emailQueue, primaryColor, companyName);
+        await StepEmailHelper.SendBulkEmailsAsync(emailService, logger, emailQueue, primaryColor, companyName, cancellationToken);
 
         return new BulkOperationResultDto(succeeded, skipped, []);
     }

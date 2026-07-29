@@ -256,6 +256,7 @@ public class DepartmentApplicationsController(
         [FromQuery] int? jobPostId,
         [FromQuery] string? status,
         [FromQuery] string? search,
+        [FromQuery] int? departmentId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
@@ -265,7 +266,7 @@ public class DepartmentApplicationsController(
         if (error is not null) return error;
 
         var result = await mediator.Send(
-            new GetPagedDepartmentApplicationsQuery(dmInfo!.DepartmentIds, jobPostId, status, search, page, pageSize),
+            new GetPagedDepartmentApplicationsQuery(dmInfo!.DepartmentIds, jobPostId, status, search, page, pageSize, departmentId),
             cancellationToken);
         return Ok(result);
     }
@@ -276,12 +277,13 @@ public class DepartmentApplicationsController(
     public async Task<IActionResult> Export(
         [FromQuery] int? jobPostId,
         [FromQuery] string? status,
+        [FromQuery] int? departmentId,
         CancellationToken cancellationToken)
     {
         var (dmInfo, error) = await GetDmOrForbidAsync(cancellationToken);
         if (error is not null) return error;
 
-        var filtered = await repository.GetAllByDepartmentAsync(dmInfo!.DepartmentIds, jobPostId, status, cancellationToken);
+        var filtered = await repository.GetAllByDepartmentAsync(dmInfo!.DepartmentIds, jobPostId, status, departmentId, cancellationToken);
 
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("Applications");

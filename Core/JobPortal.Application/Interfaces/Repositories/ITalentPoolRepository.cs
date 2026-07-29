@@ -1,3 +1,4 @@
+using JobPortal.Application.DTOs;
 using JobPortal.Domain.Entities.TalentPool;
 
 namespace JobPortal.Application.Interfaces.Repositories;
@@ -5,6 +6,7 @@ namespace JobPortal.Application.Interfaces.Repositories;
 public interface ITalentPoolRepository
 {
     Task<IEnumerable<TalentPoolEntry>> GetAllAsync(CancellationToken ct = default);
+    Task<(IEnumerable<TalentPoolEntry> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? search = null, CancellationToken ct = default);
     Task<TalentPoolEntry?> GetByIdAsync(int id, CancellationToken ct = default);
     Task<TalentPoolEntry?> GetByUserIdAsync(int userId, CancellationToken ct = default);
     Task AddAsync(TalentPoolEntry entry, CancellationToken ct = default);

@@ -70,7 +70,7 @@ public class SubmitJobPostForApprovalCommandHandler(
             if (reloaded is not null)
             {
                 var firstStep = reloaded.Steps.OrderBy(s => s.StepOrder).First();
-                ApprovalEmailHelper.FireAndForgetApprovalEmail(emailService, baseUrl, logger, reloaded, firstStep, primaryColor, companyName);
+                await ApprovalEmailHelper.SendApprovalEmailAsync(emailService, baseUrl, logger, reloaded, firstStep, primaryColor, companyName);
             }
 
             return Unit.Value;

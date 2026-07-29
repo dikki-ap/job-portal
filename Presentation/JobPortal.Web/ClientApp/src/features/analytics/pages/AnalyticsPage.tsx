@@ -215,11 +215,18 @@ export function AnalyticsPage() {
       .map(([name, value]) => ({ name: name === 'InReview' ? 'In Review' : name, value, key: name }));
   }, [filtered]);
 
-  const monthWindowSize =
-    dateRange === '30d' ? 2 :
-    dateRange === '3m' ? 3 :
-    dateRange === '6m' ? 6 :
-    12;
+  const monthWindowSize = useMemo(() => {
+    if (dateRange === '30d') return 2;
+    if (dateRange === '3m') return 3;
+    if (dateRange === '6m') return 6;
+    if (dateRange === '1y') return 12;
+    // 'all': span from earliest application to now
+    if (filtered.length === 0) return 12;
+    const earliest = new Date(Math.min(...filtered.map((a) => new Date(a.appliedAt).getTime())));
+    const now = new Date();
+    const diff = (now.getFullYear() - earliest.getFullYear()) * 12 + (now.getMonth() - earliest.getMonth());
+    return Math.max(diff + 1, 1);
+  }, [dateRange, filtered]);
 
   const byMonth = useMemo(() => {
     const now = new Date();
@@ -427,7 +434,7 @@ export function AnalyticsPage() {
           {/* Applications over time */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-4">
-              Applications per Month ({dateRange === 'all' ? 'Last 12 Months' : DATE_RANGE_OPTIONS.find((o) => o.id === dateRange)?.label})
+              Applications per Month ({DATE_RANGE_OPTIONS.find((o) => o.id === dateRange)?.label})
             </h2>
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={byMonth} margin={{ left: 0, right: 16 }}>

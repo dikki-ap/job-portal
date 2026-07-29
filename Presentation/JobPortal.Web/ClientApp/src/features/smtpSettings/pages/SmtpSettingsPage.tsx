@@ -5,6 +5,7 @@ import { ToastContainer } from '../../../components/ui/Toast';
 import { Spinner } from '../../../components/ui/Spinner';
 import { useToast } from '../../../hooks/useToast';
 import { useGetSmtpSettingQuery, useUpdateSmtpSettingMutation } from '../api/smtpSettingsApi';
+import { ErrorBanner } from '../../../components/ErrorBanner';
 import { cn } from '../../../lib/utils';
 
 const ENV_MAP: Record<string, string> = {
@@ -72,7 +73,7 @@ const inputCls = (locked: boolean) =>
 
 export function SmtpSettingsPage() {
   const { toasts, addToast, dismissToast } = useToast();
-  const { data: setting, isLoading } = useGetSmtpSettingQuery();
+  const { data: setting, isLoading, isError } = useGetSmtpSettingQuery();
   const [updateSetting, { isLoading: saving }] = useUpdateSmtpSettingMutation();
 
   const [form, setForm] = useState<FormState>({
@@ -133,6 +134,10 @@ export function SmtpSettingsPage() {
         <Spinner size="lg" className="text-[var(--primary)]" />
       </div>
     );
+  }
+
+  if (isError) {
+    return <ErrorBanner message="Failed to load SMTP settings." />;
   }
 
   return (

@@ -6,30 +6,7 @@ namespace JobPortal.Application.Common;
 
 internal static class ApprovalEmailHelper
 {
-    internal static void FireAndForgetApprovalEmail(
-        IEmailService emailService,
-        string baseUrl,
-        ILogger logger,
-        JobApprovalInstance instance,
-        JobApprovalInstanceStep step,
-        string primaryColor,
-        string companyName)
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await SendApprovalEmailAsync(emailService, baseUrl, logger, instance, step, primaryColor, companyName);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to send approval email jobPostId={JobPostId} stepOrder={StepOrder}",
-                    instance.JobPostId, step.StepOrder);
-            }
-        });
-    }
-
-    private static async Task SendApprovalEmailAsync(
+    internal static async Task SendApprovalEmailAsync(
         IEmailService emailService,
         string baseUrl,
         ILogger logger,

@@ -1,8 +1,10 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
 using JobPortal.Domain.Entities.Masters;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace JobPortal.Application.Features.DepartmentManagers.Commands.UpdateDepartmentManager;
@@ -10,6 +12,7 @@ namespace JobPortal.Application.Features.DepartmentManagers.Commands.UpdateDepar
 public class UpdateDepartmentManagerCommandHandler(
     IDepartmentManagerRepository repository,
     ICurrentUserService currentUserService,
+    IMemoryCache cache,
     ILogger<UpdateDepartmentManagerCommandHandler> logger)
     : IRequestHandler<UpdateDepartmentManagerCommand, DepartmentManagerDto>
 {
@@ -20,6 +23,7 @@ public class UpdateDepartmentManagerCommandHandler(
             var manager = await repository.GetByIdAsync(request.Id, cancellationToken)
                 ?? throw new KeyNotFoundException($"Department manager with ID {request.Id} not found.");
 
+            var oldEmail = manager.Email;
             manager.FullName = request.FullName;
             manager.Position = request.Position;
             manager.Email = request.Email.Trim().ToLowerInvariant();
@@ -32,6 +36,11 @@ public class UpdateDepartmentManagerCommandHandler(
 
             await repository.UpdateAsync(manager, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
+
+            // Invalidate cached DM identity for both old and new email (in case email changed)
+            cache.Remove(CacheKeys.DmIdentity(oldEmail));
+            if (manager.Email != oldEmail)
+                cache.Remove(CacheKeys.DmIdentity(manager.Email));
 
             var deptIds = manager.Departments.Select(d => d.DepartmentId).ToList();
             var deptNames = manager.Departments.Select(d => d.Department?.Name ?? string.Empty).ToList();

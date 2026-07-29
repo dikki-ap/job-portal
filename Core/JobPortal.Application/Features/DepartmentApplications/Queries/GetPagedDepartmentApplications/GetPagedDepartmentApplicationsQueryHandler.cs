@@ -13,7 +13,7 @@ public class GetPagedDepartmentApplicationsQueryHandler(IApplicationRepository r
     {
         var (items, totalCount) = await repository.GetPagedByDepartmentAsync(
             request.DepartmentIds, request.JobPostId, request.Status, request.Search,
-            request.Page, request.PageSize, cancellationToken);
+            request.Page, request.PageSize, request.DepartmentId, cancellationToken);
 
         var totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
         var dtos = items.Select(a => GetAllApplicationsQueryHandler.MapToDto(a)).ToList();

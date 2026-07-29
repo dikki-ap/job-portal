@@ -10,6 +10,7 @@ import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useBranding } from '../../../contexts/BrandingContext';
 import keycloak from '../../../lib/keycloak';
+import { ErrorBanner } from '../../../components/ErrorBanner';
 import { useGetCareerBySlugQuery, useApplyToJobMutation } from '../api/careersApi';
 import { useUploadDocumentMutation } from '../../documents/api/documentsApi';
 import { useGetDocumentTypesQuery } from '../../documentTypes/api/documentTypesApi';
@@ -170,7 +171,7 @@ export function ApplyPage() {
   const { toasts, addToast, dismissToast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const { data: job, isLoading: jobLoading } = useGetCareerBySlugQuery(slug!);
+  const { data: job, isLoading: jobLoading, isError: jobError } = useGetCareerBySlugQuery(slug!);
   const { data: allDocTypes = [], isLoading: typesLoading } = useGetDocumentTypesQuery();
   const { data: profile } = useGetProfileQuery(undefined, { skip: !isAuthenticated });
   const { data: consentSetting } = useGetPrivacyConsentSettingQuery();
@@ -320,6 +321,14 @@ export function ApplyPage() {
         <div className="flex justify-center py-24">
           <Spinner size="lg" className="text-[var(--primary)]" />
         </div>
+      </ApplyLayout>
+    );
+  }
+
+  if (jobError) {
+    return (
+      <ApplyLayout>
+        <ErrorBanner message="Failed to load job listing." />
       </ApplyLayout>
     );
   }

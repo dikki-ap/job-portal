@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Search, FileText, CheckCircle, XCircle, Ban, X, UserCheck, Download } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Pagination } from '../../../components/ui/Pagination';
-import { MultiSelectFilter } from '../../../components/ui/MultiSelectFilter';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { useToast } from '../../../hooks/useToast';
-import { usePagination } from '../../../hooks/usePagination';
 import {
-  useGetDepartmentApplicationsQuery,
+  useGetDepartmentApplicationsPagedQuery,
   useBulkUpdateStepMutation,
   useBulkAcceptMutation,
   useBulkRejectMutation,
@@ -16,14 +14,12 @@ import {
 import { useGetIsDepartmentManagerQuery } from '../../departmentManagers/api/departmentManagersApi';
 import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
 import { useFormatter } from '../../../lib/useFormatter';
+import { useDebounce } from '../../../hooks/useDebounce';
+import keycloak from '../../../lib/keycloak';
 import type { ApplicationDto, ApplicationStepDto } from '../../../types/api';
+import type { PageSize } from '../../../hooks/usePagination';
 
-const STATUS_OPTIONS = [
-  { id: 'Pending', label: 'Pending' },
-  { id: 'InReview', label: 'In Review' },
-  { id: 'Accepted', label: 'Accepted' },
-  { id: 'Rejected', label: 'Rejected' },
-];
+const STATUS_OPTIONS = ['Pending', 'InReview', 'Accepted', 'Rejected'] as const;
 
 const APP_STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
@@ -53,14 +49,25 @@ export function DepartmentApplicationsPage() {
   const { toasts, addToast, dismissToast } = useToast();
 
   const [search, setSearch] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [selectedDeptIds, setSelectedDeptIds] = useState<number[]>([]);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [departmentIdFilter, setDepartmentIdFilter] = useState<number | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(25);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
+  const debouncedSearch = useDebounce(search, 400);
+
+  const apiPageSize = pageSize === 'all' ? 200 : pageSize;
 
   const { data: dmInfo } = useGetIsDepartmentManagerQuery();
-  const { data: applications = [], isLoading, isError } = useGetDepartmentApplicationsQuery({});
+  const { data, isLoading, isError } = useGetDepartmentApplicationsPagedQuery({
+    search: debouncedSearch || undefined,
+    status: statusFilter || undefined,
+    departmentId: departmentIdFilter,
+    page,
+    pageSize: apiPageSize,
+  });
 
   const [bulkUpdateStep, { isLoading: bulkStepLoading }] = useBulkUpdateStepMutation();
   const [bulkAccept, { isLoading: bulkAcceptLoading }] = useBulkAcceptMutation();
@@ -69,37 +76,17 @@ export function DepartmentApplicationsPage() {
 
   const isMultiDept = (dmInfo?.departmentIds?.length ?? 0) > 1;
 
-  const deptFilterOptions = useMemo(() =>
-    (dmInfo?.departmentIds ?? []).map((id, i) => ({
-      id,
-      label: dmInfo?.departmentNames?.[i] ?? `Dept ${id}`,
-    })), [dmInfo]);
+  const applications = data?.items ?? [];
+  const totalItems = data?.totalCount ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const from = totalItems === 0 ? 0 : (page - 1) * apiPageSize + 1;
+  const to = Math.min(page * apiPageSize, totalItems);
 
-  const selectedDeptNames = useMemo(() =>
-    selectedDeptIds.map((id) => {
-      const idx = (dmInfo?.departmentIds ?? []).indexOf(id);
-      return idx >= 0 ? (dmInfo?.departmentNames?.[idx] ?? '') : '';
-    }).filter(Boolean), [selectedDeptIds, dmInfo]);
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [statusFilter, departmentIdFilter, debouncedSearch]);
 
-  // Reset selection on filter change
-  useEffect(() => { setSelectedIds(new Set()); }, [search, selectedStatuses, selectedDeptIds]);
-
-  const filtered = useMemo(() => {
-    let result = applications;
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (a) => a.candidateName.toLowerCase().includes(q) || a.candidateEmail.toLowerCase().includes(q)
-      );
-    }
-    if (selectedStatuses.length > 0) {
-      result = result.filter((a) => selectedStatuses.includes(deriveStatus(a)));
-    }
-    if (isMultiDept && selectedDeptNames.length > 0) {
-      result = result.filter((a) => selectedDeptNames.includes(a.jobPostDepartmentName ?? ''));
-    }
-    return result;
-  }, [applications, search, selectedStatuses, selectedDeptNames, isMultiDept]);
+  // Reset selection when page or filters change
+  useEffect(() => { setSelectedIds(new Set()); }, [page, statusFilter, departmentIdFilter, debouncedSearch]);
 
   const subtitleText = useMemo(() => {
     if (!dmInfo?.isDepartmentManager) return null;
@@ -110,38 +97,35 @@ export function DepartmentApplicationsPage() {
     return `Showing applications across your departments: ${listed}.`;
   }, [dmInfo]);
 
-  const { paginated, currentPage, totalPages, totalItems, pageSize, from, to, goToPage, setPageSize } =
-    usePagination(filtered);
-
   const selectedCount = selectedIds.size;
 
   const hasActionableSelected = useMemo(() => {
     if (selectedCount === 0) return false;
-    return filtered.some(
+    return applications.some(
       (a) => selectedIds.has(a.id) && a.status !== 'Accepted' && a.status !== 'Rejected'
     );
-  }, [filtered, selectedIds, selectedCount]);
+  }, [applications, selectedIds, selectedCount]);
 
   const allSelectedAtLastStep = useMemo(() => {
     if (selectedCount === 0) return false;
-    const selectedApps = filtered.filter((a) => selectedIds.has(a.id));
+    const selectedApps = applications.filter((a) => selectedIds.has(a.id));
     return selectedApps.length === selectedCount && selectedApps.every(isAtLastRequiredStep);
-  }, [filtered, selectedIds, selectedCount]);
+  }, [applications, selectedIds, selectedCount]);
 
-  // Header checkbox indeterminate state (scoped to visible page)
+  // Header checkbox indeterminate state
   useEffect(() => {
     if (!headerCheckboxRef.current) return;
-    const all = paginated.length > 0 && paginated.every((a) => selectedIds.has(a.id));
-    const some = paginated.some((a) => selectedIds.has(a.id));
+    const all = applications.length > 0 && applications.every((a) => selectedIds.has(a.id));
+    const some = applications.some((a) => selectedIds.has(a.id));
     headerCheckboxRef.current.checked = all;
     headerCheckboxRef.current.indeterminate = some && !all;
-  }, [paginated, selectedIds]);
+  }, [applications, selectedIds]);
 
   const toggleAll = () => {
-    if (paginated.every((a) => selectedIds.has(a.id))) {
+    if (applications.every((a) => selectedIds.has(a.id))) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(paginated.map((a) => a.id)));
+      setSelectedIds(new Set(applications.map((a) => a.id)));
     }
   };
 
@@ -189,6 +173,25 @@ export function DepartmentApplicationsPage() {
     }
   };
 
+  const handleExport = async () => {
+    await keycloak.updateToken(30);
+    const params = new URLSearchParams();
+    if (statusFilter) params.set('status', statusFilter);
+    if (departmentIdFilter != null) params.set('departmentId', String(departmentIdFilter));
+    const qs = params.toString();
+    const res = await fetch(`/api/department-applications/export${qs ? `?${qs}` : ''}`, {
+      headers: { Authorization: `Bearer ${keycloak.token}` },
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `applications-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
@@ -211,33 +214,43 @@ export function DepartmentApplicationsPage() {
           />
         </div>
 
-        <MultiSelectFilter<string>
-          label="Status"
-          options={STATUS_OPTIONS}
-          selected={selectedStatuses}
-          onChange={setSelectedStatuses}
-          searchPlaceholder="Search status…"
-          maxVisible={5}
-        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+        >
+          <option value="">All Statuses</option>
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>{APP_STATUS_LABEL[s] ?? s}</option>
+          ))}
+        </select>
 
         {isMultiDept && (
-          <MultiSelectFilter<number>
-            label="Department"
-            options={deptFilterOptions}
-            selected={selectedDeptIds}
-            onChange={setSelectedDeptIds}
-            searchPlaceholder="Search department…"
-            maxVisible={3}
-          />
+          <select
+            value={departmentIdFilter ?? ''}
+            onChange={(e) => setDepartmentIdFilter(e.target.value ? Number(e.target.value) : undefined)}
+            className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+          >
+            <option value="">All Departments</option>
+            {(dmInfo?.departmentIds ?? []).map((id, i) => (
+              <option key={id} value={id}>{dmInfo?.departmentNames?.[i] ?? `Dept ${id}`}</option>
+            ))}
+          </select>
         )}
 
-        <a
-          href="/api/department-applications/export"
-          download
+        {!isLoading && !isError && (
+          <p className="text-xs text-gray-400 self-center ml-auto">
+            {totalItems} application{totalItems !== 1 ? 's' : ''}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={handleExport}
           className="h-10 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
         >
           <Download className="h-4 w-4" /> Export
-        </a>
+        </button>
       </div>
 
       {/* Bulk action bar */}
@@ -310,11 +323,11 @@ export function DepartmentApplicationsPage() {
 
       {!isLoading && !isError && (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-          {filtered.length === 0 ? (
+          {applications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <FileText className="h-10 w-10 mb-3 opacity-30" />
               <p className="text-sm">
-                {applications.length === 0
+                {totalItems === 0
                   ? 'No applications yet for your department.'
                   : 'No results match your search or filters.'}
               </p>
@@ -340,7 +353,7 @@ export function DepartmentApplicationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {paginated.map((app) => {
+                {applications.map((app) => {
                   const status = deriveStatus(app);
                   const isSelected = selectedIds.has(app.id);
                   return (
@@ -411,14 +424,14 @@ export function DepartmentApplicationsPage() {
 
       {!isLoading && !isError && (
         <Pagination
-          currentPage={currentPage}
+          currentPage={page}
           totalPages={totalPages}
           totalItems={totalItems}
           from={from}
           to={to}
           pageSize={pageSize}
-          onPageChange={goToPage}
-          onPageSizeChange={setPageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(ps) => { setPageSize(ps); setPage(1); }}
         />
       )}
 

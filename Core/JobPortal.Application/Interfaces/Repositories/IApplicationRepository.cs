@@ -11,11 +11,11 @@ public interface IApplicationRepository
     Task<List<ApplicationEntity>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<IEnumerable<ApplicationEntity>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ApplicationEntity>> GetByJobPostIdAsync(int jobPostId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<ApplicationEntity>> GetAllByDepartmentAsync(IReadOnlyList<int> departmentIds, int? jobPostId = null, string? status = null, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ApplicationEntity>> GetAllByDepartmentAsync(IReadOnlyList<int> departmentIds, int? jobPostId = null, string? status = null, int? departmentId = null, CancellationToken cancellationToken = default);
     Task<(IEnumerable<ApplicationEntity> Items, int TotalCount)> GetPagedAsync(
         int? jobPostId, string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<(IEnumerable<ApplicationEntity> Items, int TotalCount)> GetPagedByDepartmentAsync(
-        IReadOnlyList<int> departmentIds, int? jobPostId, string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default);
+        IReadOnlyList<int> departmentIds, int? jobPostId, string? status, string? search, int page, int pageSize, int? departmentId = null, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(int userId, int jobPostId, CancellationToken cancellationToken = default);
     Task AddAsync(ApplicationEntity application, CancellationToken cancellationToken = default);
     Task UpdateAsync(ApplicationEntity application, CancellationToken cancellationToken = default);
@@ -26,6 +26,12 @@ public interface IApplicationRepository
 
     // Scope check (lightweight)
     Task<bool> IsInDepartmentScopeAsync(int applicationId, IReadOnlyList<int> departmentIds, CancellationToken ct = default);
+
+    // Document ownership check
+    Task<bool> AreDocumentsOwnedByUserAsync(IReadOnlyList<int> documentIds, int userId, CancellationToken ct = default);
+
+    // Application code uniqueness check
+    Task<bool> CodeExistsAsync(string code, CancellationToken ct = default);
 
     // Bulk operations
     Task<int> BulkRejectAsync(IEnumerable<int> appIds, DateTime updatedAt, CancellationToken cancellationToken = default);

@@ -74,27 +74,18 @@ internal static class StepEmailHelper
         }
     }
 
-    internal static void FireAndForgetBulkEmails(
+    internal static async Task SendBulkEmailsAsync(
         IEmailService emailService,
         ILogger logger,
         IEnumerable<(ApplicationEntity App, ApplicationStep Step, bool Passed)> items,
         string primaryColor,
-        string companyName)
+        string companyName,
+        CancellationToken cancellationToken = default)
     {
         var list = items.ToList();
         if (list.Count == 0) return;
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                foreach (var (app, step, passed) in list)
-                    await SendStepEmailAsync(emailService, logger, app, step, passed, primaryColor, companyName);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "FireAndForgetBulkEmails: unexpected error processing step emails");
-            }
-        });
+        foreach (var (app, step, passed) in list)
+            await SendStepEmailAsync(emailService, logger, app, step, passed, primaryColor, companyName, cancellationToken);
     }
 }

@@ -63,7 +63,7 @@ public class ApproveJobPostStepCommandHandler(
                 instance.CurrentStepOrder = nextStep.StepOrder;
 
                 var (primaryColor, companyName) = await GetBrandingAsync(cancellationToken);
-                ApprovalEmailHelper.FireAndForgetApprovalEmail(emailService, baseUrl, logger, instance, nextStep, primaryColor, companyName);
+                await ApprovalEmailHelper.SendApprovalEmailAsync(emailService, baseUrl, logger, instance, nextStep, primaryColor, companyName);
             }
             else
             {

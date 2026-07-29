@@ -14,6 +14,7 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { useToast } from '../../../hooks/useToast';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { canActOnStep } from '../../../lib/applicationStatus';
+import keycloak from '../../../lib/keycloak';
 import type { ApplicationDto, ApplicationStepDto } from '../../../types/api';
 import type { PageSize } from '../../../hooks/usePagination';
 
@@ -41,7 +42,7 @@ export function ApplicationsPage() {
   const { toasts, addToast, dismissToast } = useToast();
   const debouncedSearch = useDebounce(search, 400);
 
-  const apiPageSize = pageSize === 'all' ? 9999 : pageSize;
+  const apiPageSize = pageSize === 'all' ? 200 : pageSize;
 
   const { data, isLoading, isError } = useGetApplicationsPagedQuery({
     search: debouncedSearch || undefined,
@@ -116,12 +117,23 @@ export function ApplicationsPage() {
     setSelectedIds(new Set());
   };
 
-  const exportUrl = () => {
+  const handleExport = async () => {
+    await keycloak.updateToken(30);
     const params = new URLSearchParams();
     if (statusFilter) params.set('status', statusFilter);
     if (jobPostFilter != null) params.set('jobPostId', String(jobPostFilter));
     const qs = params.toString();
-    return `/api/applications/export${qs ? `?${qs}` : ''}`;
+    const res = await fetch(`/api/applications/export${qs ? `?${qs}` : ''}`, {
+      headers: { Authorization: `Bearer ${keycloak.token}` },
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `applications-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -186,13 +198,13 @@ export function ApplicationsPage() {
           </p>
         )}
 
-        <a
-          href={exportUrl()}
-          download
+        <button
+          type="button"
+          onClick={handleExport}
           className="h-10 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
         >
           <Download className="h-4 w-4" /> Export
-        </a>
+        </button>
       </div>
 
       {/* Bulk action bar */}

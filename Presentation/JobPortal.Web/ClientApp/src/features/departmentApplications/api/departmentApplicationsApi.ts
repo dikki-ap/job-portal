@@ -8,6 +8,7 @@ interface GetDepartmentApplicationsPagedParams {
   search?: string;
   page?: number;
   pageSize?: number;
+  departmentId?: number;
 }
 
 export const departmentApplicationsApi = createApi({
@@ -34,10 +35,11 @@ export const departmentApplicationsApi = createApi({
       providesTags: ['DepartmentApplication'],
     }),
     getDepartmentApplicationsPaged: builder.query<PagedResult<ApplicationDto>, GetDepartmentApplicationsPagedParams>({
-      query: ({ status, search, page = 1, pageSize = 20 } = {}) => {
+      query: ({ status, search, page = 1, pageSize = 20, departmentId } = {}) => {
         const params = new URLSearchParams();
         if (status) params.set('status', status);
         if (search) params.set('search', search);
+        if (departmentId != null) params.set('departmentId', String(departmentId));
         params.set('page', String(page));
         params.set('pageSize', String(pageSize));
         return `/paged?${params.toString()}`;

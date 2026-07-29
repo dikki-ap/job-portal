@@ -33,4 +33,7 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => await context.SaveChangesAsync(cancellationToken);
+
+    public void ClearTracker()
+        => context.ChangeTracker.Clear();
 }

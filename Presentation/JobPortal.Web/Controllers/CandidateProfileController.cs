@@ -49,7 +49,8 @@ public class CandidateProfileController(
     public async Task<IActionResult> GetInstitutionSuggestions(
         [FromQuery] string q, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetInstitutionSuggestionsQuery(q), cancellationToken);
+        if (q?.Length > 100) q = q[..100];
+        var result = await mediator.Send(new GetInstitutionSuggestionsQuery(q ?? string.Empty), cancellationToken);
         return Ok(result);
     }
 

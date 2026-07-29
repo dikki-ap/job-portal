@@ -16,6 +16,10 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<Domain.Entities
 
         builder.Property(a => a.Status).HasMaxLength(50).IsRequired();
 
+        builder.HasIndex(a => a.Status);
+        builder.HasIndex(a => a.JobPostId);
+        builder.HasIndex(a => a.AppliedAt);
+
         builder.HasMany(a => a.Documents)
             .WithOne(d => d.Application)
             .HasForeignKey(d => d.ApplicationId);

@@ -9,4 +9,5 @@ public record GetPagedDepartmentApplicationsQuery(
     string? Status,
     string? Search,
     int Page = 1,
-    int PageSize = 20) : IRequest<PagedResult<ApplicationDto>>;
+    int PageSize = 20,
+    int? DepartmentId = null) : IRequest<PagedResult<ApplicationDto>>;

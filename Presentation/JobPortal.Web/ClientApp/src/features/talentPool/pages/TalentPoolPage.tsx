@@ -1,17 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Trash2, RefreshCw, Star, X } from 'lucide-react';
+import { Users, Trash2, RefreshCw, Star, X, Search } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
+import { Pagination } from '../../../components/ui/Pagination';
 import { SearchableSelect } from '../../../components/ui/SearchableSelect';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { useToast } from '../../../hooks/useToast';
+import { useDebounce } from '../../../hooks/useDebounce';
 import { useFormatter } from '../../../lib/useFormatter';
 import { cn } from '../../../lib/utils';
-import { useGetTalentPoolQuery, useRemoveFromTalentPoolMutation, useReengageCandidateMutation } from '../api/talentPoolApi';
+import { useGetTalentPoolPagedQuery, useRemoveFromTalentPoolMutation, useReengageCandidateMutation } from '../api/talentPoolApi';
+import { ErrorBanner } from '../../../components/ErrorBanner';
 import { useGetJobPostsQuery } from '../../jobPosts/api/jobPostsApi';
 import type { TalentPoolEntryDto } from '../api/talentPoolApi';
+import type { PageSize } from '../../../hooks/usePagination';
 
 function RatingBadge({ rating }: { rating: number | null }) {
   if (!rating) return null;
@@ -106,7 +110,27 @@ export function TalentPoolPage() {
   const navigate = useNavigate();
   const { formatDate } = useFormatter();
   const { toasts, addToast, dismissToast } = useToast();
-  const { data: entries = [], isLoading } = useGetTalentPoolQuery();
+
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(25);
+  const debouncedSearch = useDebounce(search, 400);
+  const apiPageSize = pageSize === 'all' ? 100 : pageSize;
+
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
+
+  const { data, isLoading, isError } = useGetTalentPoolPagedQuery({
+    page,
+    pageSize: apiPageSize,
+    search: debouncedSearch || undefined,
+  });
+
+  const entries = data?.items ?? [];
+  const totalItems = data?.totalCount ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const from = totalItems === 0 ? 0 : (page - 1) * apiPageSize + 1;
+  const to = Math.min(page * apiPageSize, totalItems);
+
   const [remove, { isLoading: removing }] = useRemoveFromTalentPoolMutation();
   const [reengageTarget, setReengageTarget] = useState<TalentPoolEntryDto | null>(null);
   const [confirmEntry, setConfirmEntry] = useState<TalentPoolEntryDto | null>(null);
@@ -139,14 +163,27 @@ export function TalentPoolPage() {
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-500">
           <Users className="h-4 w-4" />
-          {entries.length} candidate{entries.length !== 1 ? 's' : ''}
+          {totalItems} candidate{totalItems !== 1 ? 's' : ''}
         </div>
+      </div>
+
+      <div className="relative max-w-xs">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Search candidates…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+        />
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-16">
           <Spinner size="lg" className="text-[var(--primary)]" />
         </div>
+      ) : isError ? (
+        <ErrorBanner message="Failed to load talent pool." />
       ) : entries.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-12 text-center">
           <Users className="h-8 w-8 text-gray-300 mx-auto mb-3" />
@@ -222,6 +259,19 @@ export function TalentPoolPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!isLoading && !isError && totalItems > 0 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          from={from}
+          to={to}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(ps) => { setPageSize(ps); setPage(1); }}
+        />
       )}
 
       {reengageTarget && (

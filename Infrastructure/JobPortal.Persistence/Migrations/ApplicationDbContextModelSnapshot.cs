@@ -95,7 +95,11 @@ namespace JobPortal.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
+                    b.HasIndex("AppliedAt");
+
                     b.HasIndex("JobPostId");
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("UserId", "JobPostId")
                         .IsUnique();
@@ -190,6 +194,8 @@ namespace JobPortal.Persistence.Migrations
                     b.HasIndex("ApplicationId");
 
                     b.HasIndex("JobStepId");
+
+                    b.HasIndex("Status");
 
                     b.ToTable("ApplicationSteps");
                 });
@@ -446,6 +452,8 @@ namespace JobPortal.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("JobPostId");
+
+                    b.HasIndex("Status");
 
                     b.ToTable("JobApprovalInstances");
                 });

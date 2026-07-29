@@ -79,16 +79,10 @@ public class BulkRejectApplicationCommandHandler(
         var primaryColor = await appSettingRepository.GetValueAsync("BrandPrimaryColor", cancellationToken) ?? "#004181";
         var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
 
-        StepEmailHelper.FireAndForgetBulkEmails(emailService, logger, stepEmailQueue, primaryColor, companyName);
+        await StepEmailHelper.SendBulkEmailsAsync(emailService, logger, stepEmailQueue, primaryColor, companyName, cancellationToken);
 
-        if (genericRejectQueue.Count > 0)
-        {
-            _ = Task.Run(async () =>
-            {
-                foreach (var app in genericRejectQueue)
-                    await ApplicationEmailHelper.SendRejectedAsync(emailService, logger, app, primaryColor, companyName);
-            });
-        }
+        foreach (var app in genericRejectQueue)
+            await ApplicationEmailHelper.SendRejectedAsync(emailService, logger, app, primaryColor, companyName, cancellationToken);
 
         return new BulkOperationResultDto(succeeded, skipped, []);
     }

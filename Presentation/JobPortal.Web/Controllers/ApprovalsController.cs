@@ -18,6 +18,7 @@ public record ApprovalActionRequest(string? Comment);
 public class ApprovalsController(IMediator mediator) : ControllerBase
 {
     [HttpGet("pending")]
+    [Authorize(Policy = "HrOrAdmin")]
     public async Task<IActionResult> GetPending(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetPendingApprovalsQuery(), cancellationToken);

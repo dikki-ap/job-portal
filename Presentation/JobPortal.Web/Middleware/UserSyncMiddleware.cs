@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Domain.Entities.Users;
+using Microsoft.EntityFrameworkCore;
 
 namespace JobPortal.Web.Middleware;
 
@@ -27,10 +28,21 @@ public class UserSyncMiddleware(RequestDelegate next, ILogger<UserSyncMiddleware
                             CreatedAt = DateTime.UtcNow,
                         };
                         await userRepo.AddAsync(user);
-                        await userRepo.SaveChangesAsync();
-                        logger.LogInformation("UserSync: created user ExternalId={ExternalId} Id={Id}", externalId, user.Id);
+                        try
+                        {
+                            await userRepo.SaveChangesAsync();
+                            logger.LogInformation("UserSync: created user ExternalId={ExternalId} Id={Id}", externalId, user.Id);
+                        }
+                        catch (DbUpdateException)
+                        {
+                            // Concurrent request already inserted this user — clear tracker and reload.
+                            userRepo.ClearTracker();
+                            user = await userRepo.GetByExternalIdAsync(externalId);
+                            logger.LogInformation("UserSync: concurrent insert resolved for ExternalId={ExternalId}", externalId);
+                        }
                     }
-                    context.Items["CurrentUserId"] = user.Id;
+                    if (user is not null)
+                        context.Items["CurrentUserId"] = user.Id;
                 }
                 catch (Exception ex)
                 {

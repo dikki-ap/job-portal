@@ -1,6 +1,7 @@
 using JobPortal.Application.Features.TalentPool.Commands.AddToTalentPool;
 using JobPortal.Application.Features.TalentPool.Commands.ReengageCandidate;
 using JobPortal.Application.Features.TalentPool.Commands.RemoveFromTalentPool;
+using JobPortal.Application.Features.TalentPool.Queries.GetPagedTalentPool;
 using JobPortal.Application.Features.TalentPool.Queries.GetTalentPool;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -16,6 +17,17 @@ public class TalentPoolController(IMediator mediator) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)
         => Ok(await mediator.Send(new GetTalentPoolQuery(), ct));
+
+    [HttpGet("paged")]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? search = null,
+        CancellationToken ct = default)
+    {
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        return Ok(await mediator.Send(new GetPagedTalentPoolQuery(page, pageSize, search), ct));
+    }
 
     [HttpPost]
     public async Task<IActionResult> Add([FromBody] AddToTalentPoolRequest req, CancellationToken ct)

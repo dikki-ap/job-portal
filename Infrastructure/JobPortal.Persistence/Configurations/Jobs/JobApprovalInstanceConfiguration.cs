@@ -10,6 +10,9 @@ public class JobApprovalInstanceConfiguration : IEntityTypeConfiguration<JobAppr
     {
         builder.Property(a => a.Status).HasMaxLength(50).IsRequired();
 
+        builder.HasIndex(a => a.Status);
+        builder.HasIndex(a => a.JobPostId);
+
         builder.HasMany(a => a.Steps)
             .WithOne(s => s.ApprovalInstance)
             .HasForeignKey(s => s.ApprovalInstanceId);

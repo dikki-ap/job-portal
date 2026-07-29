@@ -36,11 +36,26 @@ public class CreateApplicationCommandHandler(
         if (await applicationRepository.ExistsAsync(userId, request.JobPostId, cancellationToken))
             throw new InvalidOperationException("You have already applied to this job post.");
 
+        if (request.Documents.Count > 0)
+        {
+            var docIds = request.Documents.Select(d => d.DocumentId).ToList();
+            if (!await applicationRepository.AreDocumentsOwnedByUserAsync(docIds, userId, cancellationToken))
+                throw new UnauthorizedAccessException("One or more documents do not belong to the current user.");
+        }
+
         var now = DateTime.UtcNow;
 
         var email = currentUserService.GetCurrentUserEmail() ?? string.Empty;
         var prefix = Regex.Replace(email.Split('@')[0].ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
-        var code = $"{prefix}-{Guid.NewGuid().ToString("N")[..8]}";
+
+        string code = string.Empty;
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            code = $"{prefix}-{Guid.NewGuid().ToString("N")[..8]}";
+            if (!await applicationRepository.CodeExistsAsync(code, cancellationToken)) break;
+            if (attempt == 2)
+                throw new InvalidOperationException("Failed to generate a unique application code. Please try again.");
+        }
 
         var application = new Domain.Entities.Applications.Application
         {
@@ -82,7 +97,7 @@ public class CreateApplicationCommandHandler(
         var companyName  = await appSettingRepository.GetValueAsync("BrandCompanyName", cancellationToken)  ?? "JobPortal";
 
         var full = await applicationRepository.GetByIdAsync(application.Id, cancellationToken);
-        _ = ApplicationEmailHelper.SendReceivedAsync(emailService, logger, full!, primaryColor, companyName, CancellationToken.None);
+        await ApplicationEmailHelper.SendReceivedAsync(emailService, logger, full!, primaryColor, companyName, cancellationToken);
         return GetAllApplicationsQueryHandler.MapToDto(full!);
     }
 }

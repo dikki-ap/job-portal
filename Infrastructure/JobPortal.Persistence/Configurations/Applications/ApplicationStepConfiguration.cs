@@ -11,6 +11,9 @@ public class ApplicationStepConfiguration : IEntityTypeConfiguration<Application
         builder.Property(s => s.StepName).HasMaxLength(150).IsRequired();
         builder.Property(s => s.Status).HasMaxLength(50).IsRequired();
 
+        builder.HasIndex(s => s.ApplicationId);
+        builder.HasIndex(s => s.Status);
+
         builder.HasOne(s => s.JobStep)
             .WithMany(js => js.ApplicationSteps)
             .HasForeignKey(s => s.JobStepId)

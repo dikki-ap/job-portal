@@ -1,3 +1,4 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Features.DepartmentManagers.Queries.IsDepartmentManager;
 using JobPortal.Application.Interfaces.Services;
@@ -9,6 +10,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using System.Security.Claims;
 
 namespace JobPortal.Web.Controllers;
 
@@ -20,6 +23,7 @@ public class ApplicationCompanyDocumentsController(
     IStorageService storageService,
     ICurrentUserService currentUserService,
     IMediator mediator,
+    IMemoryCache cache,
     ILogger<ApplicationCompanyDocumentsController> logger) : ControllerBase
 {
     private static readonly HashSet<string> AllowedMimeTypes =
@@ -121,8 +125,15 @@ public class ApplicationCompanyDocumentsController(
         if (User.IsInRole("HR") || User.IsInRole("Admin"))
             return null;
 
-        var dmInfo = await mediator.Send(new IsDepartmentManagerQuery(), ct);
-        if (!dmInfo.IsDepartmentManager || dmInfo.DepartmentIds.Count == 0)
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email") ?? string.Empty;
+        if (!cache.TryGetValue(CacheKeys.DmIdentity(email), out IsDepartmentManagerDto? dmInfo))
+        {
+            dmInfo = await mediator.Send(new IsDepartmentManagerQuery(), ct);
+            if (dmInfo.IsDepartmentManager && dmInfo.DepartmentIds.Count > 0)
+                cache.Set(CacheKeys.DmIdentity(email), dmInfo, CacheEntry.Default(TimeSpan.FromMinutes(5)));
+        }
+
+        if (dmInfo is null || !dmInfo.IsDepartmentManager || dmInfo.DepartmentIds.Count == 0)
             return Forbid();
 
         if (departmentId is null || !dmInfo.DepartmentIds.Contains(departmentId.Value))

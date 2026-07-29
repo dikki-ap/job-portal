@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Ganss.Xss;
 using JobPortal.Application.Common;
 using JobPortal.Application.Features.AppSettings.Commands.UpdateBrandingSetting;
@@ -195,12 +194,29 @@ public class AppSettingsController(
 
     private static string SanitizeSvg(string svgContent)
     {
-        // Strip <script> blocks
-        var result = Regex.Replace(svgContent, @"<script[\s\S]*?</script>", string.Empty, RegexOptions.IgnoreCase);
-        // Strip on* event handler attributes (onclick, onload, etc.)
-        result = Regex.Replace(result, @"\s+on\w+\s*=\s*(?:""[^""]*""|'[^']*'|[^\s>]+)", string.Empty, RegexOptions.IgnoreCase);
-        // Strip javascript: URI scheme in href / xlink:href
-        result = Regex.Replace(result, @"((?:xlink:)?href)\s*=\s*[""']\s*javascript:[^""']*[""']", "$1=\"#\"", RegexOptions.IgnoreCase);
-        return result;
+        var sanitizer = new HtmlSanitizer();
+
+        sanitizer.AllowedTags.Clear();
+        foreach (var tag in new[]
+        {
+            "svg", "path", "g", "circle", "rect", "polygon", "polyline", "line",
+            "ellipse", "defs", "use", "symbol", "title", "desc", "text", "tspan",
+        })
+            sanitizer.AllowedTags.Add(tag);
+
+        sanitizer.AllowedAttributes.Clear();
+        foreach (var attr in new[]
+        {
+            "xmlns", "viewBox", "width", "height", "fill", "stroke", "stroke-width",
+            "stroke-linecap", "stroke-linejoin", "d", "cx", "cy", "r",
+            "x", "y", "x1", "y1", "x2", "y2", "rx", "ry", "points", "transform",
+            "class", "id", "opacity", "visibility", "display", "style",
+            "aria-label", "role",
+        })
+            sanitizer.AllowedAttributes.Add(attr);
+
+        sanitizer.AllowedCssProperties.Clear();
+
+        return sanitizer.Sanitize(svgContent);
     }
 }

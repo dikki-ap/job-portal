@@ -25,7 +25,7 @@ builder.Services
     .AddMemoryCacheWithDefaults()           // bounded IMemoryCache
     .AddReverseProxyForwardedHeaders(builder.Configuration)  // X-Forwarded-For / X-Forwarded-Proto
     .AddRateLimitingPolicies(builder.Configuration)
-    .AddKeycloakAuthentication(builder.Configuration)
+    .AddKeycloakAuthentication(builder.Configuration, builder.Environment)
     .AddApplicationServices(builder.Configuration)
     .AddHealthChecks()
     .AddDbContextCheck<ApplicationDbContext>("database")

@@ -26,6 +26,7 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
         [FromQuery] int pageSize = 9,
         CancellationToken cancellationToken = default)
     {
+        if (search?.Length > 100) search = search[..100];
         var result = await mediator.Send(
             new GetPublishedJobPostsQuery(search, categoryIds, employmentTypeIds, workModeIds,
                 countries, Math.Max(1, page), Math.Clamp(pageSize, 1, 50)),

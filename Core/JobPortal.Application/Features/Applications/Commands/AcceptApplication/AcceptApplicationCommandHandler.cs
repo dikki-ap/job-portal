@@ -19,8 +19,8 @@ public class AcceptApplicationCommandHandler(
             var application = await repository.GetByIdAsync(request.Id, cancellationToken)
                 ?? throw new KeyNotFoundException($"Application {request.Id} not found.");
 
-            if (application.Status != ApplicationStatus.InReview)
-                throw new InvalidOperationException("Only applications in 'InReview' status can be accepted.");
+            if (application.Status != ApplicationStatus.InReview && application.Status != ApplicationStatus.Pending)
+                throw new InvalidOperationException("Only Pending or InReview applications can be accepted.");
 
             application.Status = ApplicationStatus.Accepted;
             application.UpdatedAt = DateTime.UtcNow;

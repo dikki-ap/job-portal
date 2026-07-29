@@ -38,7 +38,8 @@ public static class AuthenticationExtensions
     /// </summary>
     public static IServiceCollection AddKeycloakAuthentication(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IWebHostEnvironment environment)
     {
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -48,9 +49,10 @@ public static class AuthenticationExtensions
                 // Example: https://auth.example.com/realms/job-portal
                 options.Authority = configuration["Keycloak:Authority"];
 
-                // Set to true in production when Keycloak is reachable only over HTTPS.
-                // Keep false when the container fetches JWKS from an internal HTTP URL.
-                options.RequireHttpsMetadata = configuration.GetValue("Keycloak:RequireHttpsMetadata", false);
+                // Defaults to true in non-Development environments so production/staging require
+                // HTTPS when fetching Keycloak metadata. Set Keycloak:RequireHttpsMetadata=false
+                // in appsettings.Development.json to allow plain HTTP in local/Docker setups.
+                options.RequireHttpsMetadata = configuration.GetValue("Keycloak:RequireHttpsMetadata", !environment.IsDevelopment());
 
                 // Disable automatic claim type mapping (e.g. "sub" → ClaimTypes.NameIdentifier)
                 // so that claim names in the token are used as-is and Keycloak-specific claims

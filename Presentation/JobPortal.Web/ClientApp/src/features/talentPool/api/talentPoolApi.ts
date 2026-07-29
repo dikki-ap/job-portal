@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import keycloak from '../../../lib/keycloak';
-import type { ApplicationDto } from '../../../types/api';
+import type { ApplicationDto, PagedResult } from '../../../types/api';
 
 export interface TalentPoolEntryDto {
   id: number;
@@ -36,6 +36,16 @@ export const talentPoolApi = createApi({
       query: () => '',
       providesTags: ['TalentPool'],
     }),
+    getTalentPoolPaged: builder.query<PagedResult<TalentPoolEntryDto>, { page?: number; pageSize?: number; search?: string }>({
+      query: ({ page = 1, pageSize = 20, search } = {}) => {
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('pageSize', String(pageSize));
+        if (search) params.set('search', search);
+        return `/paged?${params.toString()}`;
+      },
+      providesTags: ['TalentPool'],
+    }),
     addToTalentPool: builder.mutation<TalentPoolEntryDto, { applicationId: number; notes?: string }>({
       query: (body) => ({ url: '', method: 'POST', body }),
       invalidatesTags: ['TalentPool'],
@@ -53,6 +63,7 @@ export const talentPoolApi = createApi({
 
 export const {
   useGetTalentPoolQuery,
+  useGetTalentPoolPagedQuery,
   useAddToTalentPoolMutation,
   useRemoveFromTalentPoolMutation,
   useReengageCandidateMutation,

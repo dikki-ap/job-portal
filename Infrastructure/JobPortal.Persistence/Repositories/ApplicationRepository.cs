@@ -3,15 +3,21 @@ using JobPortal.Application.DTOs;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ApplicationEntity = JobPortal.Domain.Entities.Applications.Application;
 
 namespace JobPortal.Persistence.Repositories;
 
-public class ApplicationRepository(ApplicationDbContext context) : IApplicationRepository
+public class ApplicationRepository(
+    ApplicationDbContext context,
+    ILogger<ApplicationRepository> logger) : IApplicationRepository
 {
+    private const int ExportCeiling = 10_000;
+
     public async Task<IEnumerable<ApplicationEntity>> GetAllAsync(
         int? jobPostId = null, string? status = null, CancellationToken cancellationToken = default)
-        => await context.Applications
+    {
+        var results = await context.Applications
             .Include(a => a.User).ThenInclude(u => u.Profile)
             .Include(a => a.JobPost)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
@@ -20,7 +26,14 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .Where(a => jobPostId == null || a.JobPostId == jobPostId)
             .Where(a => status == null || a.Status == status)
             .OrderByDescending(a => a.AppliedAt)
+            .Take(ExportCeiling)
             .ToListAsync(cancellationToken);
+
+        if (results.Count == ExportCeiling)
+            logger.LogWarning("GetAllAsync hit export ceiling of {Ceiling} rows — some records omitted", ExportCeiling);
+
+        return results;
+    }
 
     public async Task<ApplicationEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await context.Applications
@@ -68,8 +81,9 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .ToListAsync(cancellationToken);
 
     public async Task<IEnumerable<ApplicationEntity>> GetAllByDepartmentAsync(
-        IReadOnlyList<int> departmentIds, int? jobPostId = null, string? status = null, CancellationToken cancellationToken = default)
-        => await context.Applications
+        IReadOnlyList<int> departmentIds, int? jobPostId = null, string? status = null, int? departmentId = null, CancellationToken cancellationToken = default)
+    {
+        var results = await context.Applications
             .Include(a => a.User).ThenInclude(u => u.Profile)
             .Include(a => a.JobPost).ThenInclude(j => j.Department)
             .Include(a => a.JobPost).ThenInclude(j => j.EmploymentType)
@@ -78,10 +92,18 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
             .Include(a => a.Documents).ThenInclude(d => d.Document)
             .Where(a => !a.IsDeleted && departmentIds.Contains(a.JobPost!.DepartmentId))
+            .Where(a => departmentId == null || a.JobPost!.DepartmentId == departmentId)
             .Where(a => jobPostId == null || a.JobPostId == jobPostId)
             .Where(a => status == null || a.Status == status)
             .OrderByDescending(a => a.AppliedAt)
+            .Take(ExportCeiling)
             .ToListAsync(cancellationToken);
+
+        if (results.Count == ExportCeiling)
+            logger.LogWarning("GetAllByDepartmentAsync hit export ceiling of {Ceiling} rows — some records omitted", ExportCeiling);
+
+        return results;
+    }
 
     public async Task<IEnumerable<ApplicationEntity>> GetByJobPostIdAsync(int jobPostId, CancellationToken cancellationToken = default)
         => await context.Applications
@@ -99,7 +121,6 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .Include(a => a.User).ThenInclude(u => u.Profile)
             .Include(a => a.JobPost).ThenInclude(j => j.Department)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
-            .Include(a => a.Documents).ThenInclude(d => d.Document)
             .Where(a => !a.IsDeleted)
             .Where(a => jobPostId == null || a.JobPostId == jobPostId)
             .Where(a => status == null || a.Status == status)
@@ -114,7 +135,7 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
     }
 
     public async Task<(IEnumerable<ApplicationEntity> Items, int TotalCount)> GetPagedByDepartmentAsync(
-        IReadOnlyList<int> departmentIds, int? jobPostId, string? status, string? search, int page, int pageSize, CancellationToken cancellationToken = default)
+        IReadOnlyList<int> departmentIds, int? jobPostId, string? status, string? search, int page, int pageSize, int? departmentId = null, CancellationToken cancellationToken = default)
     {
         var query = context.Applications
             .Include(a => a.User).ThenInclude(u => u.Profile)
@@ -123,8 +144,8 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .Include(a => a.JobPost).ThenInclude(j => j.WorkMode)
             .Include(a => a.JobPost).ThenInclude(j => j.JobLevel)
             .Include(a => a.Steps).ThenInclude(s => s.JobStep)
-            .Include(a => a.Documents).ThenInclude(d => d.Document)
             .Where(a => !a.IsDeleted && departmentIds.Contains(a.JobPost!.DepartmentId))
+            .Where(a => departmentId == null || a.JobPost!.DepartmentId == departmentId)
             .Where(a => jobPostId == null || a.JobPostId == jobPostId)
             .Where(a => status == null || a.Status == status)
             .Where(a => search == null ||
@@ -253,4 +274,13 @@ public class ApplicationRepository(ApplicationDbContext context) : IApplicationR
             .Where(a => a.Id == applicationId && !a.IsDeleted)
             .Where(a => departmentIds.Contains(a.JobPost!.DepartmentId))
             .AnyAsync(ct);
+
+    public async Task<bool> AreDocumentsOwnedByUserAsync(
+        IReadOnlyList<int> documentIds, int userId, CancellationToken ct = default)
+        => await context.Documents
+            .Where(d => documentIds.Contains(d.Id))
+            .AllAsync(d => d.CreatedByUserId == userId, ct);
+
+    public Task<bool> CodeExistsAsync(string code, CancellationToken ct = default)
+        => context.Applications.IgnoreQueryFilters().AnyAsync(a => a.Code == code, ct);
 }
