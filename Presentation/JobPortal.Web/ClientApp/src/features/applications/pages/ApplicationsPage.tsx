@@ -2,28 +2,20 @@ import { useState, useMemo, useEffect } from 'react';
 import { Search, CheckCircle, XCircle, Ban, X, UserCheck, Download } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Pagination } from '../../../components/ui/Pagination';
-import { MultiSelectFilter } from '../../../components/ui/MultiSelectFilter';
-import type { FilterOption } from '../../../components/ui/MultiSelectFilter';
 import { ApplicationsTable } from '../components/ApplicationsTable';
 import {
-  useGetApplicationsQuery,
+  useGetApplicationsPagedQuery,
   useBulkUpdateStepMutation,
   useBulkAcceptMutation,
   useBulkRejectMutation,
 } from '../api/applicationsApi';
 import { useGetJobPostsQuery } from '../../jobPosts/api/jobPostsApi';
-import { usePagination } from '../../../hooks/usePagination';
+import { useDebounce } from '../../../hooks/useDebounce';
 import { useToast } from '../../../hooks/useToast';
 import { ToastContainer } from '../../../components/ui/Toast';
-import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
+import { canActOnStep } from '../../../lib/applicationStatus';
 import type { ApplicationDto, ApplicationStepDto } from '../../../types/api';
-
-const STATUS_OPTIONS: FilterOption[] = [
-  { id: 'Pending', label: 'Pending' },
-  { id: 'InReview', label: 'In Review' },
-  { id: 'Accepted', label: 'Accepted' },
-  { id: 'Rejected', label: 'Rejected' },
-];
+import type { PageSize } from '../../../hooks/usePagination';
 
 function isAtLastRequiredStep(app: ApplicationDto): boolean {
   if (app.status === 'Accepted' || app.status === 'Rejected') return false;
@@ -40,15 +32,25 @@ function isAtLastRequiredStep(app: ApplicationDto): boolean {
 
 export function ApplicationsPage() {
   const [search, setSearch] = useState('');
-  const [statusFilters, setStatusFilters] = useState<string[]>([]);
-  const [jobPostFilters, setJobPostFilters] = useState<number[]>([]);
-  const [stepNameFilters, setStepNameFilters] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [jobPostFilter, setJobPostFilter] = useState<number | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(25);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const { toasts, addToast, dismissToast } = useToast();
+  const debouncedSearch = useDebounce(search, 400);
 
-  // Always fetch all — filtering is client-side for multi-select
-  const { data: applications = [], isLoading, isError } = useGetApplicationsQuery({});
+  const apiPageSize = pageSize === 'all' ? 9999 : pageSize;
+
+  const { data, isLoading, isError } = useGetApplicationsPagedQuery({
+    search: debouncedSearch || undefined,
+    status: statusFilter || undefined,
+    jobPostId: jobPostFilter,
+    page,
+    pageSize: apiPageSize,
+  });
+
   const { data: jobPosts = [] } = useGetJobPostsQuery();
 
   const [bulkUpdateStep, { isLoading: bulkStepLoading }] = useBulkUpdateStepMutation();
@@ -56,52 +58,17 @@ export function ApplicationsPage() {
   const [bulkReject, { isLoading: bulkRejectLoading }] = useBulkRejectMutation();
   const isBulkLoading = bulkStepLoading || bulkAcceptLoading || bulkRejectLoading;
 
-  const jobPostOptions = useMemo<FilterOption[]>(
-    () => jobPosts.map((jp) => ({ id: jp.id, label: jp.title })),
-    [jobPosts]
-  );
+  const applications = data?.items ?? [];
+  const totalItems = data?.totalCount ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const from = totalItems === 0 ? 0 : (page - 1) * apiPageSize + 1;
+  const to = Math.min(page * apiPageSize, totalItems);
 
-  const stepNameOptions = useMemo<FilterOption[]>(() => {
-    const base = jobPostFilters.length > 0
-      ? applications.filter((a) => jobPostFilters.includes(a.jobPostId))
-      : applications;
-    const names = new Set<string>();
-    base.forEach((a) => a.steps.forEach((s) => names.add(s.stepName)));
-    return [...names].sort().map((name) => ({ id: name, label: name }));
-  }, [applications, jobPostFilters]);
+  // Reset page when filters or debounced search change
+  useEffect(() => { setPage(1); }, [statusFilter, jobPostFilter, debouncedSearch]);
 
-  // Reset step filter when job post filter changes (step options change)
-  useEffect(() => { setStepNameFilters([]); }, [jobPostFilters]);
-  // Reset row selection when any filter changes
-  useEffect(() => { setSelectedIds(new Set()); }, [jobPostFilters, stepNameFilters, statusFilters, search]);
-
-  const filtered = useMemo(() => {
-    let result = applications;
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter((a) =>
-        a.candidateName.toLowerCase().includes(q) || a.candidateEmail.toLowerCase().includes(q)
-      );
-    }
-    if (statusFilters.length > 0) {
-      result = result.filter((a) => statusFilters.includes(deriveStatus(a)));
-    }
-    if (jobPostFilters.length > 0) {
-      result = result.filter((a) => jobPostFilters.includes(a.jobPostId));
-    }
-    if (stepNameFilters.length > 0) {
-      result = result.filter((a) =>
-        stepNameFilters.some((name) => {
-          const step = a.steps.find((s) => s.stepName === name);
-          return step?.status === 'Pending' && canActOnStep(step, a.steps);
-        })
-      );
-    }
-    return result;
-  }, [applications, search, statusFilters, jobPostFilters, stepNameFilters]);
-
-  const { paginated, currentPage, totalPages, totalItems, pageSize, from, to, goToPage, setPageSize } =
-    usePagination(filtered);
+  // Reset selection when page or filters change
+  useEffect(() => { setSelectedIds(new Set()); }, [page, statusFilter, jobPostFilter, debouncedSearch]);
 
   const selectedCount = selectedIds.size;
 
@@ -118,13 +85,12 @@ export function ApplicationsPage() {
     return selectedApps.length === selectedCount && selectedApps.every(isAtLastRequiredStep);
   }, [applications, selectedIds, selectedCount]);
 
-  const hasActiveFilters = statusFilters.length > 0 || jobPostFilters.length > 0 || stepNameFilters.length > 0 || search.length > 0;
+  const hasActiveFilters = statusFilter !== '' || jobPostFilter !== undefined || search.length > 0;
 
   const clearAllFilters = () => {
     setSearch('');
-    setStatusFilters([]);
-    setJobPostFilters([]);
-    setStepNameFilters([]);
+    setStatusFilter('');
+    setJobPostFilter(undefined);
   };
 
   const handleBulkStep = async (action: 'Passed' | 'Failed') => {
@@ -150,6 +116,14 @@ export function ApplicationsPage() {
     setSelectedIds(new Set());
   };
 
+  const exportUrl = () => {
+    const params = new URLSearchParams();
+    if (statusFilter) params.set('status', statusFilter);
+    if (jobPostFilter != null) params.set('jobPostId', String(jobPostFilter));
+    const qs = params.toString();
+    return `/api/applications/export${qs ? `?${qs}` : ''}`;
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
@@ -171,28 +145,30 @@ export function ApplicationsPage() {
           />
         </div>
 
-        <MultiSelectFilter<string>
-          label="Status"
-          options={STATUS_OPTIONS}
-          selected={statusFilters}
-          onChange={setStatusFilters}
-        />
+        {/* Status filter */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+        >
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="InReview">In Review</option>
+          <option value="Accepted">Accepted</option>
+          <option value="Rejected">Rejected</option>
+        </select>
 
-        <MultiSelectFilter<number>
-          label="Job Post"
-          options={jobPostOptions}
-          selected={jobPostFilters}
-          onChange={setJobPostFilters}
-        />
-
-        {stepNameOptions.length > 0 && (
-          <MultiSelectFilter<string>
-            label="Step"
-            options={stepNameOptions}
-            selected={stepNameFilters}
-            onChange={setStepNameFilters}
-          />
-        )}
+        {/* Job post filter */}
+        <select
+          value={jobPostFilter ?? ''}
+          onChange={(e) => setJobPostFilter(e.target.value ? Number(e.target.value) : undefined)}
+          className="h-10 max-w-[200px] rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+        >
+          <option value="">All Jobs</option>
+          {jobPosts.map((jp) => (
+            <option key={jp.id} value={jp.id}>{jp.title}</option>
+          ))}
+        </select>
 
         {hasActiveFilters && (
           <button
@@ -211,7 +187,7 @@ export function ApplicationsPage() {
         )}
 
         <a
-          href="/api/applications/export"
+          href={exportUrl()}
           download
           className="h-10 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
         >
@@ -290,19 +266,19 @@ export function ApplicationsPage() {
       {!isLoading && !isError && (
         <>
           <ApplicationsTable
-            applications={paginated}
+            applications={applications}
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
           />
           <Pagination
-            currentPage={currentPage}
+            currentPage={page}
             totalPages={totalPages}
             totalItems={totalItems}
             from={from}
             to={to}
             pageSize={pageSize}
-            onPageChange={goToPage}
-            onPageSizeChange={setPageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(ps) => { setPageSize(ps); setPage(1); }}
           />
         </>
       )}

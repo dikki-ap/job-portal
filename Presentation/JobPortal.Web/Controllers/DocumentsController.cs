@@ -77,6 +77,7 @@ public class DocumentsController(
     }
 
     [HttpGet("{id:int}/download")]
+    [EnableRateLimiting("download")]
     public async Task<IActionResult> Download(int id, CancellationToken cancellationToken)
     {
         var appDoc = await context.ApplicationDocuments

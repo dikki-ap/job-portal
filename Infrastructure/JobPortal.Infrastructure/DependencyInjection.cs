@@ -14,7 +14,7 @@ public static class DependencyInjection
         services.AddTransient<SmtpEmailService>();
         services.AddTransient<EmailBackgroundJob>();
         services.AddTransient<IEmailService, HangfireEmailService>();
-        services.AddScoped<MinioHealthCheck>();
+        services.AddSingleton<MinioHealthCheck>();
         return services;
     }
 }

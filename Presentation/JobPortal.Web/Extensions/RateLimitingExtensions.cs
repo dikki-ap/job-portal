@@ -16,6 +16,7 @@ namespace JobPortal.Web.Extensions;
 /// │ "public"        │  60 req / 60 s / IP │ Unauthenticated read endpoints              │
 /// │ "upload"        │   5 req / 60 s / user│ File upload endpoints                      │
 /// │ "apply"         │   5 req / 60 s / user│ Job application submission endpoint        │
+/// │ "download"      │  30 req / 60 s / user│ Document download endpoint                 │
 /// └─────────────────┴─────────────────────┴────────────────────────────────────────────┘
 ///
 /// Partition key:
@@ -126,6 +127,23 @@ public static class RateLimitingExtensions
                     {
                         PermitLimit         = rlConfig.GetValue("ApplyPermitLimit", 5),
                         Window              = TimeSpan.FromSeconds(rlConfig.GetValue("ApplyWindowSeconds", 60)),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit          = 0,
+                    }));
+
+            // ── "download" policy ────────────────────────────────────────────────────
+            // Throttles document download requests per authenticated user to prevent
+            // mass data exfiltration. Higher limit than upload/apply since downloads
+            // are a normal workflow action but should still be bounded.
+            options.AddPolicy("download", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: httpContext.User.FindFirstValue("sub")
+                                  ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                                  ?? "unknown",
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit         = rlConfig.GetValue("DownloadPermitLimit", 30),
+                        Window              = TimeSpan.FromSeconds(rlConfig.GetValue("DownloadWindowSeconds", 60)),
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit          = 0,
                     }));
