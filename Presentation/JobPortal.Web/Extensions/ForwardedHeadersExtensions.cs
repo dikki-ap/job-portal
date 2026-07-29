@@ -31,7 +31,9 @@ public static class ForwardedHeadersExtensions
     /// HTTPS redirection, logging) for the rewritten values to take effect.
     /// </para>
     /// </summary>
-    public static IServiceCollection AddReverseProxyForwardedHeaders(this IServiceCollection services)
+    public static IServiceCollection AddReverseProxyForwardedHeaders(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.Configure<ForwardedHeadersOptions>(options =>
         {
@@ -40,13 +42,20 @@ public static class ForwardedHeadersExtensions
             options.ForwardedHeaders =
                 ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 
-            // --- Uncomment for Docker Compose deployments ---
-            // When nginx/Traefik runs in the same Docker network as this container,
-            // the proxy's IP is in the 172.16.0.0/12 private range. Add it here so
-            // the middleware trusts X-Forwarded-For from that address range.
-            // Replace the CIDR below with your actual Docker network subnet.
-            //
-            // options.KnownNetworks.Add(new IPNetwork(IPAddress.Parse("172.16.0.0"), 12));
+            // Load trusted proxy networks from config (e.g. Docker bridge range).
+            // Set ReverseProxy:TrustedNetworks in appsettings or via env var:
+            //   ReverseProxy__TrustedNetworks__0=172.16.0.0/12
+            var networks = configuration.GetSection("ReverseProxy:TrustedNetworks").Get<string[]>() ?? [];
+            foreach (var cidr in networks)
+            {
+                var parts = cidr.Split('/');
+                if (parts.Length == 2
+                    && IPAddress.TryParse(parts[0], out var addr)
+                    && int.TryParse(parts[1], out var prefix))
+                {
+                    options.KnownIPNetworks.Add(new System.Net.IPNetwork(addr, prefix));
+                }
+            }
         });
 
         return services;

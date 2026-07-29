@@ -61,7 +61,6 @@ public class GetAllApplicationsQueryHandler(
             .Select(d => new ApplicationDocumentDto(
                 d.Id, d.DocumentType,
                 d.Document?.OriginalFileName ?? string.Empty,
-                d.Document?.FilePath ?? string.Empty,
                 d.Document?.FileType ?? string.Empty,
                 d.CreatedAt,
                 d.IsCompanyDocument)),

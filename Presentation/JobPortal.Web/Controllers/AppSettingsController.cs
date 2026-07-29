@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+using Ganss.Xss;
 using JobPortal.Application.Common;
 using JobPortal.Application.Features.AppSettings.Commands.UpdateBrandingSetting;
 using JobPortal.Application.Features.AppSettings.Commands.UpdateLegalPage;
@@ -41,6 +43,9 @@ public class AppSettingsController(
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> UploadBrandingLogo(IFormFile file, CancellationToken ct)
     {
+        if (file is null || file.Length == 0)
+            return BadRequest("No file provided.");
+
         if (!AllowedLogoMimes.Contains(file.ContentType))
             return BadRequest("Only SVG and PNG files are allowed.");
 
@@ -54,8 +59,25 @@ public class AppSettingsController(
         }
 
         var ext = file.ContentType == "image/svg+xml" ? ".svg" : ".png";
-        using var stream = file.OpenReadStream();
-        var storageKey = await storageService.UploadAsync(stream, ext, file.ContentType, "branding", ct);
+        Stream uploadStream;
+        if (file.ContentType == "image/svg+xml")
+        {
+            using var rawStream = file.OpenReadStream();
+            using var reader = new StreamReader(rawStream);
+            var svgText = await reader.ReadToEndAsync(ct);
+            var sanitized = SanitizeSvg(svgText);
+            uploadStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(sanitized));
+        }
+        else
+        {
+            uploadStream = file.OpenReadStream();
+        }
+
+        string storageKey;
+        await using (uploadStream)
+        {
+            storageKey = await storageService.UploadAsync(uploadStream, ext, file.ContentType, "branding", ct);
+        }
 
         var userId = currentUserService.GetCurrentUserId();
         await appSettingRepository.SetValueAsync("BrandLogoStorageKey", storageKey, userId, ct);
@@ -91,10 +113,15 @@ public class AppSettingsController(
     public async Task<IActionResult> UpdateBranding(
         [FromBody] UpdateBrandingSettingRequest req, CancellationToken ct)
     {
+        var sanitizer = new HtmlSanitizer();
+        var safeDescription = string.IsNullOrEmpty(req.Description)
+            ? req.Description
+            : sanitizer.Sanitize(req.Description);
+
         await mediator.Send(new UpdateBrandingSettingCommand(
             req.CompanyName, req.LogoUrl, req.PrimaryColor, req.PrimaryHoverColor,
             req.GradientMidColor, req.GradientEndColor, req.ContactEmail,
-            req.ContactPhone, req.Address, req.Description, req.Timezone), ct);
+            req.ContactPhone, req.Address, safeDescription, req.Timezone), ct);
         return NoContent();
     }
 
@@ -138,7 +165,11 @@ public class AppSettingsController(
     {
         if (type != "privacy" && type != "terms")
             return BadRequest("Invalid page type. Use 'privacy' or 'terms'.");
-        await mediator.Send(new UpdateLegalPageCommand(type, req.Content), ct);
+        var sanitizer = new HtmlSanitizer();
+        var safeContent = string.IsNullOrEmpty(req.Content)
+            ? req.Content
+            : sanitizer.Sanitize(req.Content);
+        await mediator.Send(new UpdateLegalPageCommand(type, safeContent), ct);
         return NoContent();
     }
 
@@ -161,4 +192,15 @@ public class AppSettingsController(
 
     public record UpdateSmtpSettingRequest(
         string Host, int Port, string SenderName, string SenderEmail, string Username, bool EnableSsl);
+
+    private static string SanitizeSvg(string svgContent)
+    {
+        // Strip <script> blocks
+        var result = Regex.Replace(svgContent, @"<script[\s\S]*?</script>", string.Empty, RegexOptions.IgnoreCase);
+        // Strip on* event handler attributes (onclick, onload, etc.)
+        result = Regex.Replace(result, @"\s+on\w+\s*=\s*(?:""[^""]*""|'[^']*'|[^\s>]+)", string.Empty, RegexOptions.IgnoreCase);
+        // Strip javascript: URI scheme in href / xlink:href
+        result = Regex.Replace(result, @"((?:xlink:)?href)\s*=\s*[""']\s*javascript:[^""']*[""']", "$1=\"#\"", RegexOptions.IgnoreCase);
+        return result;
+    }
 }

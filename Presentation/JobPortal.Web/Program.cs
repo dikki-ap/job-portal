@@ -16,7 +16,7 @@ builder.Host.AddStructuredLogging();
 builder.Services
     .AddResponseCompressionWithDefaults()   // Brotli + Gzip
     .AddMemoryCacheWithDefaults()           // bounded IMemoryCache
-    .AddReverseProxyForwardedHeaders()      // X-Forwarded-For / X-Forwarded-Proto
+    .AddReverseProxyForwardedHeaders(builder.Configuration)  // X-Forwarded-For / X-Forwarded-Proto
     .AddRateLimitingPolicies(builder.Configuration)
     .AddKeycloakAuthentication(builder.Configuration)
     .AddApplicationServices(builder.Configuration)
@@ -102,11 +102,24 @@ app.Use(async (context, next) =>
     // Disallow Adobe Flash and PDF cross-domain policy files.
     context.Response.Headers["X-Permitted-Cross-Domain-Policies"] = "none";
 
+    // Restrict resource loading to same origin. unsafe-inline is required for the
+    // React SPA (Vite inlines script/style chunks). frame-ancestors replaces X-Frame-Options.
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data: blob:; " +
+        "font-src 'self'; " +
+        "connect-src 'self'; " +
+        "frame-ancestors 'none';";
+
     await next();
 });
 
 app.UseResponseCompression();   // must be early — compresses everything after it
 app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
 app.UseCors();
 app.UseStaticFiles();           // serves the React SPA build output
 app.UseRateLimiter();

@@ -64,11 +64,14 @@ public static class AuthenticationExtensions
                 if (!string.IsNullOrEmpty(metadataAddress))
                     options.MetadataAddress = metadataAddress;
 
+                var clientId = configuration["Keycloak:ClientId"];
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    // Audience validation is disabled because Keycloak tokens are
-                    // multi-audience by default and this API does not enforce a specific audience.
-                    ValidateAudience = false,
+                    // When Keycloak:ClientId is configured, validate that the token's audience
+                    // contains the client ID or "account" (Keycloak default realm audience).
+                    // When not configured, audience validation is skipped for backward compatibility.
+                    ValidateAudience = !string.IsNullOrEmpty(clientId),
+                    ValidAudiences = string.IsNullOrEmpty(clientId) ? null : [clientId, "account"],
 
                     ValidateIssuer = true,
 

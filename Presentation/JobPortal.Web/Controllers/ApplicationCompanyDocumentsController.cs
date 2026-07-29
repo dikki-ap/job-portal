@@ -111,7 +111,6 @@ public class ApplicationCompanyDocumentsController(
             appDoc.Id,
             appDoc.DocumentType,
             doc.OriginalFileName,
-            doc.FilePath,
             doc.FileType,
             appDoc.CreatedAt,
             true));

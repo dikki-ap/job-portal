@@ -56,7 +56,7 @@ JobPortal/
 │   └── JobPortal.Persistence/     # EF Core DbContext, repositories, migrations, audit interceptor
 └── Presentation/
     └── JobPortal.Web/
-        ├── Controllers/           # REST API (23 controllers)
+        ├── Controllers/           # REST API (27 controllers)
         ├── Middleware/            # UserSync, SwaggerBasicAuth
         ├── Services/              # CurrentUserService, KeycloakClaimsTransformation
         └── ClientApp/             # React SPA (Vite + TypeScript)
@@ -89,25 +89,33 @@ JWT Bearer (Keycloak) → Policy: HrOrAdmin | AdminOnly | Authorize | AllowAnony
 - **Company profile homepage** — Hero, services, projects, about, stats, careers preview, contact
 - **Careers page** — Employer branding (Why Join Us, stats bar, Life at Company) + searchable, filterable job listings
 - **Job detail page** — Full job description, requirements, hiring steps preview
-- **Apply flow** — Document upload per required document type, privacy consent gate
-- **My Applications** — Candidate tracks their own applications (status, step history)
-- **Candidate Profile** — Personal info, highest education (level, major, institution name with autocomplete, start/end year), CV upload/download
+- **Apply flow** — Document upload per required document type, source tracking ("How did you hear about us?"), privacy consent gate
+- **My Applications** — Candidate tracks their own applications (status, step history, interview schedules)
+- **Candidate Profile** — Personal info, date of birth, highest education (level, major, institution name with autocomplete, start/end year), CV upload/download
 - **Privacy consent** — UU PDP No. 27/2022 gate; configurable on/off per deployment
 
 ### HR / Admin
 - **Job Management** — Draft → Submit for Approval → Published → Closed lifecycle
 - **Multi-level Approval Workflow** — Configurable approver chain; email notification per step
 - **Application Management** — Table view with filters; step pass/fail; bulk accept/reject
-- **Application Detail** — Candidate info including education (level, major, institution, years) visible to HR
+- **Application Detail** — Candidate info including education (level, major, institution, years), date of birth, application source visible to HR
 - **Step-based Hiring Pipeline** — Each job has ordered steps; sequential pass required; email sent on each outcome
+- **Interview Scheduling** — HR can set/clear interview date, location, and notes on each hiring step
 - **Application Rating** — HR can rate (1–10) and add notes per application
+- **Company Documents** — HR can attach internal documents (offer letters, assessment sheets) to an application (PDF/DOC/DOCX/JPEG/PNG, max 5 MB)
+- **Application Source Analytics** — Chart showing where applicants came from (LinkedIn, Referral, etc.)
 - **Talent Pool** — Save rejected candidates; re-engage them for new positions (creates new application, removes from pool, sends email)
-- **Analytics Dashboard** — Hiring funnel, application stats, charts by status
+- **Analytics Dashboard** — Hiring funnel, application stats, charts by status and source
 - **Hiring Templates** — Reusable pipeline templates with per-step email templates (rich text, placeholder support)
+
+### Department Manager
+- **Scoped Application View** — See and manage applications only from assigned departments
+- **Step Actions** — Pass/fail steps, accept/reject, schedule interviews, bulk operations
+- **DM Rating** — Separate rating (independent from HR rating) per application
 
 ### Administration (Admin role only)
 - **Master Data** — Department, Skill, Work Mode, Employment Type, Job Category, Job Level, Currency Type, Document Type, Education Level, Education Major, Approval Levels
-- **Department Managers** — Assign one or more email addresses as department managers; each manager can oversee multiple departments (many-to-many). Managers can log in as candidates and access a scoped view of applications only from their assigned departments
+- **Department Managers** — Assign one or more email addresses as department managers; each manager can oversee multiple departments (many-to-many)
 - **Branding Settings** — Company name, logo, primary color, gradient colors, contact info, description (all via DB; no redeploy needed)
 - **SMTP Settings** — Configure email host/port/sender via UI (ENV overrides UI for secrets)
 - **Privacy Consent Settings** — Toggle privacy consent requirement on/off
@@ -177,7 +185,7 @@ Documents                        AuditLogs
 | | `DepartmentManagers` | `Id`, `FullName`, `Position`, `Email` (unique) |
 | | `DepartmentManagerDepartments` | `DepartmentManagerId`, `DepartmentId` (composite PK) |
 | **Users** | `Users` | `Id`, `ExternalId` (Keycloak), `Email`, `FirstName`, `LastName`, `IsDeleted` |
-| | `UserProfiles` | `Id`, `UserId`, `PhoneNumber`, `EducationLevelId`, `EducationMajorId`, `EducationMajorCustom`, `InstitutionName`, `EducationStartYear`, `EducationEndYear`, `CvDocumentId`, `HasConsentedToPrivacyPolicy` |
+| | `UserProfiles` | `Id`, `UserId`, `PhoneNumber`, `DateOfBirth`, `EducationLevelId`, `EducationMajorId`, `EducationMajorCustom`, `InstitutionName`, `EducationStartYear`, `EducationEndYear`, `CvDocumentId`, `HasConsentedToPrivacyPolicy` |
 | | `UserAddresses` | `Id`, `UserId`, `Street`, `City`, `Province`, `Country`, `PostalCode` |
 | | `UserEducationHistories` | `Id`, `UserId`, `EducationLevelId`, `EducationMajorId`, `InstitutionName`, `StartDate`, `EndDate`, `Grade` |
 | | `UserWorkHistories` | `Id`, `UserId`, `Company`, `Title`, `StartDate`, `EndDate`, `IsCurrent` |
@@ -195,9 +203,9 @@ Documents                        AuditLogs
 | | `ApprovalLevels` | `Id`, `LevelOrder`, `ApproverName`, `ApproverEmail`, `IsActive` |
 | | `JobApprovalInstances` | `Id`, `JobPostId`, `Status`, `CurrentStepOrder`, `StartedAt`, `CompletedAt` |
 | | `JobApprovalInstanceSteps` | `Id`, `JobApprovalInstanceId`, `StepOrder`, `ApproverName`, `ApproverEmail`, `Status`, `Comment`, `ActionAt` |
-| **Applications** | `Applications` | `Id`, `Code`, `JobPostId`, `UserId`, `Status`, `AppliedAt`, `Rating`, `RatingNote`, `RatedAt`, `IsDeleted` |
-| | `ApplicationSteps` | `Id`, `ApplicationId`, `JobStepId`, `StepName`, `StepOrder`, `Status`, `CompletedAt` |
-| | `ApplicationDocuments` | `Id`, `ApplicationId`, `DocumentId`, `DocumentType` |
+| **Applications** | `Applications` | `Id`, `Code`, `JobPostId`, `UserId`, `Status`, `Source`, `AppliedAt`, `Rating`, `RatingNote`, `RatedAt`, `DmRating`, `DmRatingNote`, `DmRatedAt`, `DmRatedByUserId`, `IsDeleted` |
+| | `ApplicationSteps` | `Id`, `ApplicationId`, `JobStepId`, `StepName`, `StepOrder`, `Status`, `ScheduledAt`, `ScheduledLocation`, `ScheduledNote`, `CompletedAt`, `CompletedByUserId`, `CompletedByName` |
+| | `ApplicationDocuments` | `Id`, `ApplicationId`, `DocumentId`, `DocumentType`, `IsCompanyDocument` |
 | **TalentPool** | `TalentPoolEntries` | `Id`, `UserId` (unique), `OriginalApplicationId`, `Notes`, `AddedByUserId`, `AddedAt` |
 | **Audit** | `AuditLogs` | `Id`, `EntityName`, `EntityId`, `Action`, `OldValues`, `NewValues`, `ChangedByUserId`, `ChangedAt` |
 
@@ -207,7 +215,7 @@ Documents                        AuditLogs
 
 ## API Endpoints
 
-All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** = any authenticated user, **HR** = HR or Admin role, **A** = Admin role only.
+All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** = any authenticated user, **HR** = HR or Admin role, **A** = Admin role only, **DM** = Department Manager only.
 
 ### Masters (Admin-managed lookup data)
 
@@ -263,13 +271,14 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | GET | `/applications/code/{code}` | HR | Get by application code |
 | POST | `/applications/{id}/steps/{stepId}/pass` | HR | Pass a step |
 | POST | `/applications/{id}/steps/{stepId}/fail` | HR | Fail a step |
+| POST | `/applications/{id}/steps/{stepId}/schedule` | HR | Set/clear interview schedule (date, location, note) |
 | POST | `/applications/{id}/accept` | HR | Directly accept |
 | POST | `/applications/{id}/reject` | HR | Directly reject |
-| POST | `/applications/{id}/rate` | HR | Set rating (1–10) and note |
-| POST | `/applications/{id}/steps/{stepId}/schedule` | HR | Set/clear interview schedule (date, location, note) on a step |
+| POST | `/applications/{id}/rate` | HR | Set HR rating (1–10) and note |
 | POST | `/applications/bulk-step` | HR | Bulk pass/fail current step |
 | POST | `/applications/bulk-accept` | HR | Bulk accept |
 | POST | `/applications/bulk-reject` | HR | Bulk reject |
+| POST | `/applications/{code}/company-documents` | HR | Upload company document to application (PDF/DOC/DOCX/JPEG/PNG, max 5 MB) |
 
 ### Approvals
 
@@ -309,7 +318,7 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/candidate-profile` | ✓ | Get own profile |
-| PUT | `/candidate-profile` | ✓ | Upsert profile (personal info + highest education + CV) |
+| PUT | `/candidate-profile` | ✓ | Upsert profile (personal info + date of birth + highest education + CV) |
 | GET | `/candidate-profile/institutions` | ✓ | Institution name autocomplete (`?q=keyword`) |
 | POST | `/candidate-profile/cv` | ✓ | Upload CV (PDF/DOC/DOCX, max 3 MB) |
 | DELETE | `/candidate-profile/cv` | ✓ | Remove CV |
@@ -374,8 +383,23 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/department-applications` | HR | Applications from all departments assigned to the current manager |
-| GET | `/department-applications/{id}` | HR | Application detail (returns 403 if application is outside manager's departments) |
+| GET | `/department-applications` | DM | Applications from all departments assigned to the current manager |
+| GET | `/department-applications/{id}` | DM | Application detail (403 if outside manager's departments) |
+| POST | `/department-applications/{id}/steps/{stepId}/pass` | DM | Pass a step |
+| POST | `/department-applications/{id}/steps/{stepId}/fail` | DM | Fail a step |
+| POST | `/department-applications/{id}/steps/{stepId}/schedule` | DM | Set/clear interview schedule |
+| POST | `/department-applications/{id}/accept` | DM | Accept application |
+| POST | `/department-applications/{id}/reject` | DM | Reject application |
+| POST | `/department-applications/{id}/rate` | DM | Set DM rating (1–10) and note |
+| POST | `/department-applications/bulk-step` | DM | Bulk pass/fail current step |
+| POST | `/department-applications/bulk-accept` | DM | Bulk accept |
+| POST | `/department-applications/bulk-reject` | DM | Bulk reject |
+
+### Config
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/config/application-sources` | – | List configured application source options (for apply form dropdown) |
 
 ---
 
@@ -456,7 +480,7 @@ In Keycloak Admin (`http://localhost:9090`):
 4. Enable **OTP Policy** (TOTP, SHA1, 6 digits, 30s)
 5. Set **Configure OTP** as Default Required Action
 6. Create roles: `Admin`, `HR`
-7. Create MinIO bucket: `job-portal-documents` (public-read or presigned-URL policy)
+7. Create MinIO bucket: `job-portal-documents` with a **presigned-URL-only policy** (do not set public-read)
 
 ### 4. Configure appsettings
 
@@ -555,111 +579,11 @@ dotnet ef database update <PreviousMigrationName> \
 
 ## Dockerfile & Docker Compose
 
+See [`Dockerfile`](./Dockerfile) and [`docker-compose.yml`](./docker-compose.yml) at the root of the repository.
+
 The production setup uses a **single container**: `dotnet publish` triggers `npm install && npm run build` internally, and the resulting `wwwroot/` is served directly by ASP.NET Core — no Nginx or separate frontend container needed.
 
-### `Dockerfile`
-
-Multi-stage build — the `build` stage compiles everything (C# + React); only the compiled output is copied to the lean `runtime` stage. The server only needs Docker — no .NET SDK or Node.js required.
-
-```dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
-
-# Install Node.js 22 LTS
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Restore NuGet — invalidated only when a .csproj changes
-COPY JobPortal.slnx .
-COPY Core/JobPortal.Domain/JobPortal.Domain.csproj              Core/JobPortal.Domain/
-COPY Core/JobPortal.Application/JobPortal.Application.csproj    Core/JobPortal.Application/
-COPY Infrastructure/JobPortal.Infrastructure/JobPortal.Infrastructure.csproj   Infrastructure/JobPortal.Infrastructure/
-COPY Infrastructure/JobPortal.Persistence/JobPortal.Persistence.csproj         Infrastructure/JobPortal.Persistence/
-COPY Presentation/JobPortal.Web/JobPortal.Web.csproj             Presentation/JobPortal.Web/
-RUN dotnet restore Presentation/JobPortal.Web/JobPortal.Web.csproj
-
-# Install npm packages — invalidated only when package-lock.json changes
-COPY Presentation/JobPortal.Web/ClientApp/package.json      Presentation/JobPortal.Web/ClientApp/
-COPY Presentation/JobPortal.Web/ClientApp/package-lock.json Presentation/JobPortal.Web/ClientApp/
-RUN cd Presentation/JobPortal.Web/ClientApp && npm ci
-
-# Copy source and publish; MSBuild PublishRunWebpack runs npm install + build
-COPY . .
-RUN dotnet publish Presentation/JobPortal.Web/JobPortal.Web.csproj \
-    -c Release -o /app/publish --no-restore
-
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
-WORKDIR /app
-
-RUN groupadd --system --gid 1001 appgroup && \
-    useradd --system --uid 1001 --gid 1001 --no-create-home appuser
-
-COPY --from=build /app/publish .
-
-USER appuser
-
-ENV ASPNETCORE_URLS=http://+:8080
-EXPOSE 8080
-
-ENTRYPOINT ["dotnet", "JobPortal.Web.dll"]
-```
-
-### `docker-compose.yml`
-
-```yaml
-services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "80:8080"
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: "Server=db;Port=3306;Database=JobPortal;User Id=jobportal;Password=${DB_PASSWORD};CharSet=utf8mb4;"
-      Keycloak__Authority: ${KEYCLOAK_AUTHORITY}
-      Storage__Endpoint: ${STORAGE_ENDPOINT}
-      Storage__AccessKey: ${STORAGE_ACCESS_KEY}
-      Storage__SecretKey: ${STORAGE_SECRET_KEY}
-      Storage__BucketName: job-portal-documents
-      Storage__UseSSL: "true"
-      App__BaseUrl: ${APP_BASE_URL}
-      Smtp__Host: ${SMTP_HOST}
-      Smtp__Port: ${SMTP_PORT}
-      Smtp__FromAddress: ${SMTP_FROM_ADDRESS}
-      Smtp__FromName: ${SMTP_FROM_NAME}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      SWAGGER_USERNAME: ${SWAGGER_USERNAME}
-      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD}
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: mariadb:11
-    restart: unless-stopped
-    environment:
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MARIADB_DATABASE: JobPortal
-      MARIADB_USER: jobportal
-      MARIADB_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - db_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  db_data:
-```
+The `Dockerfile` is a multi-stage build — the `build` stage compiles everything (C# + React); only the compiled output is copied to the lean `runtime` stage. The server only needs Docker — no .NET SDK or Node.js required.
 
 > **Note:** Run `dotnet ef database update` (or apply migrations via startup) after first deploy. Keycloak and MinIO/S3 must be provisioned separately.
 
@@ -681,19 +605,19 @@ volumes:
 | `Storage__ForcePathStyle` | `false` | `true` for MinIO, `false` for AWS S3 |
 | `App__BaseUrl` | `https://app.example.com` | Public URL (used in email links) |
 
-### SMTP — can configure via UI too, ENV always wins
+### SMTP — can configure non-secret fields via UI; secrets must be set via ENV
 
 | Variable | Description |
 |----------|-------------|
-| `SMTP_HOST` | Override SMTP host (takes priority over DB setting) |
-| `SMTP_PORT` | Override SMTP port |
-| `SMTP_SENDER_NAME` | Override sender display name |
-| `SMTP_SENDER_EMAIL` | Override sender email address |
-| `SMTP_USERNAME` | SMTP auth username (**secret — only settable via ENV, never stored in DB**) |
-| `SMTP_PASSWORD` | SMTP auth password (**secret — only settable via ENV, never stored in DB**) |
-| `SMTP_ENABLE_SSL` | `true`/`false` override |
+| `Smtp__Host` | Override SMTP host (takes priority over DB setting) |
+| `Smtp__Port` | Override SMTP port |
+| `Smtp__FromName` | Override sender display name |
+| `Smtp__FromAddress` | Override sender email address |
+| `Smtp__Username` | SMTP auth username (**secret — only settable via ENV, never stored in DB**) |
+| `Smtp__Password` | SMTP auth password (**secret — only settable via ENV, never stored in DB**) |
+| `Smtp__EnableSsl` | `true`/`false` override |
 
-> SMTP host/port/sender can also be configured via the UI at `/master/smtp-settings`. ENV always overrides the UI value. Password is **never** stored in the database.
+> Use **double-underscore** (`Smtp__Username`, `Smtp__Password`) for ASP.NET Core config binding. SMTP host/port/sender can also be configured via the UI at `/master/smtp-settings` — ENV always overrides the UI value. Password is **never** stored in the database.
 
 ### Swagger — optional, but required to enable Swagger UI
 
@@ -746,4 +670,9 @@ Migrations live in `Infrastructure/JobPortal.Persistence/Migrations/`.
 | 23 | `AddDepartmentManagers` | `DepartmentManagers` table with unique email index |
 | 24 | `FixDepartmentManagerSnapshot` | EF Core model snapshot reconciliation (no schema change) |
 | 25 | `AddDepartmentManagerDepartments` | `DepartmentManagerDepartments` junction table; drop old `DepartmentId` column from `DepartmentManagers` |
-| 26 | `AddJobPostStatusIndex` | Index on `JobPosts.Status` column for published job listing queries |
+| 26 | `AddDateOfBirthToUserProfile` | `DateOfBirth` column on `UserProfiles` |
+| 27 | `AddJobPostStatusIndex` | Index on `JobPosts.Status` column for published job listing queries |
+| 28 | `AddDmRatingToApplications` | `DmRating`, `DmRatingNote`, `DmRatedAt`, `DmRatedByUserId` on `Applications` — Department Manager rating |
+| 29 | `AddIsCompanyDocumentToApplicationDocuments` | `IsCompanyDocument` flag on `ApplicationDocuments` |
+| 30 | `AddSourceAndAuditTrail` | `Source` on `Applications`; `CompletedByUserId`, `CompletedByName` on `ApplicationSteps` |
+| 31 | `AddSchedulingToApplicationStep` | `ScheduledAt`, `ScheduledLocation`, `ScheduledNote` on `ApplicationSteps` — interview scheduling |

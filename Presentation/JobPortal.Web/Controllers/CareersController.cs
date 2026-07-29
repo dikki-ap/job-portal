@@ -44,7 +44,7 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetJobPostByIdQuery(id), cancellationToken);
-        if (result is null) return NotFound();
+        if (result is null || result.Status != "Published") return NotFound();
         return Ok(result);
     }
 
@@ -52,7 +52,7 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
     public async Task<IActionResult> GetBySlug(string slug, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetJobPostBySlugQuery(slug), cancellationToken);
-        if (result is null) return NotFound();
+        if (result is null || result.Status != "Published") return NotFound();
         return Ok(result);
     }
 

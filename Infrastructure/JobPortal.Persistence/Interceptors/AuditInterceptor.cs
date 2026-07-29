@@ -94,10 +94,18 @@ public class AuditInterceptor(ICurrentUserService currentUserService) : SaveChan
         return await base.SavedChangesAsync(eventData, result, cancellationToken);
     }
 
+    private static readonly HashSet<string> RedactedFields = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "PhoneNumber", "DateOfBirth", "HasConsentedToPrivacyPolicy", "ConsentedAt",
+        "CvDocumentId", "Password",
+    };
+
     private static string SerializeValues(PropertyValues values)
     {
         var dict = values.Properties
-            .ToDictionary(p => p.Name, p => values[p]);
+            .ToDictionary(
+                p => p.Name,
+                p => RedactedFields.Contains(p.Name) ? (object?)"[REDACTED]" : values[p]);
         return JsonSerializer.Serialize(dict);
     }
 }

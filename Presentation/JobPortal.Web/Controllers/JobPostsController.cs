@@ -54,7 +54,6 @@ public class JobPostsController(IMediator mediator, ILogger<JobPostsController> 
     }
 
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateJobPostCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Create: request received title={Title}", command.Title);
@@ -72,7 +71,6 @@ public class JobPostsController(IMediator mediator, ILogger<JobPostsController> 
     }
 
     [HttpPut("{id:int}")]
-    [Authorize]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateJobPostCommand command, CancellationToken cancellationToken)
     {
         logger.LogDebug("Update: request received id={Id}", id);
@@ -91,7 +89,6 @@ public class JobPostsController(IMediator mediator, ILogger<JobPostsController> 
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("Delete: request received id={Id}", id);
@@ -109,7 +106,6 @@ public class JobPostsController(IMediator mediator, ILogger<JobPostsController> 
     }
 
     [HttpPost("{id:int}/publish")]
-    [Authorize]
     public async Task<IActionResult> Publish(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("Publish: request received id={Id}", id);
@@ -157,7 +153,6 @@ public class JobPostsController(IMediator mediator, ILogger<JobPostsController> 
     }
 
     [HttpPost("{id:int}/close")]
-    [Authorize]
     public async Task<IActionResult> Close(int id, CancellationToken cancellationToken)
     {
         logger.LogDebug("Close: request received id={Id}", id);

@@ -32,6 +32,7 @@ public class ApprovalsController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("{jobPostId:int}/job-post")]
+    [Authorize(Policy = "HrOrAdmin")]
     public async Task<IActionResult> GetJobPostForReview(int jobPostId, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetJobPostByIdQuery(jobPostId), cancellationToken);
@@ -40,6 +41,7 @@ public class ApprovalsController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("{jobPostId:int}/approval-status")]
+    [Authorize(Policy = "HrOrAdmin")]
     public async Task<IActionResult> GetApprovalStatus(int jobPostId, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetJobApprovalStatusQuery(jobPostId), cancellationToken);
