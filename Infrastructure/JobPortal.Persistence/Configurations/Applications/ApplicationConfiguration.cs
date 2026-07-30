@@ -22,6 +22,7 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<Domain.Entities
         builder.HasIndex(a => a.Status);
         builder.HasIndex(a => a.JobPostId);
         builder.HasIndex(a => a.AppliedAt);
+        builder.HasIndex(a => a.UserId);
 
         builder.HasMany(a => a.Documents)
             .WithOne(d => d.Application)

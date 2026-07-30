@@ -12,6 +12,7 @@ public class JobApprovalInstanceConfiguration : IEntityTypeConfiguration<JobAppr
 
         builder.HasIndex(a => a.Status);
         builder.HasIndex(a => a.JobPostId);
+        builder.HasIndex(a => new { a.JobPostId, a.Status });
 
         builder.HasMany(a => a.Steps)
             .WithOne(s => s.ApprovalInstance)

@@ -15,6 +15,8 @@ public class JobPostConfiguration : IEntityTypeConfiguration<JobPost>
         // Filtered index on Status — the most common query predicate (WHERE Status = 'Published').
         // Avoids full table scans on every public job listing and country filter query.
         builder.HasIndex(j => j.Status);
+        builder.HasIndex(j => j.DepartmentId);
+        builder.HasIndex(j => new { j.Status, j.PublishDate });
 
         builder.Property(j => j.Slug).HasMaxLength(255).IsRequired();
         builder.Property(j => j.Title).HasMaxLength(255).IsRequired();

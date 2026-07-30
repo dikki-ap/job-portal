@@ -16,6 +16,7 @@ public class ApplicationStepConfiguration : IEntityTypeConfiguration<Application
 
         builder.HasIndex(s => s.ApplicationId);
         builder.HasIndex(s => s.Status);
+        builder.HasIndex(s => new { s.ApplicationId, s.Status });
 
         builder.HasOne(s => s.JobStep)
             .WithMany(js => js.ApplicationSteps)

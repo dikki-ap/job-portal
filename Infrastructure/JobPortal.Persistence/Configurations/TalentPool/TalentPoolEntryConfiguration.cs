@@ -11,6 +11,7 @@ public class TalentPoolEntryConfiguration : IEntityTypeConfiguration<TalentPoolE
     public void Configure(EntityTypeBuilder<TalentPoolEntry> builder)
     {
         builder.HasIndex(e => e.UserId).IsUnique();
+        builder.HasIndex(e => e.AddedAt);
 
         builder.Property(e => e.Notes).HasMaxLength(1000);
 

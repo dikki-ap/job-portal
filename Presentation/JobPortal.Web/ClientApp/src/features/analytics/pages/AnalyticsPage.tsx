@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Briefcase, FileText, Clock, Timer, Download } from 'lucide-react';
+import keycloak from '../../../lib/keycloak';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -45,21 +46,6 @@ function daysBetween(a: string, b: string) {
   return (new Date(b).getTime() - new Date(a).getTime()) / 86_400_000;
 }
 
-function exportCsv(data: ApplicationAnalyticsDto[], range: string) {
-  const rows: (string | number | null)[][] = [
-    ['Code', 'Candidate', 'Job Title', 'Department', 'Status', 'Applied At', 'Source', 'HR Rating', 'DM Rating'],
-    ...data.map((a) => [
-      a.code, a.candidateName ?? '', a.jobPostTitle, a.jobPostDepartmentName ?? '',
-      a.status, a.appliedAt.slice(0, 10), a.source ?? '', a.rating ?? '', a.dmRating ?? '',
-    ]),
-  ];
-  const csv = rows.map((r) => r.map(String).map((v) => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `analytics-${range}.csv`; a.click();
-  URL.revokeObjectURL(url);
-}
 
 function StatCard({ label, value, sub, icon: Icon, color, loading }: {
   label: string; value: string | number; sub?: string; icon: React.ElementType; color: string; loading: boolean;
@@ -132,6 +118,29 @@ export function AnalyticsPage() {
     () => filterByDateRange(applications, dateRange),
     [applications, dateRange],
   );
+
+  const handleExportXlsx = async () => {
+    await keycloak.updateToken(30);
+    let since: string | null = null;
+    if (dateRange !== 'all') {
+      const d = new Date();
+      if (dateRange === '30d') d.setDate(d.getDate() - 30);
+      else if (dateRange === '3m') d.setMonth(d.getMonth() - 3);
+      else if (dateRange === '6m') d.setMonth(d.getMonth() - 6);
+      else if (dateRange === '1y') d.setFullYear(d.getFullYear() - 1);
+      since = d.toISOString().slice(0, 10);
+    }
+    const qs = since ? `?since=${since}` : '';
+    const res = await fetch(`/api/analytics/export${qs}`, {
+      headers: { Authorization: `Bearer ${keycloak.token}` },
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `analytics-${dateRange}.xlsx`; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const stats = useMemo(() => {
     const openPositions = jobPosts.filter((jp) => jp.status === 'Published').length;
@@ -297,12 +306,12 @@ export function AnalyticsPage() {
           </div>
           <button
             type="button"
-            onClick={() => exportCsv(filtered, dateRange)}
-            disabled={filtered.length === 0}
+            onClick={handleExportXlsx}
+            disabled={applications.length === 0}
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <Download className="h-3.5 w-3.5" />
-            Export CSV
+            Export XLSX
           </button>
         </div>
       </div>
