@@ -1,15 +1,12 @@
 using JobPortal.Application.Common;
 using JobPortal.Application.DTOs;
 using JobPortal.Application.Features.DepartmentManagers.Queries.IsDepartmentManager;
+using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
-using JobPortal.Domain.Entities.Applications;
-using JobPortal.Domain.Entities.Documents;
-using JobPortal.Persistence.Context;
 using JobPortal.Web.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
 
@@ -19,7 +16,8 @@ namespace JobPortal.Web.Controllers;
 [Route("api/applications/{code}/company-documents")]
 [Authorize]
 public class ApplicationCompanyDocumentsController(
-    ApplicationDbContext context,
+    IApplicationRepository applicationRepository,
+    IApplicationDocumentRepository applicationDocumentRepository,
     IStorageService storageService,
     ICurrentUserService currentUserService,
     IMediator mediator,
@@ -62,9 +60,7 @@ public class ApplicationCompanyDocumentsController(
                 return BadRequest(new { error = "File content does not match the declared file type." });
         }
 
-        var app = await context.Applications
-            .Include(a => a.JobPost)
-            .FirstOrDefaultAsync(a => a.Code == code, cancellationToken);
+        var app = await applicationRepository.GetByCodeAsync(code, cancellationToken);
 
         if (app is null)
             return NotFound(new { error = "Application not found." });
@@ -84,51 +80,20 @@ public class ApplicationCompanyDocumentsController(
             storageKey = await storageService.UploadAsync(stream, extension, file.ContentType, externalId, cancellationToken);
         }
 
-        await using var tx = await context.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            var doc = new Document
-            {
-                FilePath = storageKey,
-                OriginalFileName = file.FileName,
-                FileType = file.ContentType,
-                CreatedAt = DateTime.UtcNow,
-                CreatedByUserId = userId.Value,
-            };
-            context.Documents.Add(doc);
-            await context.SaveChangesAsync(cancellationToken);
+        var appDoc = await applicationDocumentRepository.AddCompanyDocumentAsync(
+            app.Id, storageKey, file.FileName, file.ContentType, userId.Value, name.Trim(), cancellationToken);
 
-            var appDoc = new ApplicationDocument
-            {
-                ApplicationId = app.Id,
-                DocumentId = doc.Id,
-                DocumentType = name.Trim(),
-                IsCompanyDocument = true,
-                CreatedAt = DateTime.UtcNow,
-                CreatedByUserId = userId.Value,
-            };
-            context.ApplicationDocuments.Add(appDoc);
-            await context.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "CompanyDocument: uploaded docId={DocId} appDoc={AppDocId} app={Code} by user={UserId}",
+            appDoc.DocumentId, appDoc.Id, code, userId);
 
-            await tx.CommitAsync(cancellationToken);
-
-            logger.LogInformation(
-                "CompanyDocument: uploaded docId={DocId} appDoc={AppDocId} app={Code} by user={UserId}",
-                doc.Id, appDoc.Id, code, userId);
-
-            return Ok(new ApplicationDocumentDto(
-                appDoc.Id,
-                appDoc.DocumentType,
-                doc.OriginalFileName,
-                doc.FileType,
-                appDoc.CreatedAt,
-                true));
-        }
-        catch
-        {
-            await tx.RollbackAsync(CancellationToken.None);
-            throw;
-        }
+        return Ok(new ApplicationDocumentDto(
+            appDoc.Id,
+            appDoc.DocumentType,
+            file.FileName,
+            file.ContentType,
+            appDoc.CreatedAt,
+            true));
     }
 
     private async Task<IActionResult?> CheckAccessAsync(int? departmentId, CancellationToken ct)

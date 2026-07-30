@@ -3,14 +3,11 @@ using JobPortal.Application.Features.CandidateProfile.Queries.GetCandidateProfil
 using JobPortal.Application.Features.CandidateProfile.Queries.GetInstitutionSuggestions;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Application.Interfaces.Services;
-using JobPortal.Domain.Entities.Documents;
-using JobPortal.Persistence.Context;
 using JobPortal.Web.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 
 namespace JobPortal.Web.Controllers;
 
@@ -22,7 +19,6 @@ public class CandidateProfileController(
     IUserProfileRepository profileRepository,
     IStorageService storageService,
     ICurrentUserService currentUserService,
-    ApplicationDbContext dbContext,
     ILogger<CandidateProfileController> logger) : ControllerBase
 {
     [HttpGet]
@@ -92,32 +88,10 @@ public class CandidateProfileController(
         await using (var stream = file.OpenReadStream())
             storageKey = await storageService.UploadAsync(stream, extension, file.ContentType, externalId, cancellationToken);
 
-        await using var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            var doc = new Document
-            {
-                FilePath = storageKey,
-                OriginalFileName = file.FileName,
-                FileType = file.ContentType,
-                CreatedAt = DateTime.UtcNow,
-                CreatedByUserId = userId.Value,
-            };
-            dbContext.Documents.Add(doc);
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            await profileRepository.LinkCvAsync(userId.Value, doc.Id, cancellationToken);
-            await profileRepository.SaveChangesAsync(cancellationToken);
-
-            await tx.CommitAsync(cancellationToken);
-            logger.LogInformation("CV uploaded: user={UserId} document={DocId}", userId, doc.Id);
-            return Ok(new { documentId = doc.Id, originalFileName = file.FileName });
-        }
-        catch
-        {
-            await tx.RollbackAsync(CancellationToken.None);
-            throw;
-        }
+        var docId = await profileRepository.UploadCvDocumentAsync(
+            userId.Value, storageKey, file.FileName, file.ContentType, userId.Value, cancellationToken);
+        logger.LogInformation("CV uploaded: user={UserId} document={DocId}", userId, docId);
+        return Ok(new { documentId = docId, originalFileName = file.FileName });
     }
 
     [HttpDelete("cv")]

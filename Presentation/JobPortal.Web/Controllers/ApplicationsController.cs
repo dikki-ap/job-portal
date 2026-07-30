@@ -9,7 +9,6 @@ using JobPortal.Application.Features.Applications.Commands.RateApplication;
 using JobPortal.Application.Features.Applications.Commands.RejectApplication;
 using JobPortal.Application.Features.Applications.Commands.ScheduleApplicationStep;
 using JobPortal.Application.Features.Applications.Commands.UpdateApplicationStep;
-using JobPortal.Application.Features.Applications.Queries.GetAllApplications;
 using JobPortal.Application.Features.Applications.Queries.GetApplicationByCode;
 using JobPortal.Application.Features.Applications.Queries.GetApplicationById;
 using JobPortal.Application.Features.Applications.Queries.GetPagedApplications;
@@ -25,20 +24,8 @@ namespace JobPortal.Web.Controllers;
 [Authorize(Policy = "HrOrAdmin")]
 public class ApplicationsController(
     IMediator mediator,
-    IApplicationRepository repository,
-    ILogger<ApplicationsController> logger) : ControllerBase
+    IApplicationRepository repository) : ControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> GetAll(
-        [FromQuery] int? jobPostId,
-        [FromQuery] string? status,
-        CancellationToken cancellationToken)
-    {
-        logger.LogDebug("GetAll: jobPostId={JobPostId} status={Status}", jobPostId, status);
-        var result = await mediator.Send(new GetAllApplicationsQuery(jobPostId, status), cancellationToken);
-        return Ok(result);
-    }
-
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {

@@ -16,6 +16,7 @@ namespace JobPortal.Web.Controllers;
 public class CareersController(IMediator mediator, ILogger<CareersController> logger) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
         [FromQuery] int[]? categoryIds,
@@ -35,6 +36,7 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
     }
 
     [HttpGet("countries")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetCountries(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetPublishedCountriesQuery(), cancellationToken);
@@ -42,6 +44,7 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
     }
 
     [HttpGet("{id:int}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetJobPostByIdQuery(id), cancellationToken);
@@ -50,6 +53,7 @@ public class CareersController(IMediator mediator, ILogger<CareersController> lo
     }
 
     [HttpGet("{slug}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetBySlug(string slug, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetJobPostBySlugQuery(slug), cancellationToken);

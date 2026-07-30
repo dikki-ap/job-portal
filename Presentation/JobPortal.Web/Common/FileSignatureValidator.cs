@@ -59,7 +59,7 @@ internal static class FileSignatureValidator
         {
             var scanLen = (int)Math.Min(PdfScanDepth, stream.Length);
             var buf = new byte[scanLen];
-            _ = stream.Read(buf, 0, scanLen);
+            stream.ReadAtLeast(buf.AsSpan(), minimumBytes: scanLen, throwOnEndOfStream: false);
             stream.Position = 0;
             return buf.AsSpan().IndexOf(PdfSignature) >= 0;
         }

@@ -1,4 +1,5 @@
 using JobPortal.Application.Interfaces.Repositories;
+using JobPortal.Domain.Entities.Documents;
 using JobPortal.Domain.Entities.Users;
 using JobPortal.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
@@ -177,4 +178,35 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => await context.SaveChangesAsync(cancellationToken);
+
+    public async Task<int> UploadCvDocumentAsync(
+        int userId, string storageKey, string originalFileName,
+        string contentType, int createdByUserId, CancellationToken ct = default)
+    {
+        await using var tx = await context.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var doc = new Document
+            {
+                FilePath = storageKey,
+                OriginalFileName = originalFileName,
+                FileType = contentType,
+                CreatedAt = DateTime.UtcNow,
+                CreatedByUserId = createdByUserId,
+            };
+            context.Documents.Add(doc);
+            await context.SaveChangesAsync(ct);
+
+            await LinkCvAsync(userId, doc.Id, ct);
+            await context.SaveChangesAsync(ct);
+
+            await tx.CommitAsync(ct);
+            return doc.Id;
+        }
+        catch
+        {
+            await tx.RollbackAsync(CancellationToken.None);
+            throw;
+        }
+    }
 }

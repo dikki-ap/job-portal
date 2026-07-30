@@ -13,4 +13,7 @@ public interface IUserProfileRepository
     Task<List<string>> GetInstitutionSuggestionsAsync(string query, CancellationToken cancellationToken = default);
     Task<UserProfile?> GetProfileWithCvAsync(int userId, CancellationToken ct = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<int> UploadCvDocumentAsync(
+        int userId, string storageKey, string originalFileName,
+        string contentType, int createdByUserId, CancellationToken ct = default);
 }
