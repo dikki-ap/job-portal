@@ -367,10 +367,15 @@ export interface StepAnalyticsDto {
 }
 
 export interface ApplicationAnalyticsDto {
+  code: string;
+  candidateName: string | null;
   appliedAt: string;
   updatedAt: string;
   status: string;
   source: string | null;
   jobPostTitle: string;
+  jobPostDepartmentName: string | null;
+  rating: number | null;
+  dmRating: number | null;
   steps: StepAnalyticsDto[];
 }

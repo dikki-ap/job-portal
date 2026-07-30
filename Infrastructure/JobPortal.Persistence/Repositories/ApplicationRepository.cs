@@ -259,11 +259,16 @@ public class ApplicationRepository(
         => await context.Applications
             .Where(a => !a.IsDeleted)
             .Select(a => new ApplicationAnalyticsDto(
+                a.Code,
+                a.User != null ? a.User.FirstName + " " + a.User.LastName : null,
                 a.AppliedAt.ToString("o"),
                 a.UpdatedAt.ToString("o"),
                 a.Status,
                 a.Source,
                 a.JobPost!.Title,
+                a.JobPost.Department != null ? a.JobPost.Department.Name : null,
+                a.Rating,
+                a.DmRating,
                 a.Steps.Select(s => new StepAnalyticsDto(s.StepName, s.StepOrder, s.Status)).ToList()
             ))
             .ToListAsync(ct);

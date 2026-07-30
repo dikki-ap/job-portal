@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase,
-  Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, FolderOpen, Plus, CalendarClock,
+  Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, FolderOpen, Plus, CalendarClock, RefreshCw, Trash2,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
@@ -25,7 +25,7 @@ import {
   useRateDepartmentApplicationMutation,
   useScheduleStepMutation,
 } from '../api/departmentApplicationsApi';
-import { useUploadCompanyDocumentMutation } from '../../applications/api/applicationsApi';
+import { useUploadCompanyDocumentMutation, useDeleteCompanyDocumentMutation, useReplaceCompanyDocumentMutation } from '../../applications/api/applicationsApi';
 import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
 import type { ApplicationStepDto } from '../../../types/api';
 
@@ -104,7 +104,12 @@ export function DepartmentApplicationDetailPage() {
   const [rejectApplication, { isLoading: rejecting }] = useRejectApplicationMutation();
   const [rateDmApplication, { isLoading: ratingDm }] = useRateDepartmentApplicationMutation();
   const [uploadCompanyDocument, { isLoading: uploadingCompanyDoc }] = useUploadCompanyDocumentMutation();
+  const [deleteCompanyDocument] = useDeleteCompanyDocumentMutation();
+  const [replaceCompanyDocument] = useReplaceCompanyDocumentMutation();
   const [scheduleStep, { isLoading: scheduling }] = useScheduleStepMutation();
+  const replaceFileInputRef = useRef<HTMLInputElement>(null);
+  const [replacingDocId, setReplacingDocId] = useState<number | null>(null);
+  const [deleteDocConfirm, setDeleteDocConfirm] = useState<number | null>(null);
 
   useEffect(() => {
     if (application) {
@@ -163,6 +168,38 @@ export function DepartmentApplicationDetailPage() {
       const data = (err as { data?: { error?: string } })?.data;
       addToast(data?.error ?? 'Failed to upload document.', 'error');
     }
+  };
+
+  const handleDeleteCompanyDoc = async (docId: number) => {
+    if (!application) return;
+    try {
+      await deleteCompanyDocument({ code: application.code, documentId: docId }).unwrap();
+      setDeleteDocConfirm(null);
+      addToast('Document deleted.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      setDeleteDocConfirm(null);
+      addToast(data?.error ?? 'Failed to delete document.', 'error');
+    }
+  };
+
+  const handleReplaceCompanyDoc = (docId: number) => {
+    setReplacingDocId(docId);
+    replaceFileInputRef.current?.click();
+  };
+
+  const handleReplaceFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !application || replacingDocId == null) return;
+    e.target.value = '';
+    try {
+      await replaceCompanyDocument({ code: application.code, documentId: replacingDocId, file }).unwrap();
+      addToast('Document replaced successfully.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to replace document.', 'error');
+    }
+    setReplacingDocId(null);
   };
 
   const handleScheduleStep = async (data: { scheduledAt: string | null; scheduledLocation: string | null; scheduledNote: string | null }) => {
@@ -607,6 +644,26 @@ export function DepartmentApplicationDetailPage() {
                           <Download className="h-3.5 w-3.5" />
                           <span className="hidden sm:inline">Download</span>
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                          onClick={() => handleReplaceCompanyDoc(doc.id)}
+                          disabled={replacingDocId === doc.id}
+                          loading={replacingDocId === doc.id}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Replace</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => setDeleteDocConfirm(doc.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Delete</span>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -641,6 +698,36 @@ export function DepartmentApplicationDetailPage() {
               Reject Candidate
             </Button>
           )}
+        </div>
+      )}
+
+      <input
+        ref={replaceFileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+        className="hidden"
+        onChange={handleReplaceFileSelected}
+      />
+
+      {deleteDocConfirm !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl mx-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900">Delete Document</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-5">
+              Are you sure you want to delete this document? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setDeleteDocConfirm(null)}>Cancel</Button>
+              <Button variant="danger" size="sm" className="gap-1.5" onClick={() => handleDeleteCompanyDoc(deleteDocConfirm)}>
+                <Trash2 className="h-3.5 w-3.5" /> Delete
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 

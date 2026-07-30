@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Briefcase, FileText, Clock, Timer } from 'lucide-react';
+import { Briefcase, FileText, Clock, Timer, Download } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -43,6 +43,22 @@ function filterByDateRange(applications: ApplicationAnalyticsDto[], range: DateR
 
 function daysBetween(a: string, b: string) {
   return (new Date(b).getTime() - new Date(a).getTime()) / 86_400_000;
+}
+
+function exportCsv(data: ApplicationAnalyticsDto[], range: string) {
+  const rows: (string | number | null)[][] = [
+    ['Code', 'Candidate', 'Job Title', 'Department', 'Status', 'Applied At', 'Source', 'HR Rating', 'DM Rating'],
+    ...data.map((a) => [
+      a.code, a.candidateName ?? '', a.jobPostTitle, a.jobPostDepartmentName ?? '',
+      a.status, a.appliedAt.slice(0, 10), a.source ?? '', a.rating ?? '', a.dmRating ?? '',
+    ]),
+  ];
+  const csv = rows.map((r) => r.map(String).map((v) => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `analytics-${range}.csv`; a.click();
+  URL.revokeObjectURL(url);
 }
 
 function StatCard({ label, value, sub, icon: Icon, color, loading }: {
@@ -261,22 +277,33 @@ export function AnalyticsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
           <p className="text-sm text-gray-500">Recruitment pipeline overview.</p>
         </div>
-        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
-          {DATE_RANGE_OPTIONS.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setDateRange(opt.id)}
-              className={cn(
-                'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                dateRange === opt.id
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
+            {DATE_RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setDateRange(opt.id)}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                  dateRange === opt.id
+                    ? 'bg-[var(--primary)] text-white'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => exportCsv(filtered, dateRange)}
+            disabled={filtered.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export CSV
+          </button>
         </div>
       </div>
 
@@ -436,7 +463,7 @@ export function AnalyticsPage() {
             <h2 className="text-base font-semibold text-gray-900 mb-4">
               Applications per Month ({DATE_RANGE_OPTIONS.find((o) => o.id === dateRange)?.label})
             </h2>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={320}>
               <AreaChart data={byMonth} margin={{ left: 0, right: 16 }}>
                 <defs>
                   <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">

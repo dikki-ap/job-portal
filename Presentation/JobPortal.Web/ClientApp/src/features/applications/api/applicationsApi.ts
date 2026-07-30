@@ -138,6 +138,25 @@ export const applicationsApi = createApi({
       },
       invalidatesTags: (_r, _e, { code }) => [{ type: 'Application', id: code }],
     }),
+    deleteCompanyDocument: builder.mutation<void, { code: string; documentId: number }>({
+      query: ({ code, documentId }) => ({
+        url: `/${code}/company-documents/${documentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_r, _e, { code }) => [{ type: 'Application', id: code }],
+    }),
+    replaceCompanyDocument: builder.mutation<
+      ApplicationDocumentDto,
+      { code: string; documentId: number; file: File; name?: string }
+    >({
+      query: ({ code, documentId, file, name }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (name) formData.append('name', name);
+        return { url: `/${code}/company-documents/${documentId}`, method: 'PUT', body: formData };
+      },
+      invalidatesTags: (_r, _e, { code }) => [{ type: 'Application', id: code }],
+    }),
   }),
 });
 
@@ -155,4 +174,6 @@ export const {
   useRateApplicationMutation,
   useScheduleStepMutation,
   useUploadCompanyDocumentMutation,
+  useDeleteCompanyDocumentMutation,
+  useReplaceCompanyDocumentMutation,
 } = applicationsApi;

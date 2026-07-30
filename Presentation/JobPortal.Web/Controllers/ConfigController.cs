@@ -9,6 +9,7 @@ namespace JobPortal.Web.Controllers;
 public class ConfigController(IConfiguration configuration) : ControllerBase
 {
     [HttpGet("application-sources")]
+    [AllowAnonymous]
     public IActionResult GetApplicationSources()
     {
         var sources = configuration.GetSection("ApplicationSources").Get<string[]>() ?? [];

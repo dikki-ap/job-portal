@@ -71,6 +71,17 @@ public class MinioStorageService : IStorageService
         return (response.ResponseStream, response.Headers.ContentType);
     }
 
+    public async Task DeleteAsync(string storageKey, CancellationToken cancellationToken = default)
+    {
+        await _s3.DeleteObjectAsync(new DeleteObjectRequest
+        {
+            BucketName = _opts.BucketName,
+            Key = storageKey,
+        }, cancellationToken);
+
+        _logger.LogDebug("Deleted file key={Key}", storageKey);
+    }
+
     private async Task EnsureBucketAsync(CancellationToken cancellationToken)
     {
         if (_bucketReady) return;

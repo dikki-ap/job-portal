@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, FileText, CheckCircle, XCircle, Ban, X, UserCheck, Download } from 'lucide-react';
+import { Building2, Search, FileText, CheckCircle, XCircle, Ban, X, UserCheck, Download, Star } from 'lucide-react';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Pagination } from '../../../components/ui/Pagination';
 import { ToastContainer } from '../../../components/ui/Toast';
@@ -12,7 +12,8 @@ import {
   useBulkRejectMutation,
 } from '../api/departmentApplicationsApi';
 import { useGetIsDepartmentManagerQuery } from '../../departmentManagers/api/departmentManagersApi';
-import { canActOnStep, deriveStatus } from '../../../lib/applicationStatus';
+import { canActOnStep, deriveStatus, getCurrentStepInfo } from '../../../lib/applicationStatus';
+import { cn } from '../../../lib/utils';
 import { useFormatter } from '../../../lib/useFormatter';
 import { useDebounce } from '../../../hooks/useDebounce';
 import keycloak from '../../../lib/keycloak';
@@ -29,6 +30,12 @@ const APP_STATUS_BADGE: Record<string, string> = {
 };
 
 const APP_STATUS_LABEL: Record<string, string> = { InReview: 'In Review' };
+
+function ratingColor(r: number) {
+  if (r <= 4) return 'bg-red-50 text-red-600 ring-red-200';
+  if (r <= 7) return 'bg-amber-50 text-amber-700 ring-amber-200';
+  return 'bg-green-50 text-green-700 ring-green-200';
+}
 
 function isAtLastRequiredStep(app: ApplicationDto): boolean {
   if (app.status === 'Accepted' || app.status === 'Rejected') return false;
@@ -355,6 +362,7 @@ export function DepartmentApplicationsPage() {
               <tbody className="divide-y divide-gray-100">
                 {applications.map((app) => {
                   const status = deriveStatus(app);
+                  const stepInfo = getCurrentStepInfo(app.steps);
                   const isSelected = selectedIds.has(app.id);
                   return (
                     <tr
@@ -403,9 +411,28 @@ export function DepartmentApplicationsPage() {
                         className="px-4 py-4 cursor-pointer"
                         onClick={() => navigate(`/department-applications/${app.id}`)}
                       >
-                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${APP_STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
-                          {APP_STATUS_LABEL[status] ?? status}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${APP_STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-600'}`}>
+                            {APP_STATUS_LABEL[status] ?? status}
+                          </span>
+                          {app.rating != null && (
+                            <span title="HR Rating" className={cn('inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset', ratingColor(app.rating))}>
+                              <Star className="h-3 w-3 shrink-0" />
+                              {app.rating}/10
+                            </span>
+                          )}
+                          {app.dmRating != null && (
+                            <span title="Department Manager Rating" className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset text-violet-700 bg-violet-50 ring-violet-600/20">
+                              <Building2 className="h-3 w-3 shrink-0" />
+                              {app.dmRating}/10
+                            </span>
+                          )}
+                        </div>
+                        {stepInfo && (
+                          <div className="mt-1 text-xs text-gray-400">
+                            Step {stepInfo.stepOrder}/{stepInfo.total} · {stepInfo.stepName}
+                          </div>
+                        )}
                       </td>
                       <td
                         className="px-4 py-4 text-gray-500 hidden lg:table-cell cursor-pointer"

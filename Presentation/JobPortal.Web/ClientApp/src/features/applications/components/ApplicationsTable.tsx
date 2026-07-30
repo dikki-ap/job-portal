@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { Building2, Star } from 'lucide-react';
 import { useFormatter } from '../../../lib/useFormatter';
 import { deriveStatus, getCurrentStepInfo, STATUS_BADGE, STATUS_LABEL } from '../../../lib/applicationStatus';
 import { cn } from '../../../lib/utils';
@@ -104,9 +104,15 @@ export function ApplicationsTable({ applications, selectedIds, onSelectionChange
                       {STATUS_LABEL[status] ?? status}
                     </span>
                     {app.rating != null && (
-                      <span className={cn('inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset', ratingColor(app.rating))}>
+                      <span title="HR Rating" className={cn('inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset', ratingColor(app.rating))}>
                         <Star className="h-3 w-3 shrink-0" />
                         {app.rating}/10
+                      </span>
+                    )}
+                    {app.dmRating != null && (
+                      <span title="Department Manager Rating" className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset text-violet-700 bg-violet-50 ring-violet-600/20">
+                        <Building2 className="h-3 w-3 shrink-0" />
+                        {app.dmRating}/10
                       </span>
                     )}
                   </div>

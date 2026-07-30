@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, BookmarkPlus, FolderOpen, Plus, CalendarClock } from 'lucide-react';
+import { ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, BookmarkPlus, FolderOpen, Plus, CalendarClock, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
@@ -21,6 +21,8 @@ import {
   useRateApplicationMutation,
   useScheduleStepMutation,
   useUploadCompanyDocumentMutation,
+  useDeleteCompanyDocumentMutation,
+  useReplaceCompanyDocumentMutation,
 } from '../api/applicationsApi';
 import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
 import { useAddToTalentPoolMutation } from '../../talentPool/api/talentPoolApi';
@@ -93,7 +95,12 @@ export function ApplicationDetailPage() {
   const [rateApplication, { isLoading: rating }] = useRateApplicationMutation();
   const [addToTalentPool, { isLoading: addingToPool }] = useAddToTalentPoolMutation();
   const [uploadCompanyDocument, { isLoading: uploadingCompanyDoc }] = useUploadCompanyDocumentMutation();
+  const [deleteCompanyDocument] = useDeleteCompanyDocumentMutation();
+  const [replaceCompanyDocument] = useReplaceCompanyDocumentMutation();
   const [scheduleStep, { isLoading: scheduling }] = useScheduleStepMutation();
+  const replaceFileInputRef = useRef<HTMLInputElement>(null);
+  const [replacingDocId, setReplacingDocId] = useState<number | null>(null);
+  const [deleteDocConfirm, setDeleteDocConfirm] = useState<number | null>(null);
 
   const [localRating, setLocalRating] = useState<number | null>(null);
   const [localNote, setLocalNote] = useState('');
@@ -173,6 +180,37 @@ export function ApplicationDetailPage() {
     } catch (err: unknown) {
       const data = (err as { data?: { error?: string } })?.data;
       addToast(data?.error ?? 'Failed to upload document.', 'error');
+    }
+  };
+
+  const handleDeleteCompanyDoc = async (documentId: number) => {
+    try {
+      await deleteCompanyDocument({ code: code!, documentId }).unwrap();
+      setDeleteDocConfirm(null);
+      addToast('Document deleted.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to delete document.', 'error');
+    }
+  };
+
+  const handleReplaceCompanyDoc = (documentId: number) => {
+    setReplacingDocId(documentId);
+    replaceFileInputRef.current?.click();
+  };
+
+  const handleReplaceFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || replacingDocId === null) return;
+    e.target.value = '';
+    try {
+      await replaceCompanyDocument({ code: code!, documentId: replacingDocId, file }).unwrap();
+      addToast('Document replaced successfully.', 'success');
+    } catch (err: unknown) {
+      const data = (err as { data?: { error?: string } })?.data;
+      addToast(data?.error ?? 'Failed to replace document.', 'error');
+    } finally {
+      setReplacingDocId(null);
     }
   };
 
@@ -334,12 +372,12 @@ export function ApplicationDetailPage() {
         </div>
       </div>
 
-      {/* DM Rating — read-only, shown only when a DM has rated */}
+      {/* Department Manager Rating — read-only, shown only when a DM has rated */}
       {application.dmRating != null && (
         <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <Star className="h-4 w-4 text-[var(--primary)]" />
-            <h2 className="text-base font-semibold text-gray-900">DM Rating</h2>
+            <h2 className="text-base font-semibold text-gray-900">Department Manager Rating</h2>
             {application.dmRatedAt && (
               <span className="text-xs text-gray-400 ml-auto">Rated: {formatDate(application.dmRatedAt)}</span>
             )}
@@ -562,6 +600,15 @@ export function ApplicationDetailPage() {
         )}
       </div>
 
+      {/* hidden file input for replace */}
+      <input
+        ref={replaceFileInputRef}
+        type="file"
+        className="hidden"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+        onChange={handleReplaceFileSelected}
+      />
+
       {/* Card 5: Additional Documents From Company */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -601,7 +648,7 @@ export function ApplicationDetailPage() {
                     </td>
                     <td className="py-2 pr-4 text-gray-500">{formatDate(doc.createdAt)}</td>
                     <td className="py-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1 flex-wrap">
                         {MIME_PREVIEW_TYPE[doc.fileType] && (
                           <Button
                             variant="ghost"
@@ -619,6 +666,22 @@ export function ApplicationDetailPage() {
                           onClick={() => downloadWithAuth(`/api/documents/${doc.id}/download`, token, doc.originalFileName)}
                         >
                           <Download className="h-3.5 w-3.5" /> Download
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                          onClick={() => handleReplaceCompanyDoc(doc.id)}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" /> Replace
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => setDeleteDocConfirm(doc.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
                         </Button>
                       </div>
                     </td>
@@ -680,6 +743,36 @@ export function ApplicationDetailPage() {
       )}
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      {/* Delete company document confirmation modal */}
+      {deleteDocConfirm !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl mx-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900">Delete Document</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-5">
+              Are you sure you want to delete this document? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setDeleteDocConfirm(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => handleDeleteCompanyDoc(deleteDocConfirm)}
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <DocumentPreviewModal
         open={previewDoc !== null}

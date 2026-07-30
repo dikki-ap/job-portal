@@ -21,7 +21,11 @@ public class SmtpSettingsService(
             return cached;
 
         var settings = await ResolveAsync(ct);
-        cache.Set(CacheKey, settings, CacheTtl);
+        cache.Set(CacheKey, settings, new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = CacheTtl,
+            Size = 1,
+        });
         return settings;
     }
 
