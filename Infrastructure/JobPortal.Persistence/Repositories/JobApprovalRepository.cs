@@ -1,3 +1,4 @@
+using JobPortal.Application.Common;
 using JobPortal.Application.Interfaces.Repositories;
 using JobPortal.Domain.Entities.Jobs;
 using JobPortal.Persistence.Context;
@@ -24,7 +25,7 @@ public class JobApprovalRepository(ApplicationDbContext context) : IJobApprovalR
                 .ThenInclude(j => j.MinEducationLevel)
             .Include(i => i.JobPost)
                 .ThenInclude(j => j.CurrencyType)
-            .Where(i => i.JobPostId == jobPostId && i.Status == "InProgress")
+            .Where(i => i.JobPostId == jobPostId && i.Status == JobApprovalStatus.InProgress)
             .OrderByDescending(i => i.StartedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -40,9 +41,9 @@ public class JobApprovalRepository(ApplicationDbContext context) : IJobApprovalR
             .Include(i => i.Steps)
             .Include(i => i.JobPost)
                 .ThenInclude(j => j.Department)
-            .Where(i => i.Status == "InProgress"
+            .Where(i => i.Status == JobApprovalStatus.InProgress
                 && i.Steps.Any(s => s.StepOrder == i.CurrentStepOrder
-                    && s.Status == "Pending"
+                    && s.Status == JobApprovalStatus.Pending
                     && s.ApproverEmail == approverEmail))
             .OrderByDescending(i => i.StartedAt)
             .ToListAsync(cancellationToken);

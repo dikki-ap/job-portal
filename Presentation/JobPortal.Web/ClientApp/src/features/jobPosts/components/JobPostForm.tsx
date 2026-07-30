@@ -107,12 +107,12 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
   const { data: jobLevels = [], isError: levelError } = useGetJobLevelsQuery();
   const { data: employmentTypes = [], isError: empError } = useGetEmploymentTypesQuery();
   const { data: workModes = [], isError: workModeError } = useGetWorkModesQuery();
-  const { data: educationLevels = [] } = useGetEducationLevelsQuery();
-  const { data: currencyTypes = [] } = useGetCurrencyTypesQuery();
-  const { data: skills = [] } = useGetSkillsQuery();
-  const { data: educationMajors = [] } = useGetEducationMajorsQuery();
-  const { data: hiringTemplates = [] } = useGetHiringTemplatesQuery();
-  const { data: documentTypes = [] } = useGetDocumentTypesQuery();
+  const { data: educationLevels = [], isError: educationLevelError } = useGetEducationLevelsQuery();
+  const { data: currencyTypes = [], isError: currencyError } = useGetCurrencyTypesQuery();
+  const { data: skills = [], isError: skillError } = useGetSkillsQuery();
+  const { data: educationMajors = [], isError: majorError } = useGetEducationMajorsQuery();
+  const { data: hiringTemplates = [], isError: templateError } = useGetHiringTemplatesQuery();
+  const { data: documentTypes = [], isError: docTypeError } = useGetDocumentTypesQuery();
 
   // Merge globally-required document types into the list whenever documentTypes loads.
   // Works for both new jobs (prev=[]) and existing jobs (prev loaded from DB).
@@ -291,7 +291,8 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {(deptError || catError || empError || workModeError || levelError) && (
+      {(deptError || catError || empError || workModeError || levelError ||
+        educationLevelError || currencyError || skillError || majorError || templateError || docTypeError) && (
         <ErrorBanner message="Failed to load some form data. Please refresh and try again." />
       )}
       {/* Basic Info */}

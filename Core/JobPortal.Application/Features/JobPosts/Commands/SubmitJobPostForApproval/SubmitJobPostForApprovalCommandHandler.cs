@@ -39,7 +39,7 @@ public class SubmitJobPostForApprovalCommandHandler(
             {
                 JobPostId = job.Id,
                 CurrentStepOrder = levels.Min(l => l.LevelOrder),
-                Status = "InProgress",
+                Status = JobApprovalStatus.InProgress,
                 StartedAt = now,
                 CreatedAt = now,
                 CreatedByUserId = userId,
@@ -48,7 +48,7 @@ public class SubmitJobPostForApprovalCommandHandler(
                     StepOrder = l.LevelOrder,
                     ApproverEmail = l.ApproverEmail,
                     ApproverName = l.ApproverName,
-                    Status = "Pending",
+                    Status = JobApprovalStatus.Pending,
                 }).ToList(),
             };
 

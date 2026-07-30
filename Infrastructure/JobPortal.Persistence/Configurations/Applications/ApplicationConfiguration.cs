@@ -15,6 +15,7 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<Domain.Entities
         builder.HasIndex(a => a.Code).IsUnique();
 
         builder.Property(a => a.Status).HasMaxLength(50).IsRequired();
+        builder.Property(a => a.Source).HasMaxLength(50);
         builder.Property(a => a.RatingNote).HasMaxLength(2000);
         builder.Property(a => a.DmRatingNote).HasMaxLength(2000);
 
