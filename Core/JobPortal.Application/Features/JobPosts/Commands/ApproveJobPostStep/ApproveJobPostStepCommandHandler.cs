@@ -49,7 +49,7 @@ public class ApproveJobPostStepCommandHandler(
                 throw new UnauthorizedAccessException("You are not authorized to approve this step.");
 
             var now = DateTime.UtcNow;
-            currentStep.Status = "Approved";
+            currentStep.Status = JobApprovalStatus.Approved;
             currentStep.ActionAt = now;
             currentStep.Comment = request.Comment;
 
@@ -67,7 +67,7 @@ public class ApproveJobPostStepCommandHandler(
             }
             else
             {
-                instance.Status = "Completed";
+                instance.Status = JobApprovalStatus.Completed;
                 instance.CompletedAt = now;
 
                 var job = await jobPostRepository.GetByIdAsync(request.JobPostId, cancellationToken)

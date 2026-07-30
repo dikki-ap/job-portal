@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { FileText, CheckCircle2, TrendingUp } from 'lucide-react';
 import { Spinner } from '../components/ui/Spinner';
+import { ErrorBanner } from '../components/ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 import { deriveStatus, STATUS_BADGE, STATUS_LABEL } from '../lib/applicationStatus';
 import { useFormatter } from '../lib/useFormatter';
@@ -32,7 +33,7 @@ function StatCard({ label, value, icon: Icon, color, loading }: {
 function CandidateDashboard({ userName }: { userName: string | undefined }) {
   const navigate = useNavigate();
   const { formatDate } = useFormatter();
-  const { data: applications = [], isLoading } = useGetMyApplicationsQuery();
+  const { data: applications = [], isLoading, isError } = useGetMyApplicationsQuery();
 
   const stats = useMemo(() => ({
     total: applications.length,
@@ -44,6 +45,8 @@ function CandidateDashboard({ userName }: { userName: string | undefined }) {
   }), [applications]);
 
   const recentApplications = useMemo(() => applications.slice(0, 3), [applications]);
+
+  if (isError) return <ErrorBanner message="Failed to load your applications. Please refresh." />;
 
   return (
     <div className="flex flex-col gap-6">

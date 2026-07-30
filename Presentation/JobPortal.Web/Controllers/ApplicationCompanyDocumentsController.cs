@@ -45,6 +45,10 @@ public class ApplicationCompanyDocumentsController(
         if (string.IsNullOrWhiteSpace(name))
             return BadRequest(new { error = "Document name is required." });
 
+        name = name.Trim();
+        if (name.Length > 100)
+            return BadRequest(new { error = "Document name must not exceed 100 characters." });
+
         if (file is null || file.Length == 0)
             return BadRequest(new { error = "No file provided." });
 
@@ -81,7 +85,7 @@ public class ApplicationCompanyDocumentsController(
         }
 
         var appDoc = await applicationDocumentRepository.AddCompanyDocumentAsync(
-            app.Id, storageKey, file.FileName, file.ContentType, userId.Value, name.Trim(), cancellationToken);
+            app.Id, storageKey, file.FileName, file.ContentType, userId.Value, name, cancellationToken);
 
         logger.LogInformation(
             "CompanyDocument: uploaded docId={DocId} appDoc={AppDocId} app={Code} by user={UserId}",

@@ -10,6 +10,7 @@ public class ApplicationStepConfiguration : IEntityTypeConfiguration<Application
     {
         builder.Property(s => s.StepName).HasMaxLength(150).IsRequired();
         builder.Property(s => s.Status).HasMaxLength(50).IsRequired();
+        builder.Property(s => s.CompletedByName).HasMaxLength(300);
         builder.Property(s => s.ScheduledLocation).HasMaxLength(500);
         builder.Property(s => s.ScheduledNote).HasMaxLength(2000);
 

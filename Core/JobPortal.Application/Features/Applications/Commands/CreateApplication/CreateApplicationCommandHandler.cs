@@ -27,7 +27,7 @@ public class CreateApplicationCommandHandler(
         var jobPost = await jobPostRepository.GetByIdAsync(request.JobPostId, cancellationToken)
             ?? throw new KeyNotFoundException($"Job post {request.JobPostId} not found.");
 
-        if (jobPost.Status != "Published")
+        if (jobPost.Status != JobPostStatus.Published)
             throw new InvalidOperationException("This job post is not accepting applications.");
 
         if (jobPost.CloseDate.HasValue && jobPost.CloseDate.Value < DateTime.UtcNow)

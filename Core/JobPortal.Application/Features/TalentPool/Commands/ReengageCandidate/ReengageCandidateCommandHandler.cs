@@ -27,7 +27,7 @@ public class ReengageCandidateCommandHandler(
         var jobPost = await jobPostRepository.GetByIdAsync(request.JobPostId, ct)
             ?? throw new KeyNotFoundException($"Job post {request.JobPostId} not found.");
 
-        if (jobPost.Status != "Published")
+        if (jobPost.Status != JobPostStatus.Published)
             throw new InvalidOperationException("The selected job post is not published.");
 
         if (await applicationRepository.ExistsAsync(entry.UserId, request.JobPostId, ct))

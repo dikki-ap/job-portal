@@ -46,7 +46,6 @@ public class HiringTemplatesController(IMediator mediator, ILogger<HiringTemplat
     }
 
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateHiringTemplateCommand command, CancellationToken cancellationToken)
     {
         try
@@ -62,7 +61,6 @@ public class HiringTemplatesController(IMediator mediator, ILogger<HiringTemplat
     }
 
     [HttpPut("{id:int}")]
-    [Authorize]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateHiringTemplateCommand command, CancellationToken cancellationToken)
     {
         try
@@ -83,7 +81,6 @@ public class HiringTemplatesController(IMediator mediator, ILogger<HiringTemplat
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         try

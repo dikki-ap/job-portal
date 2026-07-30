@@ -8,6 +8,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { RichTextEditor } from "../../../components/ui/RichTextEditor";
+import { ErrorBanner } from "../../../components/ErrorBanner";
 import { useNavigate } from "react-router-dom";
 import { Input } from "../../../components/ui/Input";
 import { SearchableSelect } from "../../../components/ui/SearchableSelect";
@@ -101,11 +102,11 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
   const isLoading = isCreating || isUpdating;
 
   // Dropdown data
-  const { data: departments = [] } = useGetDepartmentsQuery();
-  const { data: jobCategories = [] } = useGetJobCategoriesQuery();
-  const { data: jobLevels = [] } = useGetJobLevelsQuery();
-  const { data: employmentTypes = [] } = useGetEmploymentTypesQuery();
-  const { data: workModes = [] } = useGetWorkModesQuery();
+  const { data: departments = [], isError: deptError } = useGetDepartmentsQuery();
+  const { data: jobCategories = [], isError: catError } = useGetJobCategoriesQuery();
+  const { data: jobLevels = [], isError: levelError } = useGetJobLevelsQuery();
+  const { data: employmentTypes = [], isError: empError } = useGetEmploymentTypesQuery();
+  const { data: workModes = [], isError: workModeError } = useGetWorkModesQuery();
   const { data: educationLevels = [] } = useGetEducationLevelsQuery();
   const { data: currencyTypes = [] } = useGetCurrencyTypesQuery();
   const { data: skills = [] } = useGetSkillsQuery();
@@ -290,6 +291,9 @@ export function JobPostForm({ editing, onSuccess, onError }: JobPostFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {(deptError || catError || empError || workModeError || levelError) && (
+        <ErrorBanner message="Failed to load some form data. Please refresh and try again." />
+      )}
       {/* Basic Info */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-base font-semibold text-gray-900">

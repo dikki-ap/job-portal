@@ -31,11 +31,11 @@ public class RejectJobPostStepCommandHandler(
                 throw new UnauthorizedAccessException("You are not authorized to reject this step.");
 
             var now = DateTime.UtcNow;
-            currentStep.Status = "Rejected";
+            currentStep.Status = JobApprovalStatus.Rejected;
             currentStep.ActionAt = now;
             currentStep.Comment = request.Comment;
 
-            instance.Status = "Rejected";
+            instance.Status = JobApprovalStatus.Rejected;
             instance.CompletedAt = now;
 
             var job = await jobPostRepository.GetByIdAsync(request.JobPostId, cancellationToken)
