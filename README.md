@@ -104,16 +104,17 @@ JWT Bearer (Keycloak) → Policy: HrOrAdmin | AdminOnly | Authorize | AllowAnony
 - **Step-based Hiring Pipeline** — Each job has ordered steps; sequential pass required; email sent on each outcome
 - **Interview Scheduling** — HR can set/clear interview date, location, and notes on each hiring step
 - **Application Rating** — HR can rate (1–10) and add notes per application
-- **Company Documents** — HR can attach internal documents (offer letters, assessment sheets) to an application (PDF/DOC/DOCX/JPEG/PNG, max 5 MB)
+- **Company Documents** — HR can attach internal documents (offer letters, assessment sheets) to an application (PDF/DOC/DOCX/JPEG/PNG, max 5 MB); documents can be replaced or deleted after upload
 - **Application Source Analytics** — Chart showing where applicants came from (LinkedIn, Referral, etc.)
 - **Talent Pool** — Save rejected candidates; re-engage them for new positions (creates new application, removes from pool, sends email)
-- **Analytics Dashboard** — Hiring funnel, application stats, charts by status and source
+- **Analytics Dashboard** — Hiring funnel, application stats, charts by status/source/step dropout; exportable as `.xlsx` (filtered by selected date range)
 - **Hiring Templates** — Reusable pipeline templates with per-step email templates (rich text, placeholder support)
 
 ### Department Manager
-- **Scoped Application View** — See and manage applications only from assigned departments
+- **Scoped Application View** — See and manage applications only from assigned departments; list shows step progress, HR rating, and DM rating at a glance
 - **Step Actions** — Pass/fail steps, accept/reject, schedule interviews, bulk operations
-- **DM Rating** — Separate rating (independent from HR rating) per application
+- **DM Rating** — Separate rating (1–10) independent from HR rating; visible alongside HR rating in both the list and the HR detail view
+- **Company Documents** — Can upload, replace, and delete company documents attached to applications in their department
 
 ### Administration (Admin role only)
 - **Master Data** — Department, Skill, Work Mode, Employment Type, Job Category, Job Level, Currency Type, Document Type, Education Level, Education Major, Approval Levels
@@ -285,6 +286,8 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | POST | `/applications/bulk-accept` | HR | Bulk accept |
 | POST | `/applications/bulk-reject` | HR | Bulk reject |
 | POST | `/applications/{code}/company-documents` | HR | Upload company document to application (PDF/DOC/DOCX/JPEG/PNG, max 5 MB) |
+| PUT | `/applications/{code}/company-documents/{documentId}` | HR | Replace a company document file |
+| DELETE | `/applications/{code}/company-documents/{documentId}` | HR | Delete a company document |
 
 ### Approvals
 
@@ -300,6 +303,7 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/talent-pool` | HR | List all entries |
+| GET | `/talent-pool/paged` | HR | Paginated list (`?page=1&pageSize=20&search=`) |
 | POST | `/talent-pool` | HR | Add candidate (`{applicationId, notes?}`) |
 | DELETE | `/talent-pool/{id}` | HR | Remove entry |
 | POST | `/talent-pool/{id}/reengage` | HR | Re-engage for new job (`{jobPostId}`) |
@@ -404,6 +408,13 @@ All endpoints are prefixed with `/api`. Auth column: **–** = public, **✓** =
 | POST | `/department-applications/bulk-step` | DM | Bulk pass/fail current step |
 | POST | `/department-applications/bulk-accept` | DM | Bulk accept |
 | POST | `/department-applications/bulk-reject` | DM | Bulk reject |
+
+### Analytics
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/analytics/applications` | HR | All application data for analytics charts |
+| GET | `/analytics/export` | HR | Download analytics data as `.xlsx` (`?since=YYYY-MM-DD` optional date filter) |
 
 ### Config
 
@@ -690,3 +701,8 @@ Migrations live in `Infrastructure/JobPortal.Persistence/Migrations/`.
 | 29 | `AddIsCompanyDocumentToApplicationDocuments` | `IsCompanyDocument` flag on `ApplicationDocuments` |
 | 30 | `AddSourceAndAuditTrail` | `Source` on `Applications`; `CompletedByUserId`, `CompletedByName` on `ApplicationSteps` |
 | 31 | `AddSchedulingToApplicationStep` | `ScheduledAt`, `ScheduledLocation`, `ScheduledNote` on `ApplicationSteps` — interview scheduling |
+| 32 | `AddPerformanceIndexes` | Indexes on `Applications.Status`, `Applications.AppliedAt`, `ApplicationSteps.Status`, `JobApprovalInstances.Status` |
+| 33 | `AddStringLengthConstraints` | `HasMaxLength` on `Application.Code`, `Status`, `RatingNote`, `DmRatingNote`, `Source`; `ApplicationStep.StepName`, `Status`, `CompletedByName`, `ScheduledLocation`, `ScheduledNote` |
+| 34 | `AddCompletedByNameLength` | `HasMaxLength(300)` on `ApplicationStep.CompletedByName` |
+| 35 | `AddApplicationSourceLength` | `HasMaxLength(50)` on `Application.Source` |
+| 36 | `AddMissingPerformanceIndexes` | Indexes on `Application.UserId`; `ApplicationStep.(ApplicationId, Status)` composite; `JobPost.DepartmentId`; `JobPost.(Status, PublishDate)` composite; `JobApprovalInstance.(JobPostId, Status)` composite; `TalentPoolEntry.AddedAt` |
