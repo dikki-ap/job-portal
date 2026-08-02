@@ -362,7 +362,7 @@ export function DepartmentApplicationsPage() {
               <tbody className="divide-y divide-gray-100">
                 {applications.map((app) => {
                   const status = deriveStatus(app);
-                  const stepInfo = getCurrentStepInfo(app.steps);
+                  const stepInfo = getCurrentStepInfo(app);
                   const isSelected = selectedIds.has(app.id);
                   return (
                     <tr

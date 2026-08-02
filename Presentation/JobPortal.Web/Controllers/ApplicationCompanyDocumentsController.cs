@@ -131,24 +131,33 @@ public class ApplicationCompanyDocumentsController(
     }
 
     [HttpPut("{documentId:int}")]
-    public async Task<IActionResult> Replace(
+    public async Task<IActionResult> Update(
         string code,
         int documentId,
         [FromForm] string? name,
-        IFormFile file,
+        IFormFile? file,
         CancellationToken cancellationToken)
     {
-        if (file is null || file.Length == 0)
-            return BadRequest(new { error = "No file provided." });
+        var trimmedName = name?.Trim();
 
-        if (file.Length > MaxFileSizeBytes)
-            return BadRequest(new { error = "File exceeds the 5 MB limit." });
+        if (file is null && string.IsNullOrWhiteSpace(trimmedName))
+            return BadRequest(new { error = "Provide a new name, a new file, or both." });
 
-        if (!AllowedMimeTypes.Contains(file.ContentType))
-            return BadRequest(new { error = $"File type '{file.ContentType}' is not allowed. Allowed: PDF, DOC, DOCX, JPEG, PNG." });
+        if (!string.IsNullOrWhiteSpace(trimmedName) && trimmedName.Length > 100)
+            return BadRequest(new { error = "Document name must not exceed 100 characters." });
 
-        await using (var sigStream = file.OpenReadStream())
+        if (file is not null)
         {
+            if (file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            if (file.Length > MaxFileSizeBytes)
+                return BadRequest(new { error = "File exceeds the 5 MB limit." });
+
+            if (!AllowedMimeTypes.Contains(file.ContentType))
+                return BadRequest(new { error = $"File type '{file.ContentType}' is not allowed. Allowed: PDF, DOC, DOCX, JPEG, PNG." });
+
+            await using var sigStream = file.OpenReadStream();
             if (!FileSignatureValidator.IsValidSignature(sigStream, file.ContentType))
                 return BadRequest(new { error = "File content does not match the declared file type." });
         }
@@ -163,42 +172,45 @@ public class ApplicationCompanyDocumentsController(
         if (appDoc is null || appDoc.ApplicationId != app.Id)
             return NotFound(new { error = "Document not found." });
 
-        var externalId = currentUserService.GetCurrentUserExternalId();
-        if (externalId is null) return Unauthorized();
+        if (!string.IsNullOrWhiteSpace(trimmedName))
+            appDoc.DocumentType = trimmedName;
 
-        var oldStorageKey = appDoc.Document.FilePath;
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        string newStorageKey;
-        await using (var stream = file.OpenReadStream())
+        if (file is not null)
         {
-            newStorageKey = await storageService.UploadAsync(stream, extension, file.ContentType, externalId, cancellationToken);
+            var externalId = currentUserService.GetCurrentUserExternalId();
+            if (externalId is null) return Unauthorized();
+
+            var oldStorageKey = appDoc.Document.FilePath;
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            string newStorageKey;
+            await using (var stream = file.OpenReadStream())
+            {
+                newStorageKey = await storageService.UploadAsync(stream, extension, file.ContentType, externalId, cancellationToken);
+            }
+
+            await applicationDocumentRepository.ReplaceCompanyDocumentFileAsync(appDoc, newStorageKey, file.FileName, file.ContentType, cancellationToken);
+
+            try
+            {
+                await storageService.DeleteAsync(oldStorageKey, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "CompanyDocument: updated DB record but failed to remove old storage key={Key}", oldStorageKey);
+            }
+        }
+        else
+        {
+            await applicationDocumentRepository.SaveChangesAsync(cancellationToken);
         }
 
-        if (!string.IsNullOrWhiteSpace(name))
-        {
-            name = name.Trim();
-            if (name.Length > 100) return BadRequest(new { error = "Document name must not exceed 100 characters." });
-            appDoc.DocumentType = name;
-        }
-
-        await applicationDocumentRepository.ReplaceCompanyDocumentFileAsync(appDoc, newStorageKey, file.FileName, file.ContentType, cancellationToken);
-
-        try
-        {
-            await storageService.DeleteAsync(oldStorageKey, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "CompanyDocument: replaced DB record but failed to remove old storage key={Key}", oldStorageKey);
-        }
-
-        logger.LogInformation("CompanyDocument: replaced appDoc={AppDocId} app={Code}", documentId, code);
+        logger.LogInformation("CompanyDocument: updated appDoc={AppDocId} app={Code}", documentId, code);
 
         return Ok(new ApplicationDocumentDto(
             appDoc.Id,
             appDoc.DocumentType,
-            file.FileName,
-            file.ContentType,
+            appDoc.Document.OriginalFileName,
+            appDoc.Document.FileType,
             appDoc.CreatedAt,
             true));
     }

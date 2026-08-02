@@ -23,4 +23,6 @@ public interface IApplicationDocumentRepository
         string newOriginalFileName,
         string newContentType,
         CancellationToken ct = default);
+
+    Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

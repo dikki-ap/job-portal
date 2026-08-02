@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, BookmarkPlus, FolderOpen, Plus, CalendarClock, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase, Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, BookmarkPlus, FolderOpen, Plus, CalendarClock, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { DocumentPreviewModal } from '../../../components/ui/DocumentPreviewModal';
 import { UploadCompanyDocumentModal } from '../../../components/ui/UploadCompanyDocumentModal';
+import { UpdateCompanyDocumentModal } from '../../../components/ui/UpdateCompanyDocumentModal';
 import { ScheduleInterviewModal } from '../../../components/ui/ScheduleInterviewModal';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -22,7 +23,7 @@ import {
   useScheduleStepMutation,
   useUploadCompanyDocumentMutation,
   useDeleteCompanyDocumentMutation,
-  useReplaceCompanyDocumentMutation,
+  useUpdateCompanyDocumentMutation,
 } from '../api/applicationsApi';
 import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
 import { useAddToTalentPoolMutation } from '../../talentPool/api/talentPoolApi';
@@ -96,10 +97,9 @@ export function ApplicationDetailPage() {
   const [addToTalentPool, { isLoading: addingToPool }] = useAddToTalentPoolMutation();
   const [uploadCompanyDocument, { isLoading: uploadingCompanyDoc }] = useUploadCompanyDocumentMutation();
   const [deleteCompanyDocument] = useDeleteCompanyDocumentMutation();
-  const [replaceCompanyDocument] = useReplaceCompanyDocumentMutation();
+  const [updateCompanyDocument, { isLoading: updatingCompanyDoc }] = useUpdateCompanyDocumentMutation();
   const [scheduleStep, { isLoading: scheduling }] = useScheduleStepMutation();
-  const replaceFileInputRef = useRef<HTMLInputElement>(null);
-  const [replacingDocId, setReplacingDocId] = useState<number | null>(null);
+  const [updateDocTarget, setUpdateDocTarget] = useState<{ id: number; name: string } | null>(null);
   const [deleteDocConfirm, setDeleteDocConfirm] = useState<number | null>(null);
 
   const [localRating, setLocalRating] = useState<number | null>(null);
@@ -194,23 +194,15 @@ export function ApplicationDetailPage() {
     }
   };
 
-  const handleReplaceCompanyDoc = (documentId: number) => {
-    setReplacingDocId(documentId);
-    replaceFileInputRef.current?.click();
-  };
-
-  const handleReplaceFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || replacingDocId === null) return;
-    e.target.value = '';
+  const handleUpdateCompanyDoc = async (name: string, file: File | null) => {
+    if (!updateDocTarget) return;
     try {
-      await replaceCompanyDocument({ code: code!, documentId: replacingDocId, file }).unwrap();
-      addToast('Document replaced successfully.', 'success');
+      await updateCompanyDocument({ code: code!, documentId: updateDocTarget.id, name, file }).unwrap();
+      setUpdateDocTarget(null);
+      addToast('Document updated successfully.', 'success');
     } catch (err: unknown) {
       const data = (err as { data?: { error?: string } })?.data;
-      addToast(data?.error ?? 'Failed to replace document.', 'error');
-    } finally {
-      setReplacingDocId(null);
+      addToast(data?.error ?? 'Failed to update document.', 'error');
     }
   };
 
@@ -600,15 +592,6 @@ export function ApplicationDetailPage() {
         )}
       </div>
 
-      {/* hidden file input for replace */}
-      <input
-        ref={replaceFileInputRef}
-        type="file"
-        className="hidden"
-        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-        onChange={handleReplaceFileSelected}
-      />
-
       {/* Card 5: Additional Documents From Company */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -671,9 +654,9 @@ export function ApplicationDetailPage() {
                           variant="ghost"
                           size="sm"
                           className="gap-1.5 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
-                          onClick={() => handleReplaceCompanyDoc(doc.id)}
+                          onClick={() => setUpdateDocTarget({ id: doc.id, name: doc.documentType })}
                         >
-                          <RefreshCw className="h-3.5 w-3.5" /> Replace
+                          <Pencil className="h-3.5 w-3.5" /> Update
                         </Button>
                         <Button
                           variant="ghost"
@@ -788,6 +771,14 @@ export function ApplicationDetailPage() {
         onClose={() => setCompanyDocModal(false)}
         onUpload={handleUploadCompanyDoc}
         isUploading={uploadingCompanyDoc}
+      />
+
+      <UpdateCompanyDocumentModal
+        open={updateDocTarget !== null}
+        onClose={() => setUpdateDocTarget(null)}
+        currentName={updateDocTarget?.name ?? ''}
+        onUpdate={handleUpdateCompanyDoc}
+        isUpdating={updatingCompanyDoc}
       />
 
       <ScheduleInterviewModal

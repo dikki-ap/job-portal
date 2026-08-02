@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Download, Eye, CheckCircle, XCircle, MapPin, Briefcase,
-  Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, FolderOpen, Plus, CalendarClock, RefreshCw, Trash2,
+  Clock, BarChart2, Users, GraduationCap, Layers, Tag, Building2, Phone, Star, FolderOpen, Plus, CalendarClock, Pencil, Trash2,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Spinner } from '../../../components/ui/Spinner';
 import { ToastContainer } from '../../../components/ui/Toast';
 import { DocumentPreviewModal } from '../../../components/ui/DocumentPreviewModal';
 import { UploadCompanyDocumentModal } from '../../../components/ui/UploadCompanyDocumentModal';
+import { UpdateCompanyDocumentModal } from '../../../components/ui/UpdateCompanyDocumentModal';
 import { ScheduleInterviewModal } from '../../../components/ui/ScheduleInterviewModal';
 import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -25,7 +26,7 @@ import {
   useRateDepartmentApplicationMutation,
   useScheduleStepMutation,
 } from '../api/departmentApplicationsApi';
-import { useUploadCompanyDocumentMutation, useDeleteCompanyDocumentMutation, useReplaceCompanyDocumentMutation } from '../../applications/api/applicationsApi';
+import { useUploadCompanyDocumentMutation, useDeleteCompanyDocumentMutation, useUpdateCompanyDocumentMutation } from '../../applications/api/applicationsApi';
 import { useGetJobPostByIdQuery } from '../../jobPosts/api/jobPostsApi';
 import type { ApplicationStepDto } from '../../../types/api';
 
@@ -105,10 +106,9 @@ export function DepartmentApplicationDetailPage() {
   const [rateDmApplication, { isLoading: ratingDm }] = useRateDepartmentApplicationMutation();
   const [uploadCompanyDocument, { isLoading: uploadingCompanyDoc }] = useUploadCompanyDocumentMutation();
   const [deleteCompanyDocument] = useDeleteCompanyDocumentMutation();
-  const [replaceCompanyDocument] = useReplaceCompanyDocumentMutation();
+  const [updateCompanyDocument, { isLoading: updatingCompanyDoc }] = useUpdateCompanyDocumentMutation();
   const [scheduleStep, { isLoading: scheduling }] = useScheduleStepMutation();
-  const replaceFileInputRef = useRef<HTMLInputElement>(null);
-  const [replacingDocId, setReplacingDocId] = useState<number | null>(null);
+  const [updateDocTarget, setUpdateDocTarget] = useState<{ id: number; name: string } | null>(null);
   const [deleteDocConfirm, setDeleteDocConfirm] = useState<number | null>(null);
 
   useEffect(() => {
@@ -183,23 +183,16 @@ export function DepartmentApplicationDetailPage() {
     }
   };
 
-  const handleReplaceCompanyDoc = (docId: number) => {
-    setReplacingDocId(docId);
-    replaceFileInputRef.current?.click();
-  };
-
-  const handleReplaceFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !application || replacingDocId == null) return;
-    e.target.value = '';
+  const handleUpdateCompanyDoc = async (name: string, file: File | null) => {
+    if (!updateDocTarget || !application) return;
     try {
-      await replaceCompanyDocument({ code: application.code, documentId: replacingDocId, file }).unwrap();
-      addToast('Document replaced successfully.', 'success');
+      await updateCompanyDocument({ code: application.code, documentId: updateDocTarget.id, name, file }).unwrap();
+      setUpdateDocTarget(null);
+      addToast('Document updated successfully.', 'success');
     } catch (err: unknown) {
       const data = (err as { data?: { error?: string } })?.data;
-      addToast(data?.error ?? 'Failed to replace document.', 'error');
+      addToast(data?.error ?? 'Failed to update document.', 'error');
     }
-    setReplacingDocId(null);
   };
 
   const handleScheduleStep = async (data: { scheduledAt: string | null; scheduledLocation: string | null; scheduledNote: string | null }) => {
@@ -648,12 +641,10 @@ export function DepartmentApplicationDetailPage() {
                           variant="ghost"
                           size="sm"
                           className="gap-1.5 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
-                          onClick={() => handleReplaceCompanyDoc(doc.id)}
-                          disabled={replacingDocId === doc.id}
-                          loading={replacingDocId === doc.id}
+                          onClick={() => setUpdateDocTarget({ id: doc.id, name: doc.documentType })}
                         >
-                          <RefreshCw className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Replace</span>
+                          <Pencil className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Update</span>
                         </Button>
                         <Button
                           variant="ghost"
@@ -701,14 +692,6 @@ export function DepartmentApplicationDetailPage() {
         </div>
       )}
 
-      <input
-        ref={replaceFileInputRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-        className="hidden"
-        onChange={handleReplaceFileSelected}
-      />
-
       {deleteDocConfirm !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl mx-4">
@@ -747,6 +730,14 @@ export function DepartmentApplicationDetailPage() {
         onClose={() => setCompanyDocModal(false)}
         onUpload={handleUploadCompanyDoc}
         isUploading={uploadingCompanyDoc}
+      />
+
+      <UpdateCompanyDocumentModal
+        open={updateDocTarget !== null}
+        onClose={() => setUpdateDocTarget(null)}
+        currentName={updateDocTarget?.name ?? ''}
+        onUpdate={handleUpdateCompanyDoc}
+        isUpdating={updatingCompanyDoc}
       />
 
       <ScheduleInterviewModal

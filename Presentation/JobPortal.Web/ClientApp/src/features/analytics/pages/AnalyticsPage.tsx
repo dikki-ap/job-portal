@@ -473,7 +473,7 @@ export function AnalyticsPage() {
               Applications per Month ({DATE_RANGE_OPTIONS.find((o) => o.id === dateRange)?.label})
             </h2>
             <ResponsiveContainer width="100%" height={320}>
-              <AreaChart data={byMonth} margin={{ left: 0, right: 16 }}>
+              <AreaChart data={byMonth} margin={{ top: 20, left: 0, right: 16, bottom: 0 }}>
                 <defs>
                   <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.15} />

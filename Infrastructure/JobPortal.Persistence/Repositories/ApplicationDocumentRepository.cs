@@ -31,6 +31,9 @@ public class ApplicationDocumentRepository(ApplicationDbContext context) : IAppl
         }
     }
 
+    public Task<int> SaveChangesAsync(CancellationToken ct = default)
+        => context.SaveChangesAsync(ct);
+
     public async Task ReplaceCompanyDocumentFileAsync(
         ApplicationDocument appDoc,
         string newStorageKey,
