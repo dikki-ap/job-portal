@@ -108,7 +108,7 @@ export function DepartmentApplicationDetailPage() {
   const [deleteCompanyDocument] = useDeleteCompanyDocumentMutation();
   const [updateCompanyDocument, { isLoading: updatingCompanyDoc }] = useUpdateCompanyDocumentMutation();
   const [scheduleStep, { isLoading: scheduling }] = useScheduleStepMutation();
-  const [updateDocTarget, setUpdateDocTarget] = useState<{ id: number; name: string } | null>(null);
+  const [updateDocTarget, setUpdateDocTarget] = useState<{ id: number; name: string; originalFileName: string } | null>(null);
   const [deleteDocConfirm, setDeleteDocConfirm] = useState<number | null>(null);
 
   useEffect(() => {
@@ -161,7 +161,7 @@ export function DepartmentApplicationDetailPage() {
   const handleUploadCompanyDoc = async (name: string, file: File) => {
     if (!application) return;
     try {
-      await uploadCompanyDocument({ code: application.code, name, file }).unwrap();
+      await uploadCompanyDocument({ code: application.code, name, file, applicationId: application.id }).unwrap();
       setCompanyDocModal(false);
       addToast('Document uploaded successfully.', 'success');
     } catch (err: unknown) {
@@ -173,7 +173,7 @@ export function DepartmentApplicationDetailPage() {
   const handleDeleteCompanyDoc = async (docId: number) => {
     if (!application) return;
     try {
-      await deleteCompanyDocument({ code: application.code, documentId: docId }).unwrap();
+      await deleteCompanyDocument({ code: application.code, documentId: docId, applicationId: application.id }).unwrap();
       setDeleteDocConfirm(null);
       addToast('Document deleted.', 'success');
     } catch (err: unknown) {
@@ -186,7 +186,7 @@ export function DepartmentApplicationDetailPage() {
   const handleUpdateCompanyDoc = async (name: string, file: File | null) => {
     if (!updateDocTarget || !application) return;
     try {
-      await updateCompanyDocument({ code: application.code, documentId: updateDocTarget.id, name, file }).unwrap();
+      await updateCompanyDocument({ code: application.code, documentId: updateDocTarget.id, name, file, applicationId: application.id }).unwrap();
       setUpdateDocTarget(null);
       addToast('Document updated successfully.', 'success');
     } catch (err: unknown) {
@@ -641,7 +641,7 @@ export function DepartmentApplicationDetailPage() {
                           variant="ghost"
                           size="sm"
                           className="gap-1.5 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
-                          onClick={() => setUpdateDocTarget({ id: doc.id, name: doc.documentType })}
+                          onClick={() => setUpdateDocTarget({ id: doc.id, name: doc.documentType, originalFileName: doc.originalFileName })}
                         >
                           <Pencil className="h-3.5 w-3.5" />
                           <span className="hidden sm:inline">Update</span>
@@ -736,6 +736,7 @@ export function DepartmentApplicationDetailPage() {
         open={updateDocTarget !== null}
         onClose={() => setUpdateDocTarget(null)}
         currentName={updateDocTarget?.name ?? ''}
+        currentFileName={updateDocTarget?.originalFileName ?? ''}
         onUpdate={handleUpdateCompanyDoc}
         isUpdating={updatingCompanyDoc}
       />

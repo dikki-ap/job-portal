@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Pencil, Upload, X, FileText } from 'lucide-react';
 import { Button } from './Button';
 
@@ -16,15 +16,25 @@ interface Props {
   open: boolean;
   onClose: () => void;
   currentName: string;
+  currentFileName: string;
   onUpdate: (name: string, file: File | null) => Promise<void>;
   isUpdating: boolean;
 }
 
-export function UpdateCompanyDocumentModal({ open, onClose, currentName, onUpdate, isUpdating }: Props) {
+export function UpdateCompanyDocumentModal({ open, onClose, currentName, currentFileName, onUpdate, isUpdating }: Props) {
   const [name, setName] = useState(currentName);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setName(currentName);
+      setFile(null);
+      setFileError('');
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  }, [open, currentName]);
 
   if (!open) return null;
 
@@ -116,6 +126,14 @@ export function UpdateCompanyDocumentModal({ open, onClose, currentName, onUpdat
                   <FileText className="h-5 w-5 text-[var(--primary)] shrink-0" />
                   <span className="font-medium break-all">{file.name}</span>
                   <span className="text-gray-400 shrink-0">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                </div>
+              ) : currentFileName ? (
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <FileText className="h-5 w-5 text-gray-400 shrink-0" />
+                    <span className="font-medium break-all text-gray-600">{currentFileName}</span>
+                  </div>
+                  <p className="text-xs text-gray-400">Current file · click to replace</p>
                 </div>
               ) : (
                 <>

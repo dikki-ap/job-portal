@@ -99,7 +99,7 @@ export function ApplicationDetailPage() {
   const [deleteCompanyDocument] = useDeleteCompanyDocumentMutation();
   const [updateCompanyDocument, { isLoading: updatingCompanyDoc }] = useUpdateCompanyDocumentMutation();
   const [scheduleStep, { isLoading: scheduling }] = useScheduleStepMutation();
-  const [updateDocTarget, setUpdateDocTarget] = useState<{ id: number; name: string } | null>(null);
+  const [updateDocTarget, setUpdateDocTarget] = useState<{ id: number; name: string; originalFileName: string } | null>(null);
   const [deleteDocConfirm, setDeleteDocConfirm] = useState<number | null>(null);
 
   const [localRating, setLocalRating] = useState<number | null>(null);
@@ -654,7 +654,7 @@ export function ApplicationDetailPage() {
                           variant="ghost"
                           size="sm"
                           className="gap-1.5 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
-                          onClick={() => setUpdateDocTarget({ id: doc.id, name: doc.documentType })}
+                          onClick={() => setUpdateDocTarget({ id: doc.id, name: doc.documentType, originalFileName: doc.originalFileName })}
                         >
                           <Pencil className="h-3.5 w-3.5" /> Update
                         </Button>
@@ -777,6 +777,7 @@ export function ApplicationDetailPage() {
         open={updateDocTarget !== null}
         onClose={() => setUpdateDocTarget(null)}
         currentName={updateDocTarget?.name ?? ''}
+        currentFileName={updateDocTarget?.originalFileName ?? ''}
         onUpdate={handleUpdateCompanyDoc}
         isUpdating={updatingCompanyDoc}
       />

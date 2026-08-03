@@ -128,7 +128,7 @@ export const applicationsApi = createApi({
     }),
     uploadCompanyDocument: builder.mutation<
       ApplicationDocumentDto,
-      { code: string; name: string; file: File }
+      { code: string; name: string; file: File; applicationId?: number }
     >({
       query: ({ code, name, file }) => {
         const formData = new FormData();
@@ -136,18 +136,24 @@ export const applicationsApi = createApi({
         formData.append('file', file);
         return { url: `/${code}/company-documents`, method: 'POST', body: formData };
       },
-      invalidatesTags: (_r, _e, { code }) => [{ type: 'Application', id: code }],
+      invalidatesTags: (_r, _e, { code, applicationId }) => [
+        { type: 'Application', id: code },
+        ...(applicationId != null ? [{ type: 'DepartmentApplication' as const, id: applicationId }] : []),
+      ],
     }),
-    deleteCompanyDocument: builder.mutation<void, { code: string; documentId: number }>({
+    deleteCompanyDocument: builder.mutation<void, { code: string; documentId: number; applicationId?: number }>({
       query: ({ code, documentId }) => ({
         url: `/${code}/company-documents/${documentId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (_r, _e, { code }) => [{ type: 'Application', id: code }],
+      invalidatesTags: (_r, _e, { code, applicationId }) => [
+        { type: 'Application', id: code },
+        ...(applicationId != null ? [{ type: 'DepartmentApplication' as const, id: applicationId }] : []),
+      ],
     }),
     updateCompanyDocument: builder.mutation<
       ApplicationDocumentDto,
-      { code: string; documentId: number; name: string; file: File | null }
+      { code: string; documentId: number; name: string; file: File | null; applicationId?: number }
     >({
       query: ({ code, documentId, name, file }) => {
         const formData = new FormData();
@@ -155,7 +161,10 @@ export const applicationsApi = createApi({
         if (file) formData.append('file', file);
         return { url: `/${code}/company-documents/${documentId}`, method: 'PUT', body: formData };
       },
-      invalidatesTags: (_r, _e, { code }) => [{ type: 'Application', id: code }],
+      invalidatesTags: (_r, _e, { code, applicationId }) => [
+        { type: 'Application', id: code },
+        ...(applicationId != null ? [{ type: 'DepartmentApplication' as const, id: applicationId }] : []),
+      ],
     }),
   }),
 });
